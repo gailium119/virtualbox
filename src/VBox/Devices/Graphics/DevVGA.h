@@ -1,4 +1,4 @@
-/* $Id: DevVGA.h 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: DevVGA.h 111491 2025-10-24 12:45:03Z michal.necasek@oracle.com $ */
 /** @file
  * DevVGA - VBox VGA/VESA device, internal header.
  */
@@ -410,7 +410,7 @@ typedef struct VGAState
     uint8_t                     cbWriteVBEIndex;
     /** VBE Extra Data write address one byte buffer */
     uint8_t                     cbWriteVBEExtraAddress;
-    uint8_t                     Padding5;
+    uint8_t                     PaddingBwIo;
 #endif
 
     /** Retrace emulation state */

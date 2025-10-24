@@ -1,4 +1,4 @@
-/* $Id: DevVGA.cpp 110742 2025-08-16 11:14:20Z vitali.pelenjow@oracle.com $ */
+/* $Id: DevVGA.cpp 111491 2025-10-24 12:45:03Z michal.necasek@oracle.com $ */
 /** @file
  * DevVGA - VBox VGA/VESA device.
  */
@@ -6121,6 +6121,13 @@ static DECLCALLBACK(void)  vgaR3Reset(PPDMDEVINS pDevIns)
     pThis->vbe_regs[VBE_DISPI_INDEX_VBOX_VIDEO] = 0;
     pThis->vbe_regs[VBE_DISPI_INDEX_FB_BASE_HI] = pThis->GCPhysVRAM >> 16;
     pThis->vbe_bank_max   = (pThis->vram_size >> 16) - 1;
+
+#ifdef VBE_BYTEWISE_IO
+    pchStart = (char *)&pThis->fReadVBEData;
+    pchEnd   = (char *)&pThis->PaddingBwIo;
+    memset(pchStart, 0, pchEnd - pchStart);
+#endif
+
 # endif /* CONFIG_BOCHS_VBE */
     pThis->st00 = 0x70; /* Static except for bit 4. */
 
