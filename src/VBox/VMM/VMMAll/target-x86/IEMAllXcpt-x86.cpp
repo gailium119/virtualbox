@@ -1,4 +1,4 @@
-/* $Id: IEMAllXcpt-x86.cpp 111190 2025-09-30 13:58:03Z knut.osmundsen@oracle.com $ */
+/* $Id: IEMAllXcpt-x86.cpp 111486 2025-10-24 07:23:14Z alexander.eichner@oracle.com $ */
 /** @file
  * IEM - Interpreted Execution Manager - x86 target, exceptions & interrupts.
  */
@@ -57,6 +57,7 @@
 #include <iprt/string.h>
 #include <iprt/x86.h>
 
+#include "IEMInline.h"
 #include "IEMInline-x86.h"
 
 

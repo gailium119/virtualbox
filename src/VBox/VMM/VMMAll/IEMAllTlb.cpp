@@ -1,4 +1,4 @@
-/* $Id: IEMAllTlb.cpp 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: IEMAllTlb.cpp 111486 2025-10-24 07:23:14Z alexander.eichner@oracle.com $ */
 /** @file
  * IEM - Interpreted Execution Manager - TLB Management.
  */
@@ -45,6 +45,7 @@
 #include <iprt/string.h>
 #include <iprt/x86.h>
 
+#include "IEMInline.h"
 #ifdef VBOX_VMM_TARGET_X86
 # include "target-x86/IEMAllTlbInline-x86.h"
 #elif defined(VBOX_VMM_TARGET_ARMV8)

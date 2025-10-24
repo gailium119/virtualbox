@@ -1,4 +1,4 @@
-/* $Id: IEMInline.h 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: IEMInline.h 111486 2025-10-24 07:23:14Z alexander.eichner@oracle.com $ */
 /** @file
  * IEM - Interpreted Execution Manager - Inlined Functions, Common.
  */
@@ -325,7 +325,11 @@ DECLINLINE(void) iemTlbTrace(PVMCPU pVCpu, IEMTLBTRACETYPE enmType, uint64_t u64
     pEntry->u32Param  = u32Param;
     pEntry->bParam    = bParam;
     pEntry->enmType   = enmType;
+#ifdef VBOX_VMM_TARGET_X86
     pEntry->rip       = pVCpu->cpum.GstCtx.rip + pVCpu->cpum.GstCtx.cs.u64Base;
+#elif defined(VBOX_VMM_TARGET_ARMV8)
+    pEntry->rip       = pVCpu->cpum.GstCtx.Pc.u64;
+#endif
 }
 #endif
 
