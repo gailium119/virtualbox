@@ -1,4 +1,4 @@
-/* $Id: tstUnattendedScript.cpp 111494 2025-10-27 14:50:11Z alexander.rudnev@oracle.com $ */
+/* $Id: tstUnattendedScript.cpp 111495 2025-10-27 14:59:50Z alexander.eichner@oracle.com $ */
 /** @file
  * tstUnattendedScript - testcases for UnattendedScript.
  */
@@ -733,9 +733,11 @@ VBOXOSTYPE Unattended::i_getGuestOsArch() const
     return (VBOXOSTYPE)(mEnmOsType & VBOXOSTYPE_ArchitectureMask);
 }
 
+
 /*********************************************************************************************************************************
 *   The Testcase                                                                                                                 *
 *********************************************************************************************************************************/
+
 static bool loadFileAsString(const char *pszFilename, Utf8Str &rstrContent)
 {
     rstrContent.setNull();
