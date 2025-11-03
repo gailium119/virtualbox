@@ -1,4 +1,4 @@
-/* $Id: SUPHardenedVerifyProcess-win.cpp 111482 2025-10-23 12:22:27Z knut.osmundsen@oracle.com $ */
+/* $Id: SUPHardenedVerifyProcess-win.cpp 111531 2025-11-03 19:26:02Z klaus.espenlaub@oracle.com $ */
 /** @file
  * VirtualBox Support Library/Driver - Hardened Process Verification, Windows.
  */
@@ -1814,7 +1814,7 @@ static bool supHardNtVpFreeOrReplacePrivateExecMemory(PSUPHNTVPSTATE pThis, HAND
             supHardNtVpSetInfo2(pThis, VERR_SUP_VP_REPLACE_VIRTUAL_MEMORY_FAILED,
                                 "NtAllocateVirtualMemory (%p LB %#zx) failed with rcNt=%#x allocating "
                                 "replacement memory for working around buggy protection software. "
-                                "See VBoxStartup.log for more details",
+                                "See VBoxHardening.log for more details",
                                 pvAlloc, cbFree, rcNt);
             supR3HardenedLogFlush();
             NtTerminateProcess(hProcess, VERR_SUP_VP_REPLACE_VIRTUAL_MEMORY_FAILED);

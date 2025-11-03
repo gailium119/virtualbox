@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# $Id: vbox.py 111452 2025-10-20 07:38:17Z alexander.eichner@oracle.com $
+# $Id: vbox.py 111531 2025-11-03 19:26:02Z klaus.espenlaub@oracle.com $
 # pylint: disable=too-many-lines
 
 """
@@ -37,7 +37,7 @@ terms and conditions of either the GPL or the CDDL or both.
 
 SPDX-License-Identifier: GPL-3.0-only OR CDDL-1.0
 """
-__version__ = "$Revision: 111452 $"
+__version__ = "$Revision: 111531 $"
 
 # pylint: disable=unnecessary-semicolon
 
@@ -3198,7 +3198,7 @@ class TestDriver(base.TestDriver):                                              
 
     def uploadStartupLogFile(self, oVM, sVmName):
         """
-        Uploads the VBoxStartup.log when present.
+        Uploads the VBoxHardening.log when present.
         """
         fRc = True;
         try:
