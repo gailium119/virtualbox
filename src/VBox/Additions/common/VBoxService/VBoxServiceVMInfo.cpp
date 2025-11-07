@@ -1,4 +1,4 @@
-/* $Id: VBoxServiceVMInfo.cpp 111564 2025-11-07 16:17:09Z knut.osmundsen@oracle.com $ */
+/* $Id: VBoxServiceVMInfo.cpp 111569 2025-11-07 17:06:09Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxService - Virtual Machine Information for the Host.
  */
@@ -1413,7 +1413,7 @@ static int vgsvcVMInfoWriteNetwork(void)
                 {
                     struct sockaddr_dl *pLinkAddress = (struct sockaddr_dl *)pIfLinkCurr->ifa_addr;
                     AssertPtr(pLinkAddress);
-                    uint8_t const      *pu8Mac       = (uint8_t const *)LLADDR(pLinkAddress);
+                    pu8Mac = (uint8_t const *)LLADDR(pLinkAddress);
                     AssertPtr(pu8Mac);
                     break;
                 }
