@@ -1,4 +1,4 @@
-/** $Id: VBoxServiceClipboard-os2.cpp 111598 2025-11-10 14:35:00Z knut.osmundsen@oracle.com $ */
+/** $Id: VBoxServiceClipboard-os2.cpp 111600 2025-11-10 14:49:28Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxService - Guest Additions Clipboard Service, OS/2.
  */
@@ -1114,5 +1114,4 @@ VBOXSERVICE g_Clipboard =
     vgsvcClipboardOs2Stop,
     vgsvcClipboardOs2Term
 };
-
 
