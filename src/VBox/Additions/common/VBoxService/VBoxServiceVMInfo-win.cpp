@@ -1,4 +1,4 @@
-/* $Id: VBoxServiceVMInfo-win.cpp 111585 2025-11-09 14:36:34Z knut.osmundsen@oracle.com $ */
+/* $Id: VBoxServiceVMInfo-win.cpp 111598 2025-11-10 14:35:00Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxService - Virtual Machine Information for the Host, Windows specifics.
  */
@@ -1063,7 +1063,7 @@ static int vgsvcVMInfoWinWriteLastInput(PVBOXSERVICEVEPROPCACHE pCache, const ch
                      * user's last input time. This might happen when running on Windows NT4 or older. */
                     && ipcReply.cSecSinceLastInput != UINT32_MAX)
                 {
-                    userState = ipcReply.cSecSinceLastInput * 1000 < g_uVMInfoUserIdleThresholdMS
+                    userState = ipcReply.cSecSinceLastInput * 1000 < g_cMsVMInfoUserIdleThreshold
                               ? VBoxGuestUserState_InUse
                               : VBoxGuestUserState_Idle;
 

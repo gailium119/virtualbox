@@ -1,4 +1,4 @@
-/* $Id: VBoxServiceAutoMount.cpp 111555 2025-11-06 09:49:17Z knut.osmundsen@oracle.com $ */
+/* $Id: VBoxServiceAutoMount.cpp 111598 2025-11-10 14:35:00Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxService - Auto-mounting for Shared Folders, only Linux & Solaris atm.
  */
@@ -2200,6 +2200,8 @@ VBOXSERVICE g_AutoMount =
     NULL,
     /* pszOptions. */
     NULL,
+    /* paOptions, cOptions. */
+    NULL, 0,
     /* methods */
     VGSvcDefaultPreInit,
     VGSvcDefaultOption,

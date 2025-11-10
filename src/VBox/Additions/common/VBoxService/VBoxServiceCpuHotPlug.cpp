@@ -1,4 +1,4 @@
-/* $Id: VBoxServiceCpuHotPlug.cpp 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: VBoxServiceCpuHotPlug.cpp 111598 2025-11-10 14:35:00Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxService - Guest Additions CPU Hot-Plugging Service.
  */
@@ -661,6 +661,8 @@ VBOXSERVICE g_CpuHotPlug =
     NULL,
     /* pszOptions. */
     NULL,
+    /* paOptions, cOptions. */
+    NULL, 0,
     /* methods */
     VGSvcDefaultPreInit,
     VGSvcDefaultOption,

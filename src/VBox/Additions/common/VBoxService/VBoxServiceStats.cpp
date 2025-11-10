@@ -1,4 +1,4 @@
-/* $Id: VBoxServiceStats.cpp 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: VBoxServiceStats.cpp 111598 2025-11-10 14:35:00Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxStats - Guest statistics notification
  */
@@ -737,6 +737,8 @@ VBOXSERVICE g_VMStatistics =
     NULL,
     /* pszOptions. */
     NULL,
+    /* paOptions, cOptions. */
+    NULL, 0,
     /* methods */
     VGSvcDefaultPreInit,
     VGSvcDefaultOption,

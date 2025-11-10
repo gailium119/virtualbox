@@ -1,4 +1,4 @@
-/** $Id: VBoxServiceClipboard-os2.cpp 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/** $Id: VBoxServiceClipboard-os2.cpp 111598 2025-11-10 14:35:00Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxService - Guest Additions Clipboard Service, OS/2.
  */
@@ -90,7 +90,6 @@ typedef struct _Odin32ClipboardHeader
 /*********************************************************************************************************************************
 *   Global Variables                                                                                                             *
 *********************************************************************************************************************************/
-
 /** The control thread (main) handle.
  * Only used to avoid some queue creation trouble. */
 static RTTHREAD g_ThreadCtrl = NIL_RTTHREAD;
@@ -150,30 +149,6 @@ static ATOM g_atomOdin32UnicodeText = 0;
 /** Odin32 CF_UNICODETEXT. See user32.cpp. */
 #define SZFMT_ODIN32_UNICODETEXT    (PCSZ)"Odin32 UnicodeText"
 
-
-
-
-/**
- * @interface_method_impl{VBOXSERVICE,pfnPreInit}
- */
-static DECLCALLBACK(int) vgsvcClipboardOs2PreInit(void)
-{
-    return VINF_SUCCESS;
-}
-
-
-/**
- * @interface_method_impl{VBOXSERVICE,pfnOption}
- */
-static DECLCALLBACK(int) vgsvcClipboardOs2Option(const char **ppszShort, int argc, char **argv, int *pi)
-{
-    NOREF(ppszShort);
-    NOREF(argc);
-    NOREF(argv);
-    NOREF(pi);
-
-    return -1;
-}
 
 
 /**
@@ -1129,12 +1104,15 @@ VBOXSERVICE g_Clipboard =
     /* pszOptions. */
     ""
     ,
+    /* paOptions, cOptions. */
+    NULL, 0,
     /* methods */
-    vgsvcClipboardOs2PreInit,
-    vgsvcClipboardOs2Option,
+    VGSvcDefaultPreInit,
+    VGSvcDefaultOption,
     vgsvcClipboardOs2Init,
     vgsvcClipboardOs2Worker,
     vgsvcClipboardOs2Stop,
     vgsvcClipboardOs2Term
 };
+
 
