@@ -1,4 +1,4 @@
-/* $Id: VBoxServiceVMInfo.cpp 111621 2025-11-11 09:22:38Z knut.osmundsen@oracle.com $ */
+/* $Id: VBoxServiceVMInfo.cpp 111622 2025-11-11 09:31:22Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxService - Virtual Machine Information for the Host.
  */
@@ -158,8 +158,15 @@
 *   Defined Constants And Macros                                                                                                 *
 *********************************************************************************************************************************/
 /** This enables some code for monitoring /VirtualBox/HostInfo/VRDP/Active
- * and logging changes. It doesn't seem to much more purpose here. */
-#define WITH_VDE_CONNECTION_MONITORING
+ * and logging changes (i.e. VDE client attach and detach).
+ *
+ * It doesn't seem to much more purpose beyond loging here in VBoxService.
+ *
+ * @note 2025-11-11 bird: Disabled this, as it has little purpose here.
+ *       VBoxTray & VBoxClient is where this stuff would be useful. */
+#if 0 || defined(DOXYGEN_RUNNING)
+# define WITH_VDE_CONNECTION_MONITORING
+#endif
 
 
 /*********************************************************************************************************************************
