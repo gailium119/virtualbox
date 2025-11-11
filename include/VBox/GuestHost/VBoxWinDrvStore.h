@@ -1,4 +1,4 @@
-/* $Id: VBoxWinDrvStore.h 111636 2025-11-11 15:47:46Z andreas.loeffler@oracle.com $ */
+/* $Id: VBoxWinDrvStore.h 111638 2025-11-11 15:55:31Z andreas.loeffler@oracle.com $ */
 /** @file
  * VBoxWinDrvInst - Header for Windows driver store handling.
  */
@@ -77,7 +77,7 @@ typedef struct VBOXWINDRVSTOREFILEENTRY
     RTLISTNODE               Node;
     /** Full (absolute) path of the file. */
     RTUTF16                  wszFile[RTPATH_MAX];
-} VBOXWINDRVSTOREFILE;
+} VBOXWINDRVSTOREFILEENTRY;
 /** Pointer to a Windows driver store file entry. */
 typedef VBOXWINDRVSTOREFILEENTRY *PVBOXWINDRVSTOREFILEENTRY;
 
