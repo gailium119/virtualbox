@@ -1,4 +1,4 @@
-/* $Id: SUPDrv-linux.c 111620 2025-11-11 09:10:04Z ramshankar.venkataraman@oracle.com $ */
+/* $Id: SUPDrv-linux.c 111623 2025-11-11 09:36:02Z ramshankar.venkataraman@oracle.com $ */
 /** @file
  * VBoxDrv - The VirtualBox Support Driver - Linux specifics.
  */
@@ -1965,6 +1965,9 @@ MODULE_DESCRIPTION(VBOX_PRODUCT " Support Driver");
 MODULE_LICENSE("GPL");
 #ifdef MODULE_VERSION
 MODULE_VERSION(VBOX_VERSION_STRING " r" RT_XSTR(VBOX_SVN_REV) " (" RT_XSTR(SUPDRV_IOC_VERSION) ")");
+#endif
+#ifdef SUPDRV_LINUX_HAS_KVM_HWVIRT_API
+MODULE_SOFTDEP("pre: kvm_intel kvm_amd");
 #endif
 
 module_param(force_async_tsc, int, 0444);
