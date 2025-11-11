@@ -1,4 +1,4 @@
-/* $Id: VBoxServiceUtils.h 111555 2025-11-06 09:49:17Z knut.osmundsen@oracle.com $ */
+/* $Id: VBoxServiceUtils.h 111633 2025-11-11 13:17:32Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxServiceUtils - Guest Additions Services (Utilities).
  */
@@ -73,7 +73,8 @@ int VGSvcWritePropF(PVBGLGSTPROPCLIENT pGuestPropClient, const char *pszName, co
 #endif
 
 #ifdef RT_OS_WINDOWS
-int VGSvcUtilWinGetFileVersionString(const char *pszPath, const char *pszFileName, char *pszVersion, size_t cbVersion);
+int VGSvcUtilWinGetFileVersion(const char *pszFilename, uint32_t *puMajor, uint32_t *puMinor, uint32_t *puBuildNumber,
+                               uint32_t *puRevisionNumber);
 #endif
 
 const char *VGSvcIdCacheGetUidName(PVGSVCIDCACHE pIdCache, RTUID uid, const char *pszEntry, const char *pszRelativeTo);
