@@ -1,4 +1,4 @@
-/* $Id: VBoxServiceControlSession.cpp 111389 2025-10-14 15:02:15Z andreas.loeffler@oracle.com $ */
+/* $Id: VBoxServiceControlSession.cpp 111635 2025-11-11 13:27:52Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxServiceControlSession - Guest session handling. Also handles the spawned session processes.
  */
@@ -46,7 +46,6 @@
 #include <iprt/system.h> /* For RTShutdown. */
 
 #include "VBoxServiceInternal.h"
-#include "VBoxServiceUtils.h"
 #include "VBoxServiceControl.h"
 
 using namespace guestControl;

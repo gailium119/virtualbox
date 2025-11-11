@@ -1,4 +1,4 @@
-/* $Id: VBoxServiceStats.cpp 111598 2025-11-10 14:35:00Z knut.osmundsen@oracle.com $ */
+/* $Id: VBoxServiceStats.cpp 111635 2025-11-11 13:27:52Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxStats - Guest statistics notification
  */
@@ -71,7 +71,6 @@
 #include <VBox/VBoxGuestLib.h>
 
 #include "VBoxServiceInternal.h"
-#include "VBoxServiceUtils.h"
 
 
 /*********************************************************************************************************************************

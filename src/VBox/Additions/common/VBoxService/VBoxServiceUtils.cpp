@@ -1,4 +1,4 @@
-/* $Id: VBoxServiceUtils.cpp 111634 2025-11-11 13:21:46Z knut.osmundsen@oracle.com $ */
+/* $Id: VBoxServiceUtils.cpp 111635 2025-11-11 13:27:52Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxServiceUtils - Some utility functions.
  */
@@ -35,7 +35,6 @@
 
 #include <VBox/VBoxGuestLib.h>
 #include "VBoxServiceInternal.h"
-#include "VBoxServiceUtils.h"
 
 
 #ifdef VBOX_WITH_GUEST_PROPS

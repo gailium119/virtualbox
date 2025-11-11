@@ -1,4 +1,4 @@
-/* $Id: VBoxService.cpp 111598 2025-11-10 14:35:00Z knut.osmundsen@oracle.com $ */
+/* $Id: VBoxService.cpp 111635 2025-11-11 13:27:52Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxService - Guest Additions Service Skeleton.
  */
@@ -101,7 +101,6 @@
 #include <VBox/log.h>
 
 #include "VBoxServiceInternal.h"
-#include "VBoxServiceUtils.h"
 #ifdef VBOX_WITH_VBOXSERVICE_CONTROL
 # include "VBoxServiceControl.h"
 #endif

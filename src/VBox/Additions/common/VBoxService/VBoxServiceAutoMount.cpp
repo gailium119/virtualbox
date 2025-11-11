@@ -1,4 +1,4 @@
-/* $Id: VBoxServiceAutoMount.cpp 111598 2025-11-10 14:35:00Z knut.osmundsen@oracle.com $ */
+/* $Id: VBoxServiceAutoMount.cpp 111635 2025-11-11 13:27:52Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxService - Auto-mounting for Shared Folders, only Linux & Solaris atm.
  */
@@ -59,7 +59,6 @@
 #include <VBox/VBoxGuestLib.h>
 #include <VBox/shflsvc.h>
 #include "VBoxServiceInternal.h"
-#include "VBoxServiceUtils.h"
 
 #ifdef RT_OS_WINDOWS
 #elif defined(RT_OS_OS2)

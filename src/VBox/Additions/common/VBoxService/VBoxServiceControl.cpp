@@ -1,4 +1,4 @@
-/* $Id: VBoxServiceControl.cpp 111598 2025-11-10 14:35:00Z knut.osmundsen@oracle.com $ */
+/* $Id: VBoxServiceControl.cpp 111635 2025-11-11 13:27:52Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxServiceControl - Host-driven Guest Control.
  */
@@ -73,7 +73,6 @@
 #include <VBox/HostServices/GuestControlSvc.h>
 #include "VBoxServiceInternal.h"
 #include "VBoxServiceControl.h"
-#include "VBoxServiceUtils.h"
 
 using namespace guestControl;
 

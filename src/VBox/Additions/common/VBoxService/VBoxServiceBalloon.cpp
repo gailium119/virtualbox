@@ -1,4 +1,4 @@
-/* $Id: VBoxServiceBalloon.cpp 111598 2025-11-10 14:35:00Z knut.osmundsen@oracle.com $ */
+/* $Id: VBoxServiceBalloon.cpp 111635 2025-11-11 13:27:52Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxService - Memory Ballooning.
  */
@@ -62,7 +62,6 @@
 #include <VBox/err.h>
 #include <VBox/VBoxGuestLib.h>
 #include "VBoxServiceInternal.h"
-#include "VBoxServiceUtils.h"
 
 #ifdef RT_OS_LINUX
 # include <iprt/param.h>

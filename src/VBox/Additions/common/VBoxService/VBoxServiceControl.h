@@ -1,4 +1,4 @@
-/* $Id: VBoxServiceControl.h 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: VBoxServiceControl.h 111635 2025-11-11 13:27:52Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxServiceControl.h - Internal guest control definitions.
  */
@@ -42,7 +42,7 @@
 #include <VBox/GuestHost/GuestControl.h>
 #include <VBox/HostServices/GuestControlSvc.h>
 
-#include "VBoxServiceUtils.h" /* For VGSVCIDCACHE. */
+#include "VBoxServiceInternal.h" /* For VGSVCIDCACHE. */
 
 
 /**

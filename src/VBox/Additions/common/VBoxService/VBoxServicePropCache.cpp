@@ -1,4 +1,4 @@
-/* $Id: VBoxServicePropCache.cpp 111615 2025-11-11 08:03:24Z knut.osmundsen@oracle.com $ */
+/* $Id: VBoxServicePropCache.cpp 111635 2025-11-11 13:27:52Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxServicePropCache - Guest property cache.
  *
@@ -41,7 +41,6 @@
 #include <VBox/HostServices/GuestPropertySvc.h> /* For GUEST_PROP_MAX_VALUE_LEN */
 
 #include "VBoxServiceInternal.h"
-#include "VBoxServiceUtils.h"
 
 
 /**

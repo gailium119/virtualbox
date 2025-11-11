@@ -1,4 +1,4 @@
-/* $Id: VBoxServiceVMInfo.cpp 111629 2025-11-11 12:07:09Z knut.osmundsen@oracle.com $ */
+/* $Id: VBoxServiceVMInfo.cpp 111635 2025-11-11 13:27:52Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxService - Virtual Machine Information for the Host.
  */
@@ -151,7 +151,6 @@
 #include <VBox/VBoxGuestLib.h>
 #include <VBox/HostServices/GuestPropertySvc.h> /* For GUEST_PROP_MAX_VALUE_LEN and GUEST_PROP_MAX_NAME_LEN.  */
 #include "VBoxServiceInternal.h"
-#include "VBoxServiceUtils.h"
 
 
 /*********************************************************************************************************************************
