@@ -1,4 +1,4 @@
-/* $Id: VDKeyStore.cpp 111594 2025-11-10 13:33:34Z alexander.eichner@oracle.com $ */
+/* $Id: VDKeyStore.cpp 111652 2025-11-12 10:17:46Z alexander.eichner@oracle.com $ */
 /** @file
  * VD - Simple keystore handling for encrypted media.
  */
@@ -31,6 +31,7 @@
 *********************************************************************************************************************************/
 #include "VDKeyStore.h"
 
+#include <iprt/asm.h>
 #include <iprt/assert.h>
 #include <iprt/base64.h>
 #include <iprt/string.h>
