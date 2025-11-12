@@ -1,5 +1,5 @@
 #!/usr/bin/make -f
-# $Id: rules 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $
+# $Id: rules 111645 2025-11-12 09:09:25Z alexander.eichner@oracle.com $
 ## @file
 # VirtualBox rules.
 #
@@ -312,6 +312,9 @@ binary: build $(if $(NOMODS),,$(bldbase)/modules-stamp)
 	ln -s ../VBoxVMM.so $(prefix)/usr/lib/$(package)/components/VBoxVMM.so
 	if [ -f $(prefix)/usr/lib/$(package)/VBoxVMMArm.so ]; then \
 	    ln -s ../VBoxVMMArm.so $(prefix)/usr/lib/$(package)/components/VBoxVMMArm.so; \
+	fi
+	if [ -f $(prefix)/usr/lib/$(package)/VBoxVRDP.so ]; then \
+	    ln -s ../VBoxVRDP.so $(prefix)/usr/lib/$(package)/VBoxVRDP.so; \
 	fi
 	rmdir $(prefix)/opt
 	dh_link \

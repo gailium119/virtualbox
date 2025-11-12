@@ -1,4 +1,4 @@
-# $Id: VirtualBox.tmpl.spec 111300 2025-10-09 11:19:42Z vadim.galitsyn@oracle.com $
+# $Id: VirtualBox.tmpl.spec 111645 2025-11-12 09:09:25Z alexander.eichner@oracle.com $
 ## @file
 # Spec file for creating VirtualBox rpm packages
 #
@@ -232,6 +232,9 @@ rm -f $RPM_BUILD_ROOT/usr/lib/virtualbox/chrpath
 ln -s ../VBoxVMM.so $RPM_BUILD_ROOT/usr/lib/virtualbox/components/VBoxVMM.so
 if [ -f $RPM_BUILD_ROOT/usr/lib/virtualbox/VBoxVMMArm.so ]; then
   ln -s ../VBoxVMMArm.so $RPM_BUILD_ROOT/usr/lib/virtualbox/components/VBoxVMMArm.so
+fi
+if [ -f $RPM_BUILD_ROOT/usr/lib/virtualbox/VBoxVRDP.so ]; then
+  ln -s ../VBoxVRDP.so $RPM_BUILD_ROOT/usr/lib/virtualbox/VBoxVRDP.so
 fi
 for i in VirtualBoxVM VBoxHeadless VBoxNetDHCP VBoxNetNAT VBoxNetAdpCtl; do
   chmod 4511 $RPM_BUILD_ROOT/usr/lib/virtualbox/$i; done
