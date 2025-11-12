@@ -1,4 +1,4 @@
-/* $Id: svn2git.cpp 110524 2025-08-04 09:36:44Z alexander.eichner@oracle.com $ */
+/* $Id: svn2git.cpp 111671 2025-11-12 12:33:19Z alexander.eichner@oracle.com $ */
 /** @file
  * svn2git - Convert a svn repository to git.
  */
@@ -434,7 +434,7 @@ static RTEXITCODE s2gParseArguments(PS2GCTX pThis, int argc, char **argv)
             case 'V':
             {
                 /* The following is assuming that svn does it's job here. */
-                static const char s_szRev[] = "$Revision: 110524 $";
+                static const char s_szRev[] = "$Revision: 111671 $";
                 const char *psz = RTStrStripL(strchr(s_szRev, ' '));
                 RTMsgInfo("r%.*s\n", strchr(psz, ' ') - psz, psz);
                 return RTEXITCODE_SUCCESS;
@@ -2249,6 +2249,7 @@ static RTEXITCODE s2gSvnExportRevision(PS2GCTX pThis, uint32_t idRev)
                             Rev.pszGitAuthor      = &achAuthorInfo[0];
 
                             /* Now the E-Mail. */
+                            pszGithubMerge++; /* Skip < */
                             Rev.pszGitAuthorEmail = &achAuthorInfo[cchAuthorInfo];
                             while (*pszGithubMerge != '>')
                                 achAuthorInfo[cchAuthorInfo++] = *pszGithubMerge++;
