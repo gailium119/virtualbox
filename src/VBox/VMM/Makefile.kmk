@@ -1,4 +1,4 @@
-# $Id: Makefile.kmk 111710 2025-11-13 15:15:07Z knut.osmundsen@oracle.com $
+# $Id: Makefile.kmk 111712 2025-11-13 15:17:23Z knut.osmundsen@oracle.com $
 ## @file
 # Top-level makefile for the VMM.
 #
@@ -545,7 +545,7 @@ ifdef VBOX_WITH_VIRT_ARMV8
  	VMMAll/PDMAllCritSect.cpp \
  	VMMAll/PDMAllCritSectRw.cpp \
  	VMMAll/PDMAllCritSectBoth.cpp \
- 	VMMAll/PDMAllGic.cpp \
+ 	VMMAll/target-armv8/PDMAllGic-armv8.cpp \
  	VMMAll/PDMAllQueue.cpp \
  	VMMAll/PDMAllTask.cpp \
  	VMMAll/PGMAll.cpp \
