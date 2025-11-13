@@ -1,4 +1,4 @@
-/* $Id: SELMAll.cpp 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: SELMAll-x86.cpp 111702 2025-11-13 14:09:21Z knut.osmundsen@oracle.com $ */
 /** @file
  * SELM All contexts.
  */
