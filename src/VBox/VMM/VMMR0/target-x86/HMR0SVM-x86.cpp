@@ -1,4 +1,4 @@
-/* $Id: HMSVMR0.cpp 111177 2025-09-30 07:47:26Z knut.osmundsen@oracle.com $ */
+/* $Id: HMR0SVM-x86.cpp 111701 2025-11-13 14:05:10Z knut.osmundsen@oracle.com $ */
 /** @file
  * HM SVM (AMD-V) - Host Context Ring-0.
  */
@@ -46,7 +46,7 @@
 #include "HMInternal.h"
 #include <VBox/vmm/vmcc.h>
 #include <VBox/err.h>
-#include "HMSVMR0.h"
+#include "HMR0SVM-x86.h"
 #include "dtrace/VBoxVMM.h"
 
 #ifdef DEBUG_ramshankar

@@ -1,4 +1,4 @@
-; $Id: HMR0A.asm 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $
+; $Id: HMR0A-x86.asm 111701 2025-11-13 14:05:10Z knut.osmundsen@oracle.com $
 ;; @file
 ; HM - Ring-0 VMX, SVM world-switch and helper routines.
 ;

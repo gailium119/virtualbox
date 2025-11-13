@@ -1,4 +1,4 @@
-/* $Id: HMR0.cpp 111076 2025-09-22 08:10:34Z ramshankar.venkataraman@oracle.com $ */
+/* $Id: HMR0-x86.cpp 111701 2025-11-13 14:05:10Z knut.osmundsen@oracle.com $ */
 /** @file
  * Hardware Assisted Virtualization Manager (HM) - Host Context Ring-0.
  */
@@ -51,8 +51,8 @@
 #include <iprt/string.h>
 #include <iprt/thread.h>
 #include <iprt/x86.h>
-#include "HMVMXR0.h"
-#include "HMSVMR0.h"
+#include "HMR0VMX-x86.h"
+#include "HMR0SVM-x86.h"
 
 
 /*********************************************************************************************************************************

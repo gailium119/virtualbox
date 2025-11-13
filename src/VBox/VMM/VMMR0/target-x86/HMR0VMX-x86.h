@@ -1,4 +1,4 @@
-/* $Id: HMVMXR0.h 111076 2025-09-22 08:10:34Z ramshankar.venkataraman@oracle.com $ */
+/* $Id: HMR0VMX-x86.h 111701 2025-11-13 14:05:10Z knut.osmundsen@oracle.com $ */
 /** @file
  * HM VMX (VT-x) - Internal header file.
  */
@@ -25,8 +25,8 @@
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
-#ifndef VMM_INCLUDED_SRC_VMMR0_HMVMXR0_h
-#define VMM_INCLUDED_SRC_VMMR0_HMVMXR0_h
+#ifndef VMM_INCLUDED_SRC_VMMR0_target_x86_HMR0VMX_x86_h
+#define VMM_INCLUDED_SRC_VMMR0_target_x86_HMR0VMX_x86_h
 #ifndef RT_WITHOUT_PRAGMA_ONCE
 # pragma once
 #endif
@@ -62,5 +62,5 @@ VMMR0DECL(VBOXSTRICTRC) VMXR0RunGuestCode(PVMCPUCC pVCpu);
 
 RT_C_DECLS_END
 
-#endif /* !VMM_INCLUDED_SRC_VMMR0_HMVMXR0_h */
+#endif /* !VMM_INCLUDED_SRC_VMMR0_target_x86_HMR0VMX_x86_h */
 

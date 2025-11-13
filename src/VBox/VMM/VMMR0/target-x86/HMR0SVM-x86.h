@@ -1,4 +1,4 @@
-/* $Id: HMSVMR0.h 111076 2025-09-22 08:10:34Z ramshankar.venkataraman@oracle.com $ */
+/* $Id: HMR0SVM-x86.h 111701 2025-11-13 14:05:10Z knut.osmundsen@oracle.com $ */
 /** @file
  * HM SVM (AMD-V) - Internal header file.
  */
@@ -25,8 +25,8 @@
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
-#ifndef VMM_INCLUDED_SRC_VMMR0_HMSVMR0_h
-#define VMM_INCLUDED_SRC_VMMR0_HMSVMR0_h
+#ifndef VMM_INCLUDED_SRC_VMMR0_target_x86_HMR0SVM_x86_h
+#define VMM_INCLUDED_SRC_VMMR0_target_x86_HMR0SVM_x86_h
 #ifndef RT_WITHOUT_PRAGMA_ONCE
 # pragma once
 #endif
@@ -77,5 +77,5 @@ DECLASM(void) SVMR0InvlpgA(RTGCPTR GCVirt, uint32_t u32ASID);
 
 RT_C_DECLS_END
 
-#endif /* !VMM_INCLUDED_SRC_VMMR0_HMSVMR0_h */
+#endif /* !VMM_INCLUDED_SRC_VMMR0_target_x86_HMR0SVM_x86_h */
 

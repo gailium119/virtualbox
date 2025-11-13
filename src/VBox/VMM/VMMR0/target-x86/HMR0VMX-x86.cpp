@@ -1,4 +1,4 @@
-/* $Id: HMVMXR0.cpp 111076 2025-09-22 08:10:34Z ramshankar.venkataraman@oracle.com $ */
+/* $Id: HMR0VMX-x86.cpp 111701 2025-11-13 14:05:10Z knut.osmundsen@oracle.com $ */
 /** @file
  * HM VMX (Intel VT-x) - Host Context Ring-0.
  */
@@ -49,7 +49,7 @@
 #include "HMInternal.h"
 #include <VBox/vmm/vmcc.h>
 #include <VBox/vmm/hmvmxinline.h>
-#include "HMVMXR0.h"
+#include "HMR0VMX-x86.h"
 #include "VMXInternal.h"
 #include "dtrace/VBoxVMM.h"
 

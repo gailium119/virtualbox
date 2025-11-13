@@ -1,4 +1,4 @@
-/* $Id: HMAll.cpp 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: HMAll-x86.cpp 111701 2025-11-13 14:05:10Z knut.osmundsen@oracle.com $ */
 /** @file
  * HM - All contexts.
  */
