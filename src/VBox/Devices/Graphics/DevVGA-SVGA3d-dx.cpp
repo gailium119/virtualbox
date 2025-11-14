@@ -1,4 +1,4 @@
-/* $Id: DevVGA-SVGA3d-dx.cpp 111474 2025-10-21 14:56:59Z vitali.pelenjow@oracle.com $ */
+/* $Id: DevVGA-SVGA3d-dx.cpp 111724 2025-11-14 09:27:54Z alexander.eichner@oracle.com $ */
 /** @file
  * DevSVGA3d - VMWare SVGA device, 3D parts - Common code for DX backend interface.
  */
@@ -2246,7 +2246,10 @@ static int dxSetOrGrowCOTable(PVGASTATECC pThisCC, PVMSVGA3DDXCONTEXT pDXContext
 
         /* When growing a COTable, the valid size can't be greater than the old COTable size. */
         if (fGrow)
-            validSizeInBytes = RT_MIN(validSizeInBytes, vmsvgaR3MobSize(pDXContext->aCOTMobs[idxCOTable]));
+        {
+            uint32_t const cbCOTable = vmsvgaR3MobSize(pDXContext->aCOTMobs[idxCOTable]);
+            validSizeInBytes = RT_MIN(validSizeInBytes, cbCOTable);
+        }
 
         /* Create a memory pointer, which is accessible by host. */
         rc = vmsvgaR3MobBackingStoreCreate(pSvgaR3State, pMob, fGrow ? 0 : validSizeInBytes);
