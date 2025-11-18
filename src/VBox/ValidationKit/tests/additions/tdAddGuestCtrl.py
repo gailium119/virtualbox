@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # pylint: disable=too-many-lines
-# $Id: tdAddGuestCtrl.py 111790 2025-11-18 12:49:13Z knut.osmundsen@oracle.com $
+# $Id: tdAddGuestCtrl.py 111792 2025-11-18 12:56:43Z knut.osmundsen@oracle.com $
 
 """
 VirtualBox Validation Kit - Guest Control Tests.
@@ -38,7 +38,7 @@ terms and conditions of either the GPL or the CDDL or both.
 
 SPDX-License-Identifier: GPL-3.0-only OR CDDL-1.0
 """
-__version__ = "$Revision: 111790 $"
+__version__ = "$Revision: 111792 $"
 
 # Standard Python imports.
 import errno
@@ -675,8 +675,9 @@ class tdTestFileOpenAndWrite(tdTestFileOpen):
     The chunks are a list of tuples(offset, bytes), where offset can be None
     if no seeking should be performed.
     """
-    def __init__(self, sFile = "", eAccessMode = None, eAction = None, eSharing = None, # pylint: disable=too-many-arguments
-                 fCreationMode = 0o660, atChunks = None, fUseAtApi = False, abContent = None, oCreds = None):
+    def __init__(self, sFile = "", eAccessMode = None, # pylint: disable=too-many-arguments,too-many-positional-arguments
+                 eAction = None, eSharing = None,  fCreationMode = 0o660, atChunks = None, fUseAtApi = False,
+                 abContent = None, oCreds = None):
         tdTestFileOpen.__init__(self, sFile, eAccessMode if eAccessMode is not None else vboxcon.FileAccessMode_WriteOnly,
                                 eAction, eSharing, fCreationMode, oCreds);
         assert atChunks is not None;

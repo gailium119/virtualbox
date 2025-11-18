@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# $Id: testfileset.py 111790 2025-11-18 12:49:13Z knut.osmundsen@oracle.com $
+# $Id: testfileset.py 111792 2025-11-18 12:56:43Z knut.osmundsen@oracle.com $
 # pylint: disable=too-many-lines
 
 """
@@ -37,7 +37,7 @@ terms and conditions of either the GPL or the CDDL or both.
 
 SPDX-License-Identifier: GPL-3.0-only OR CDDL-1.0
 """
-__version__ = "$Revision: 111790 $"
+__version__ = "$Revision: 111792 $"
 
 
 # Standard Python imports.
@@ -301,7 +301,7 @@ class TestFileSet(object):
 
     ## @}
 
-    def __init__(self, fDosStyle, sBasePath, sSubDir, # pylint: disable=too-many-arguments
+    def __init__(self, fDosStyle, sBasePath, sSubDir, # pylint: disable=too-many-arguments,too-many-positional-arguments
                  asCompatibleWith = None,             # List of getHostOs values to the names must be compatible with.
                  oRngFileSizes = xrange(0, 16384),
                  oRngManyFiles = xrange(128, 512),

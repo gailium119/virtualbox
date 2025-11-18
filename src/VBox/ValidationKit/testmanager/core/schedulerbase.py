@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# $Id: schedulerbase.py 111790 2025-11-18 12:49:13Z knut.osmundsen@oracle.com $
+# $Id: schedulerbase.py 111792 2025-11-18 12:56:43Z knut.osmundsen@oracle.com $
 # pylint: disable=too-many-lines
 
 
@@ -38,7 +38,7 @@ terms and conditions of either the GPL or the CDDL or both.
 
 SPDX-License-Identifier: GPL-3.0-only OR CDDL-1.0
 """
-__version__ = "$Revision: 111790 $"
+__version__ = "$Revision: 111792 $"
 
 
 # Standard python imports.
@@ -366,8 +366,8 @@ class SchedQueueData(ModelDataBase):
         self.idTestSetGangLeader    = None;
         self.cMissingGangMembers    = 1;
 
-    def initFromValues(self, idSchedGroup, idGenTestCaseArgs, idTestGroup, aidTestGroupPreReqs, # pylint: disable=too-many-arguments
-                       bmHourlySchedule, cMissingGangMembers,
+    def initFromValues(self, idSchedGroup, idGenTestCaseArgs, # pylint: disable=too-many-arguments,too-many-positional-arguments
+                       idTestGroup, aidTestGroupPreReqs, bmHourlySchedule, cMissingGangMembers,
                        idItem = None, offQueue = None, tsConfig = None, tsLastScheduled = None, idTestSetGangLeader = None):
         """
         Reinitialize with all attributes potentially given as inputs.

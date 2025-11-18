@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# $Id: txsclient.py 111790 2025-11-18 12:49:13Z knut.osmundsen@oracle.com $
+# $Id: txsclient.py 111792 2025-11-18 12:56:43Z knut.osmundsen@oracle.com $
 # pylint: disable=too-many-lines
 
 """
@@ -36,7 +36,7 @@ terms and conditions of either the GPL or the CDDL or both.
 
 SPDX-License-Identifier: GPL-3.0-only OR CDDL-1.0
 """
-__version__ = "$Revision: 111790 $"
+__version__ = "$Revision: 111792 $"
 
 # Standard Python imports.
 import array;
@@ -781,7 +781,8 @@ class Session(TdTaskBase):
     # pylint: disable=missing-docstring
     #
 
-    def taskExecEx(self, sExecName, fFlags, asArgs, asAddEnv, oStdIn, oStdOut, oStdErr, oTestPipe, sAsUser): # pylint: disable=too-many-arguments,too-many-locals,too-many-statements,line-too-long
+    def taskExecEx(self, # pylint: disable=too-many-arguments,too-many-locals,too-many-statements,too-many-positional-arguments
+                   sExecName, fFlags, asArgs, asAddEnv, oStdIn, oStdOut, oStdErr, oTestPipe, sAsUser):
         # Construct the payload.
         aoPayload = [long(fFlags), '%s' % (sExecName), long(len(asArgs))];
         for sArg in asArgs:
@@ -1459,8 +1460,8 @@ class Session(TdTaskBase):
     # Public methods - execution.
     #
 
-    def asyncExecEx(self, sExecName, asArgs = (), asAddEnv = (), # pylint: disable=too-many-arguments
-                    oStdIn = None, oStdOut = None, oStdErr = None, oTestPipe = None,
+    def asyncExecEx(self, sExecName, asArgs = (), # pylint: disable=too-many-arguments,too-many-positional-arguments
+                    asAddEnv = (), oStdIn = None, oStdOut = None, oStdErr = None, oTestPipe = None,
                     sAsUser = "", cMsTimeout = 3600000, fIgnoreErrors = False):
         """
         Initiates a exec process task.
@@ -1488,7 +1489,7 @@ class Session(TdTaskBase):
                               (sExecName, long(0), asArgs, asAddEnv, oStdIn,
                                oStdOut, oStdErr, oTestPipe, sAsUser));
 
-    def syncExecEx(self, sExecName, asArgs = (), asAddEnv = (), # pylint: disable=too-many-arguments
+    def syncExecEx(self, sExecName, asArgs = (), asAddEnv = (), # pylint: disable=too-many-arguments,too-many-positional-arguments
                    oStdIn = '/dev/null', oStdOut = '/dev/null',
                    oStdErr = '/dev/null', oTestPipe = '/dev/null',
                    sAsUser = '', cMsTimeout = 3600000, fIgnoreErrors = False):

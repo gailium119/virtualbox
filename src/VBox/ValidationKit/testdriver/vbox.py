@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# $Id: vbox.py 111790 2025-11-18 12:49:13Z knut.osmundsen@oracle.com $
+# $Id: vbox.py 111792 2025-11-18 12:56:43Z knut.osmundsen@oracle.com $
 # pylint: disable=too-many-lines
 
 """
@@ -37,7 +37,7 @@ terms and conditions of either the GPL or the CDDL or both.
 
 SPDX-License-Identifier: GPL-3.0-only OR CDDL-1.0
 """
-__version__ = "$Revision: 111790 $"
+__version__ = "$Revision: 111792 $"
 
 # pylint: disable=unnecessary-semicolon
 
@@ -607,8 +607,8 @@ class EventHandlerBase(object):
         return None;
 
     @staticmethod
-    def registerDerivedEventHandler(oVBoxMgr, fpApiVer, oSubClass, dArgsCopy, # pylint: disable=too-many-arguments
-                                    oSrcParent, sSrcParentNm, sICallbackNm,
+    def registerDerivedEventHandler(oVBoxMgr, fpApiVer, # pylint: disable=too-many-arguments,too-many-positional-arguments
+                                    oSubClass, dArgsCopy, oSrcParent, sSrcParentNm, sICallbackNm,
                                     fMustSucceed = True, sLogSuffix = '', aenmEvents = None):
         """
         Registers the callback / event listener.
