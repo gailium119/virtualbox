@@ -1,4 +1,4 @@
-/* $Id: RecordingSettingsImpl.h 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: RecordingSettingsImpl.h 111809 2025-11-19 11:12:22Z andreas.loeffler@oracle.com $ */
 /** @file
  * VirtualBox COM class implementation - Machine recording screen settings.
  */
@@ -99,6 +99,7 @@ private:
     HRESULT getScreenSettings(ULONG uScreenId, ComPtr<IRecordingScreenSettings> &aRecordScreenSettings);
     HRESULT resume(void);
     HRESULT start(ComPtr<IProgress> &aProgress);
+    HRESULT stop(void);
 
 private:
 
