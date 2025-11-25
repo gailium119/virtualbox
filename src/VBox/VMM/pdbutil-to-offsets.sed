@@ -1,4 +1,4 @@
-# $Id: pdbutil-to-offsets.sed 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $
+# $Id: pdbutil-to-offsets.sed 111872 2025-11-25 21:28:40Z knut.osmundsen@oracle.com $
 ## @file
 # For defining member offsets for selected struct so the ARM64 assembler can use them.
 #
@@ -43,5 +43,23 @@
 /^  struct IEMCPU .* {$/,/^  }$/ {
     s/^    data [+]\(0x[[:xdigit:]][[:xdigit:]]*\) .* \([a-zA-Z_][a-zA-Z0-9_]*\)$/\#define IEMCPU_OFF_\2 \1/p
     s/^    data [+]\(0x[[:xdigit:]][[:xdigit:]]*\) .* \([a-zA-Z_][a-zA-Z0-9_]*\)\[[0-9][0-9]*]$/\#define IEMCPU_OFF_\2 \1/p
+}
+
+
+#
+# The top-level IEMCPURECOMP members.
+#
+/^  struct IEMCPURECOMP .* {$/,/^  }$/ {
+    s/^    data [+]\(0x[[:xdigit:]][[:xdigit:]]*\) .* \([a-zA-Z_][a-zA-Z0-9_]*\)$/\#define IEMCPURECOMP_OFF_\2 \1/p
+    s/^    data [+]\(0x[[:xdigit:]][[:xdigit:]]*\) .* \([a-zA-Z_][a-zA-Z0-9_]*\)\[[0-9][0-9]*]$/\#define IEMCPURECOMP_OFF_\2 \1/p
+}
+
+
+#
+# The top-level IEMCPUCORE members.
+#
+/^  struct IEMCPUCORE .* {$/,/^  }$/ {
+    s/^    data [+]\(0x[[:xdigit:]][[:xdigit:]]*\) .* \([a-zA-Z_][a-zA-Z0-9_]*\)$/\#define IEMCPUCORE_OFF_\2 \1/p
+    s/^    data [+]\(0x[[:xdigit:]][[:xdigit:]]*\) .* \([a-zA-Z_][a-zA-Z0-9_]*\)\[[0-9][0-9]*]$/\#define IEMCPUCORE_OFF_\2 \1/p
 }
 
