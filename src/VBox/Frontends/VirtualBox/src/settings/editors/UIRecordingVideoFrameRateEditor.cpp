@@ -1,4 +1,4 @@
-/* $Id: UIRecordingVideoFrameRateEditor.cpp 111886 2025-11-26 11:50:37Z sergey.dubov@oracle.com $ */
+/* $Id: UIRecordingVideoFrameRateEditor.cpp 111888 2025-11-26 11:59:27Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIRecordingVideoFrameRateEditor class implementation.
  */
@@ -72,7 +72,7 @@ int UIRecordingVideoFrameRateEditor::minimumLabelHorizontalHint() const
 void UIRecordingVideoFrameRateEditor::setMinimumLayoutIndent(int iIndent)
 {
     if (m_pLayout)
-        m_pLayout->setColumnMinimumWidth(0, iIndent);
+        m_pLayout->setColumnMinimumWidth(0, iIndent + m_pLayout->spacing());
 }
 
 void UIRecordingVideoFrameRateEditor::sltRetranslateUI()

@@ -1,4 +1,4 @@
-/* $Id: UIRecordingFilePathEditor.cpp 111884 2025-11-26 11:12:11Z sergey.dubov@oracle.com $ */
+/* $Id: UIRecordingFilePathEditor.cpp 111888 2025-11-26 11:59:27Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIRecordingFilePathEditor class implementation.
  */
@@ -83,7 +83,7 @@ int UIRecordingFilePathEditor::minimumLabelHorizontalHint() const
 void UIRecordingFilePathEditor::setMinimumLayoutIndent(int iIndent)
 {
     if (m_pLayout)
-        m_pLayout->setColumnMinimumWidth(0, iIndent);
+        m_pLayout->setColumnMinimumWidth(0, iIndent + m_pLayout->spacing());
 }
 
 void UIRecordingFilePathEditor::sltRetranslateUI()
