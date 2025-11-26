@@ -1,4 +1,4 @@
-# $Id: Makefile.kmk 111872 2025-11-25 21:28:40Z knut.osmundsen@oracle.com $
+# $Id: Makefile.kmk 111875 2025-11-26 08:53:04Z ramshankar.venkataraman@oracle.com $
 ## @file
 # Top-level makefile for the VMM.
 #
@@ -223,7 +223,7 @@ VBoxVMM_SOURCES  = \
 	VMMAll/MMAll.cpp \
 	VMMAll/NEMAll.cpp \
 	VMMAll/PDMAll.cpp \
-	VMMAll/PDMAllApic.cpp \
+	VMMAll/target-x86/PDMAllApic-x86.cpp \
 	VMMAll/PDMAllCritSect.cpp \
 	VMMAll/PDMAllCritSectRw.cpp \
 	VMMAll/PDMAllCritSectBoth.cpp \
@@ -1077,7 +1077,7 @@ if defined(VBOX_WITH_R0_MODULES) && !defined(VBOX_ONLY_BUILD)
   	VMMAll/MMAll.cpp \
   	VMMAll/NEMAll.cpp \
   	VMMAll/PDMAll.cpp \
-  	VMMAll/PDMAllApic.cpp \
+  	VMMAll/target-x86/PDMAllApic-x86.cpp \
   	VMMAll/PDMAllCritSect.cpp \
   	VMMAll/PDMAllCritSectRw.cpp \
   	VMMAll/PDMAllCritSectBoth.cpp \
