@@ -1,4 +1,4 @@
-/* $Id: main.cpp 110791 2025-08-22 15:14:50Z serkan.bayraktar@oracle.com $ */
+/* $Id: main.cpp 111900 2025-11-26 21:43:46Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBox Qt GUI - The main() function.
  */
@@ -305,6 +305,7 @@ static void ShowHelp()
         "\n"
         "Expert options:\n"
         "  --execute-all-in-iem       For debugging the interpreted execution mode.\n"
+        "  --execute-all-in-rem       For debugging the recompiled execution mode.\n"
         "  --driverless               Do not open the support driver (NEM or IEM mode).\n"
         "  --warp-pct=<pct>           time warp factor, 100%% (= 1.0) = normal speed\n"
         "  --no-keyboard-grabbing     Don't grab the keyboard on windows (for debugging).\n"

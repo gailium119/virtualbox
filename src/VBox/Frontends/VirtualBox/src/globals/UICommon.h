@@ -1,4 +1,4 @@
-/* $Id: UICommon.h 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: UICommon.h 111900 2025-11-26 21:43:46Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBox Qt GUI - UICommon class declaration.
  */
@@ -190,6 +190,8 @@ public:
 
         /** Returns the --execute-all-in-iem option value. */
         bool areWeToExecuteAllInIem() const { return m_fExecuteAllInIem; }
+        /** Returns the --execute-all-in-recompiler option value. */
+        bool areWeToExecuteAllInRecompiler() const { return m_fExecuteAllInRem; }
         /** Returns whether --warp-factor option value is equal to 100. */
         bool isDefaultWarpPct() const { return m_uWarpPct == 100; }
         /** Returns the --warp-factor option value. */
@@ -425,6 +427,8 @@ private:
 
         /** Holds the --execute-all-in-iem option value. */
         bool      m_fExecuteAllInIem;
+        /** Holds the --execute-all-in-rem/recompiler option value. */
+        bool      m_fExecuteAllInRem;
         /** Holds the --warp-factor option value. */
         uint32_t  m_uWarpPct;
 
