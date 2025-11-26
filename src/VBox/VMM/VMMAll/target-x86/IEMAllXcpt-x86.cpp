@@ -1,4 +1,4 @@
-/* $Id: IEMAllXcpt-x86.cpp 111870 2025-11-25 15:04:16Z knut.osmundsen@oracle.com $ */
+/* $Id: IEMAllXcpt-x86.cpp 111898 2025-11-26 17:53:03Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - Interpreted Execution Manager - x86 target, exceptions & interrupts.
  */
@@ -2289,7 +2289,7 @@ iemRaiseXcptOrInt(PVMCPUCC    pVCpu,
     IEM_CTX_IMPORT_RET(pVCpu, IEM_CPUMCTX_EXTRN_XCPT_MASK);
     IEM_CTX_ASSERT(pVCpu, IEM_CPUMCTX_EXTRN_XCPT_MASK);
 
-#ifndef IEM_WITH_CODE_TLB /** @todo we're doing it afterwards too, that should suffice... */
+#ifndef IEM_WITH_CODE_TLB_IN_CUR_CTX /** @todo we're doing it afterwards too, that should suffice... */
     /*
      * Flush prefetch buffer
      */

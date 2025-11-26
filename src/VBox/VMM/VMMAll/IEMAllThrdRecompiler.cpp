@@ -1,4 +1,4 @@
-/* $Id: IEMAllThrdRecompiler.cpp 111872 2025-11-25 21:28:40Z knut.osmundsen@oracle.com $ */
+/* $Id: IEMAllThrdRecompiler.cpp 111898 2025-11-26 17:53:03Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - Instruction Decoding and Threaded Recompilation.
  *
@@ -95,11 +95,11 @@
  * Narrow down configs here to avoid wasting time on unused configs here.
  */
 
-#ifndef IEM_WITH_CODE_TLB
+#ifndef IEM_WITH_CODE_TLB_IN_CUR_CTX
 # error The code TLB must be enabled for the recompiler.
 #endif
 
-#ifndef IEM_WITH_DATA_TLB
+#ifndef IEM_WITH_DATA_TLB_IN_CUR_CTX
 # error The data TLB must be enabled for the recompiler.
 #endif
 

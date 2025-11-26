@@ -1,4 +1,4 @@
-/* $Id: IEMAllN8veRecompFuncs-x86.h 111870 2025-11-25 15:04:16Z knut.osmundsen@oracle.com $ */
+/* $Id: IEMAllN8veRecompFuncs-x86.h 111898 2025-11-26 17:53:03Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - Native Recompiler - Inlined Bits, x86 target.
  */
@@ -70,11 +70,11 @@
  * Note! Same checks in IEMAllThrdRecompiler.cpp.
  */
 
-#ifndef IEM_WITH_CODE_TLB
+#ifndef IEM_WITH_CODE_TLB_IN_CUR_CTX
 # error The code TLB must be enabled for the recompiler.
 #endif
 
-#ifndef IEM_WITH_DATA_TLB
+#ifndef IEM_WITH_DATA_TLB_IN_CUR_CTX
 # error The data TLB must be enabled for the recompiler.
 #endif
 

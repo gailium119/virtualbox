@@ -1,4 +1,4 @@
-/* $Id: IEMInlineExec-x86.h 111870 2025-11-25 15:04:16Z knut.osmundsen@oracle.com $ */
+/* $Id: IEMInlineExec-x86.h 111898 2025-11-26 17:53:03Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - Interpreted Execution Manager - X86 target, Inline Exec/Decoder routines.
  *
@@ -108,7 +108,7 @@ DECLINLINE(void) iemInitExecTargetStrict(PVMCPUCC pVCpu) RT_NOEXCEPT
     ICORE(pVCpu).uVexLength         = 127;
     ICORE(pVCpu).fEvexStuff         = 127;
     ICORE(pVCpu).uFpuOpcode         = UINT16_MAX;
-#  ifdef IEM_WITH_CODE_TLB
+#  ifdef IEM_WITH_CODE_TLB_IN_CUR_CTX
     ICORE(pVCpu).offInstrNextByte   = UINT16_MAX;
     ICORE(pVCpu).pbInstrBuf         = NULL;
     ICORE(pVCpu).cbInstrBuf         = UINT16_MAX;
