@@ -1,4 +1,4 @@
-/* $Id: VBoxGuestR0LibGenericRequest.cpp 111929 2025-11-27 15:44:31Z alexander.eichner@oracle.com $ */
+/* $Id: VBoxGuestR0LibGenericRequest.cpp 111930 2025-11-27 15:49:32Z alexander.eichner@oracle.com $ */
 /** @file
  * VBoxGuestLibR0 - Generic VMMDev request management.
  */
@@ -89,7 +89,7 @@ DECLR0VBGL(int) VbglGR0Verify(const VMMDevRequestHeader *pReq, size_t cbReq)
      */
     if (   pReq->requestType == VMMDevReq_ChangeMemBalloon
         || pReq->requestType == VMMDevReq_GetDisplayChangeRequestMulti
-#if defined(RT_ARCH_AMD64) || defined(RT_ARCH_ARM64)
+#ifdef VBOX_WITH_64_BITS_GUESTS
         || pReq->requestType == VMMDevReq_HGCMCall64
 #endif
         || pReq->requestType == VMMDevReq_HGCMCall32
