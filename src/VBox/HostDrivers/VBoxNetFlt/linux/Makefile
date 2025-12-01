@@ -1,4 +1,4 @@
-# $Id: Makefile 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $
+# $Id: Makefile 111948 2025-12-01 09:37:14Z alexander.eichner@oracle.com $
 ## @file
 # Makefile for the VirtualBox Linux Host Network Filter Driver.
 #
@@ -73,8 +73,7 @@ VBOXMOD_DEFS = \
 	IN_SUP_R0 \
 	VBOX \
 	RT_WITH_VBOX \
-	VBOX_WITH_HARDENING \
-	VBOX_WITH_64_BITS_GUESTS # <-- must be consistent with Config.kmk!
+	VBOX_WITH_HARDENING
 VBOXMOD_CFLAGS = -include $(VBOXNETFLT_DIR)include/VBox/SUPDrvMangling.h -fno-pie -Wno-declaration-after-statement
 
 include $(obj)/Makefile-footer.gmk

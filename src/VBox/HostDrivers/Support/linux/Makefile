@@ -1,4 +1,4 @@
-# $Id: Makefile 110886 2025-09-04 09:27:24Z ramshankar.venkataraman@oracle.com $
+# $Id: Makefile 111948 2025-12-01 09:37:14Z alexander.eichner@oracle.com $
 ## @file
 # Makefile for the VirtualBox Linux Host Driver.
 #
@@ -189,8 +189,7 @@ VBOXMOD_DEFS = \
 	SUPDRV_WITH_RELEASE_LOGGER \
 	VBOX_WITHOUT_EFLAGS_AC_SET_IN_VBOXDRV \
 	IPRT_WITHOUT_EFLAGS_AC_PRESERVING \
-	VBOX_WITH_HOST_VMX \
-	VBOX_WITH_64_BITS_GUESTS # <-- must be consistent with Config.kmk!
+	VBOX_WITH_HOST_VMX
 ifndef CONFIG_VBOXDRV_FIXEDMAJOR
 VBOXMOD_DEFS += CONFIG_VBOXDRV_AS_MISC
 endif
