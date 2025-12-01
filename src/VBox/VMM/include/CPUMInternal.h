@@ -1,4 +1,4 @@
-/* $Id: CPUMInternal.h 111930 2025-11-27 15:49:32Z alexander.eichner@oracle.com $ */
+/* $Id: CPUMInternal.h 111945 2025-12-01 08:24:18Z alexander.eichner@oracle.com $ */
 /** @file
  * CPUM - Internal header file.
  */
@@ -728,9 +728,6 @@ PCPUMMSRRANGE       cpumLookupMsrRange(PVM pVM, uint32_t idMsr);
 #  if defined(VBOX_VMM_TARGET_X86) /** @todo temporary: */ || defined(VBOX_VMM_TARGET_AGNOSTIC)
 DECLASM(int)        cpumR0SaveHostRestoreGuestFPUState(PCPUMCPU pCPUM);
 DECLASM(void)       cpumR0SaveGuestRestoreHostFPUState(PCPUMCPU pCPUM);
-#   if ARCH_BITS == 32 && defined(VBOX_WITH_64_BITS_GUESTS)
-DECLASM(void)       cpumR0RestoreHostFPUState(PCPUMCPU pCPUM);
-#   endif
 #  endif
 # endif
 
