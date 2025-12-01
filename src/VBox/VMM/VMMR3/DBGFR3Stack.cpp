@@ -1,4 +1,4 @@
-/* $Id: DBGFR3Stack.cpp 111695 2025-11-13 13:31:17Z knut.osmundsen@oracle.com $ */
+/* $Id: DBGFR3Stack.cpp 111956 2025-12-01 12:31:49Z alexander.eichner@oracle.com $ */
 /** @file
  * DBGF - Debugger Facility, Call Stack Analyser.
  */
@@ -1030,7 +1030,7 @@ static DECLCALLBACK(int) dbgfR3StackWalkCtxFull(PUVM pUVM, VMCPUID idCpu, PCCPUM
     {
         uint64_t fAddrMask;
         if (enmCodeType == DBGFCODETYPE_RING0)
-            fAddrMask = HC_ARCH_BITS == 64 ? UINT64_MAX : UINT32_MAX;
+            fAddrMask = UINT64_MAX;
         else if (enmCodeType == DBGFCODETYPE_HYPER)
             fAddrMask = UINT32_MAX;
         else if (DBGFADDRESS_IS_FAR16(&pCur->AddrPC))
@@ -1081,9 +1081,7 @@ static DECLCALLBACK(int) dbgfR3StackWalkCtxFull(PUVM pUVM, VMCPUID idCpu, PCCPUM
                 case DBGFADDRESS_FLAGS_FAR16: pCur->enmReturnType = RTDBGRETURNTYPE_NEAR16; break;
                 case DBGFADDRESS_FLAGS_FAR32: pCur->enmReturnType = RTDBGRETURNTYPE_NEAR32; break;
                 case DBGFADDRESS_FLAGS_FAR64: pCur->enmReturnType = RTDBGRETURNTYPE_NEAR64; break;
-                case DBGFADDRESS_FLAGS_RING0:
-                    pCur->enmReturnType = HC_ARCH_BITS == 64 ? RTDBGRETURNTYPE_NEAR64 : RTDBGRETURNTYPE_NEAR32;
-                    break;
+                case DBGFADDRESS_FLAGS_RING0: pCur->enmReturnType = RTDBGRETURNTYPE_NEAR64; break;
                 default:
                     pCur->enmReturnType = RTDBGRETURNTYPE_NEAR32;
                     break;

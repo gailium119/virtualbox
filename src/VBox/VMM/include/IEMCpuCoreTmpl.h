@@ -1,4 +1,4 @@
-/* $Id: IEMCpuCoreTmpl.h 111898 2025-11-26 17:53:03Z knut.osmundsen@oracle.com $ */
+/* $Id: IEMCpuCoreTmpl.h 111956 2025-12-01 12:31:49Z alexander.eichner@oracle.com $ */
 /** @file
  * IEM - Core data structure template.
  */
@@ -244,9 +244,7 @@ typedef struct IEMCPUCORE
         /** The access flags (IEM_ACCESS_XXX).
          * IEM_ACCESS_INVALID if the entry is unused. */
         uint32_t            fAccess;
-#if HC_ARCH_BITS == 64
         uint32_t            u32Alignment4; /**< Alignment padding. */
-#endif
     } aMemMappings[IEM_MAX_MEM_MAPPINGS];                                           /* arm: 0x50 LB 0x20  x86: 0x50 LB 0x30 */
 
     /** Locking records for the mapped memory. */

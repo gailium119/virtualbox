@@ -1,4 +1,4 @@
-/* $Id: HMR3-x86.cpp 111945 2025-12-01 08:24:18Z alexander.eichner@oracle.com $ */
+/* $Id: HMR3-x86.cpp 111956 2025-12-01 12:31:49Z alexander.eichner@oracle.com $ */
 /** @file
  * HM - Intel/AMD VM Hardware Support Manager.
  */
@@ -357,7 +357,7 @@ VMMR3_INT_DECL(int) HMR3Init(PVM pVM)
      * Enables AMD64 cpu features.
      * On 32-bit hosts this isn't default and require host CPU support. 64-bit hosts
      * already have the support. */
-    rc = CFGMR3QueryBoolDef(pCfgHm, "64bitEnabled", &pVM->hm.s.fAllow64BitGuestsCfg, HC_ARCH_BITS == 64);
+    rc = CFGMR3QueryBoolDef(pCfgHm, "64bitEnabled", &pVM->hm.s.fAllow64BitGuestsCfg, true);
     AssertLogRelRCReturn(rc, rc);
 
     /** @cfgm{/HM/VmxPleGap, uint32_t, 0}

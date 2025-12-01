@@ -1,4 +1,4 @@
-/* $Id: GMMR3.cpp 111695 2025-11-13 13:31:17Z knut.osmundsen@oracle.com $ */
+/* $Id: GMMR3.cpp 111956 2025-12-01 12:31:49Z alexander.eichner@oracle.com $ */
 /** @file
  * GMM - Global Memory Manager, ring-3 request wrappers.
  */
@@ -441,7 +441,7 @@ VMMR3_INT_DECL(int)  GMMR3CheckSharedModules(PVM pVM)
 }
 
 
-# if defined(VBOX_STRICT) && HC_ARCH_BITS == 64
+# if defined(VBOX_STRICT)
 /**
  * @see GMMR0FindDuplicatePage
  */
@@ -459,7 +459,7 @@ VMMR3_INT_DECL(bool) GMMR3IsDuplicatePage(PVM pVM, uint32_t idPage)
         return Req.fDuplicate;
     return false;
 }
-# endif /* VBOX_STRICT && HC_ARCH_BITS == 64 */
+# endif /* VBOX_STRICT */
 
 #endif /* defined(VBOX_WITH_R0_MODULES) && !defined(VBOX_WITH_MINIMAL_R0) */
 

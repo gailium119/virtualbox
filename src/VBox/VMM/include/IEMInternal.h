@@ -1,4 +1,4 @@
-/* $Id: IEMInternal.h 111901 2025-11-26 21:52:42Z knut.osmundsen@oracle.com $ */
+/* $Id: IEMInternal.h 111956 2025-12-01 12:31:49Z alexander.eichner@oracle.com $ */
 /** @file
  * IEM - Internal header file.
  */
@@ -548,9 +548,6 @@ typedef struct IEMTLBENTRY
     uint64_t                GCPhys;
     /** Pointer to the ring-3 mapping. */
     R3PTRTYPE(uint8_t *)    pbMappingR3;
-#if HC_ARCH_BITS == 32
-    uint32_t                u32Padding1;
-#endif
 } IEMTLBENTRY;
 AssertCompileSize(IEMTLBENTRY, 32);
 /** Pointer to an IEM TLB entry. */

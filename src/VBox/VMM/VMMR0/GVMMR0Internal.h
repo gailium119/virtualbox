@@ -1,4 +1,4 @@
-/* $Id: GVMMR0Internal.h 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: GVMMR0Internal.h 111956 2025-12-01 12:31:49Z alexander.eichner@oracle.com $ */
 /** @file
  * GVMM - The Global VM Manager, Internal header.
  */
@@ -72,9 +72,7 @@ typedef struct GVMMEMTHASHENTRY
     RTNATIVETHREAD      hNativeEmt;
     /** The VCpu index. */
     VMCPUID             idVCpu;
-#if HC_ARCH_BITS == 64
     uint32_t            u32Padding;
-#endif
 } GVMMEMTHASHENTRY;
 AssertCompileSize(GVMMEMTHASHENTRY, sizeof(void *) * 2);
 
