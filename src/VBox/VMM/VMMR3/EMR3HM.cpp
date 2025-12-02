@@ -1,4 +1,4 @@
-/* $Id: EMR3HM.cpp 111906 2025-11-27 08:51:26Z knut.osmundsen@oracle.com $ */
+/* $Id: EMR3HM.cpp 111981 2025-12-02 21:46:11Z knut.osmundsen@oracle.com $ */
 /** @file
  * EM - Execution Monitor / Manager - hardware virtualization
  */
@@ -266,7 +266,6 @@ static int emR3HmExecuteIOInstruction(PVM pVM, PVMCPU pVCpu)
     else
     {
         RT_UNTRUSTED_VALIDATED_FENCE();
-        CPUM_IMPORT_EXTRN_RET(pVCpu, IEM_CPUMCTX_EXTRN_MUST_MASK);
         rcStrict = EMHistoryExec(pVCpu, &pVCpu->em.s.aExitRecords[idxContinueExitRec], 0);
         LogFlow(("emR3HmExecuteIOInstruction: %Rrc (EMHistoryExec)\n", VBOXSTRICTRC_VAL(rcStrict)));
         STAM_COUNTER_INC(&pVCpu->em.s.StatIoRestarted);

@@ -1,4 +1,4 @@
-/* $Id: IEMAllStub.cpp 111432 2025-10-16 11:58:18Z knut.osmundsen@oracle.com $ */
+/* $Id: IEMAllStub.cpp 111981 2025-12-02 21:46:11Z knut.osmundsen@oracle.com $ */
 /** @file
  * IEM - Interpreted Execution Manager, dummy IEM stub functions.
  *
@@ -44,12 +44,11 @@
 *   Internal Functions                                                                                                           *
 *********************************************************************************************************************************/
 
-VMM_INT_DECL(VBOXSTRICTRC)
-IEMExecForExits(PVMCPUCC pVCpu, uint32_t fWillExit, uint32_t cMinInstructions, uint32_t cMaxInstructions,
-                uint32_t cMaxInstructionsWithoutExits, PIEMEXECFOREXITSTATS pStats)
+VMM_INT_DECL(VBOXSTRICTRC) IEMExecForExits(PVMCPUCC pVCpu, uint32_t fWillExit, uint32_t cMaxInstructions,
+                                           uint32_t cMaxInstructionsWithoutExits, PIEMEXECFOREXITSTATS pStats)
 {
     AssertReleaseFailed();
-    RT_NOREF(pVCpu, fWillExit, cMinInstructions, cMaxInstructions, cMaxInstructionsWithoutExits);
+    RT_NOREF(pVCpu, fWillExit, cMaxInstructions, cMaxInstructionsWithoutExits);
     RT_ZERO(*pStats);
     return VERR_NOT_IMPLEMENTED;
 }
