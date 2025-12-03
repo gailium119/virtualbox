@@ -1,4 +1,4 @@
-/* $Id: QITableView.cpp 111940 2025-11-28 16:20:12Z sergey.dubov@oracle.com $ */
+/* $Id: QITableView.cpp 111986 2025-12-03 11:46:56Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - Qt extensions: QITableView class implementation.
  */
@@ -159,15 +159,19 @@ public:
     /** Returns a text for the passed @a enmTextRole. */
     virtual QString text(QAccessible::Text enmTextRole) const RT_OVERRIDE
     {
-        /* Sanity check: */
-        QITableViewCell *pCell = cell();
-        AssertPtrReturn(pCell, QString());
-
         /* Return a text for the passed enmTextRole: */
         switch (enmTextRole)
         {
-            case QAccessible::Name: return pCell->text();
-            default: break;
+            case QAccessible::Name:
+            {
+                /* Sanity check: */
+                QITableViewCell *pCell = cell();
+                AssertPtrReturn(pCell, QString());
+
+                return pCell->text();
+            }
+            default:
+                break;
         }
 
         /* Null-string by default: */
@@ -318,8 +322,18 @@ public:
         /* Return a text for the passed enmTextRole: */
         switch (enmTextRole)
         {
-            case QAccessible::Name: return childCount() > 0 && child(0) ? child(0)->text(enmTextRole) : QString();
-            default: break;
+            case QAccessible::Name:
+            {
+                /* Sanity check: */
+                QITableViewRow *pRow = row();
+                AssertPtrReturn(pRow, QString());
+                QITableViewCell *pCell = pRow->childItem(0);
+                AssertPtrReturn(pCell, QString());
+
+                return pCell->text();
+            }
+            default:
+                break;
         }
 
         /* Null-string by default: */
