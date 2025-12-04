@@ -1,4 +1,4 @@
-/* $Id: UIRecordingAudioProfileEditor.cpp 111969 2025-12-02 07:59:05Z serkan.bayraktar@oracle.com $ */
+/* $Id: UIRecordingAudioProfileEditor.cpp 112010 2025-12-04 10:38:35Z serkan.bayraktar@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIRecordingAudioProfileEditor class implementation.
  */
@@ -102,7 +102,6 @@ void UIRecordingAudioProfileEditor::prepare()
 {
     /* Prepare everything: */
     prepareWidgets();
-    prepareConnections();
 
     /* Apply language settings: */
     sltRetranslateUI();
@@ -178,8 +177,4 @@ void UIRecordingAudioProfileEditor::prepareWidgets()
             m_pLayout->addWidget(pWidgetContainer, 0, 1);
         }
     }
-}
-
-void UIRecordingAudioProfileEditor::prepareConnections()
-{
 }

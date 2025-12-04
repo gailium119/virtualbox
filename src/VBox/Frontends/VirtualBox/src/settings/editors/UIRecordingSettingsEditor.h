@@ -1,4 +1,4 @@
-/* $Id: UIRecordingSettingsEditor.h 111975 2025-12-02 14:53:20Z serkan.bayraktar@oracle.com $ */
+/* $Id: UIRecordingSettingsEditor.h 112010 2025-12-04 10:38:35Z serkan.bayraktar@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIRecordingSettingsEditor class declaration.
  */
@@ -44,9 +44,9 @@ class QComboBox;
 class QGridLayout;
 class QLabel;
 class QWidget;
-class UIFilmContainer;
 class UIRecordingAudioProfileEditor;
 class UIRecordingFilePathEditor;
+class UIRecordingScreenSelectorEditor;
 class UIRecordingVideoBitrateEditor;
 class UIRecordingVideoFrameRateEditor;
 class UIRecordingVideoFrameSizeEditor;
@@ -209,10 +209,8 @@ private:
         QWidget            *m_pWidgetAudioProfileSettings;
         /** Holds the size hint label instance. */
         QLabel             *m_pLabelSizeHint;
-        /** Holds the screens label instance. */
-        QLabel             *m_pLabelScreens;
-        /** Holds the screens scroller instance. */
-        UIFilmContainer    *m_pScrollerScreens;
+        /** Holds the screen selector editor instance. */
+        UIRecordingScreenSelectorEditor *m_pEditorScreenSelector;
     /** @} */
 };
 
