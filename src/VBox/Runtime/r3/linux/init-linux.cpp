@@ -1,4 +1,4 @@
-/* $Id: init-linux.cpp 112026 2025-12-04 19:01:28Z alexander.eichner@oracle.com $ */
+/* $Id: init-linux.cpp 112027 2025-12-04 19:06:38Z alexander.eichner@oracle.com $ */
 /** @file
  * IPRT - Init Ring-3, POSIX Specific Code.
  */
@@ -268,7 +268,7 @@ static void rtR3LnxSigSegvBusHandler(int iSignum, siginfo_t *pSigInfo, void *pvC
                 aszCmdline[cbRead] = '\0'; /* Terminate */
                 RTLogLoggerWeak(pLogger, NULL, "\nCommandLine: ");
 
-                uint32_t off = 0;
+                ssize_t off = 0;
                 while (off < cbRead)
                 {
                     RTLogLoggerWeak(pLogger, NULL, "%s\n", &aszCmdline[off]);
