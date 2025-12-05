@@ -1,4 +1,4 @@
-/* $Id: QITableWidget.cpp 111465 2025-10-20 17:12:01Z sergey.dubov@oracle.com $ */
+/* $Id: QITableWidget.cpp 112045 2025-12-05 13:58:15Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - Qt extensions: QITableWidget class implementation.
  */
@@ -258,6 +258,21 @@ public:
         const int iRow = iIndex / (table()->columnCount() + 1) - 1;
         const int iColumn = iIndex % (table()->columnCount() + 1) - 1;
         return QAccessible::queryAccessibleInterface(table()->childItem(iRow, iColumn));
+    }
+
+    /** Returns the child located at the global @a x, @a y coordinate. */
+    virtual QAccessibleInterface *childAt(int x, int y) const RT_OVERRIDE
+    {
+        /* Sanity check: */
+        QITableWidget *pTable = table();
+        AssertPtrReturn(pTable, 0);
+
+        /* Map to table coordinates: */
+        const QPoint gpt(x, y);
+        const QPoint lpt = pTable->mapFromGlobal(gpt);
+
+        /* Return the child at the passed coordinates: */
+        return QAccessible::queryAccessibleInterface(QITableWidgetItem::toItem(pTable->itemAt(lpt)));
     }
 
     /** Returns the index of the passed @a pChild. */
