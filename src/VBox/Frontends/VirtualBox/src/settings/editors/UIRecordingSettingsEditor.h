@@ -1,4 +1,4 @@
-/* $Id: UIRecordingSettingsEditor.h 112055 2025-12-08 13:58:25Z sergey.dubov@oracle.com $ */
+/* $Id: UIRecordingSettingsEditor.h 112056 2025-12-08 14:04:10Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIRecordingSettingsEditor class declaration.
  */
@@ -35,12 +35,8 @@
 #include "UIEditor.h"
 #include "UISettingsDefs.h"
 
-/* COM includes: */
-#include "KRecordingCodecDeadline.h"
-
 /* Forward declarations: */
 class QCheckBox;
-class QComboBox;
 class QGridLayout;
 class QLabel;
 class QWidget;
