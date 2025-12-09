@@ -1,4 +1,4 @@
-; $Id: VBoxGuestAdditionsCommon.nsh 111731 2025-11-14 12:02:32Z knut.osmundsen@oracle.com $
+; $Id: VBoxGuestAdditionsCommon.nsh 112061 2025-12-09 09:34:51Z andreas.loeffler@oracle.com $
 ;; @file
 ; VBoxGuestAdditionsCommon.nsh - Common / shared utility functions.
 ;
@@ -83,7 +83,11 @@ Function ${un}Common_DetectEnvironment
   ${LogVerbose} "Temp directory: $TEMP"
   ${LogVerbose} "Current user: $g_strCurUser"
   ${LogVerbose} "--------------------------------------------------------------------------------"
-
+  ${LogVerbose} ""
+  ${LogVerbose} "Installer architecture: $%KBUILD_TARGET_ARCH%"
+  ${If} $g_strEarlyNTDrvInfix != ""
+    ${LogVerbose} "Installer uses early NT drivers"
+  ${EndIf}
 !ifdef _DEBUG
   ${LogVerbose} "Installer runs in debug mode"
 !endif
