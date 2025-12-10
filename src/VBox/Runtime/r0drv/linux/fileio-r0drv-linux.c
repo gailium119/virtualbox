@@ -1,4 +1,4 @@
-/* $Id: fileio-r0drv-linux.c 112075 2025-12-09 23:55:12Z knut.osmundsen@oracle.com $ */
+/* $Id: fileio-r0drv-linux.c 112085 2025-12-10 08:48:06Z knut.osmundsen@oracle.com $ */
 /** @file
  * IPRT - File I/O, R0 Driver, Linux.
  */
@@ -289,6 +289,7 @@ RTDECL(int) RTFileReadAt(RTFILE hFile, RTFOFF off, void *pvBuf, size_t cbToRead,
                     if (vma)
                     {
                         pgprot_t fPg = PAGE_SHARED; /* not entirely safe, but PAGE_KERNEL doesn't work */
+                        SetPageReserved(pPage);
                         rc = remap_pfn_range(vma, ulAddr, page_to_pfn(pPage), PAGE_SIZE, fPg);
                         LNX_MM_UP_WRITE(pMm);
                         if (!rc)
@@ -332,6 +333,7 @@ RTDECL(int) RTFileReadAt(RTFILE hFile, RTFOFF off, void *pvBuf, size_t cbToRead,
                         }
                         else
                             rc = VERR_MAP_FAILED;
+                        ClearPageReserved(pPage);
                     }
                     else
                     {
