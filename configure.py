@@ -6,7 +6,7 @@ Requires >= Python 3.4.
 """
 
 # -*- coding: utf-8 -*-
-# $Id: configure.py 112191 2025-12-22 19:33:20Z andreas.loeffler@oracle.com $
+# $Id: configure.py 112196 2025-12-23 10:59:21Z andreas.loeffler@oracle.com $
 # pylint: disable=bare-except
 # pylint: disable=consider-using-f-string
 # pylint: disable=global-statement
@@ -39,7 +39,7 @@ along with this program; if not, see <https://www.gnu.org/licenses>.
 SPDX-License-Identifier: GPL-3.0-only
 """
 
-__revision__ = "$Revision: 112191 $"
+__revision__ = "$Revision: 112196 $"
 
 import argparse
 import ctypes
@@ -476,7 +476,9 @@ def compileAndExecute(sName, enmBuildTarget, enmBuildArch, asIncPaths, asLibPath
     else:
         fCPP      = hasCPPHeader(asIncFiles) and ('g++' in sCompiler);
         sCompiler = g_oEnv['config_cpp_compiler'] if fCPP else g_oEnv['config_c_compiler'];
-    assert sCompiler is not None;
+    if not sCompiler:
+        printError(f'No compiler found for test program "{sName}"');
+        return False, None, None;
 
     if g_fDebug:
         sTempDir = tempfile.gettempdir();
@@ -1223,9 +1225,9 @@ class LibraryCheck(CheckBase):
              'xsltproc': [ 'VBOX_XSLTPROC', 'VBOX_HAVE_XSLTPROC' ]
         }
 
-        for curFile, asDefs in mapFiles.items():
+        for sCurFile, asDefs in mapFiles.items():
             sPath = self.sCustomPath;
-            sBin  = curFile + getExeSuff();
+            sBin  = sCurFile + getExeSuff();
             if sPath:
                 asFiles = self.findFiles(sPath, [ sBin ]);
                 sPath = asFiles[0] if asFiles else None;
@@ -1236,7 +1238,7 @@ class LibraryCheck(CheckBase):
                 g_oEnv.set(asDefs[0], sPath);
                 continue;
 
-            self.printWarn("Unable to find '{sCurFile}' binary");
+            self.printWarn(f"Unable to find '{sCurFile}' binary");
             g_oEnv.set(asDefs[1], '');
 
         return True;
@@ -2542,7 +2544,7 @@ class EnvManager:
         Writes a single key as an export.
         """
         sWhat = 'set ' if enmBuildTarget == BuildTarget.WINDOWS else 'export ';
-        return self.write(fh, sKey, sWhat);
+        return self.write(fh, sKey, sWhat = sWhat);
 
     def transform(self, mapTransform):
         """
@@ -2816,10 +2818,14 @@ def write_autoconfig_kmk(sFilePath, enmBuildTarget, oEnv, aoLibs, aoTools):
                     if oLibCur.asLibPaths:
                         g_oEnv.write_single(fh, f'SDK_{oLibCur.sSdkName}_LIBS', oLibCur.asLibPaths[0]);
 
+            # Special SDK paths.
             g_oEnv.write_single(fh, 'PATH_SDK_WINSDK10');
             g_oEnv.write_single(fh, 'SDK_WINSDK10_VERSION');
             g_oEnv.write_single(fh, 'PATH_SDK_WINDDK71');
             g_oEnv.write_single(fh, 'SDK_WINDDK71_VERSION'); # Not official, but good to have (I guess).
+
+            # Misc stuff.
+            g_oEnv.write_single(fh, 'VBOX_WITH_EXTPACK');
 
         return True;
     except OSError as ex:
@@ -2867,6 +2873,9 @@ rem It will be completely overwritten if {g_sScriptName} is executed again.
 rem
 rem Generated on """ +  sTimestamp + """
 rem\n""");
+            # AUTOCFG defines the path to AutoConfig.kmk and can be specified via '--output-file-autoconfig'.
+            oEnv.write_as_export(fh, 'AUTOCFG', enmBuildTarget);
+
             oEnv.write_all_as_exports(fh, enmBuildTarget, asPrefixInclude = [ 'KBUILD_' ]);
 
             oEnv.write_as_export(fh, 'PATH_DEVTOOLS', enmBuildTarget);
@@ -2922,15 +2931,19 @@ def main():
     oParser.add_argument('--disable-sdl', '--without-sdl', help='Disables building the SDL frontend', action='store_true', default=None, dest='VBOX_WITH_SDL=');
     oParser.add_argument('--disable-udptunnel', '--without-udptunnel', help='Disables building UDP tunnel support', action='store_true', default=None, dest='VBOX_WITH_UDPTUNNEL=');
     oParser.add_argument('--disable-additions', '--without-additions', help='Disables building the Guest Additions', action='store_true', default=None, dest='VBOX_WITH_ADDITIONS=');
+    # Disables building the Extension Pack explicitly. Only makes sense for the non-OSE build.
+    oParser.add_argument('--disable-extpack', '--without-extpack', help='Disables building the Extension Pack', action='store_true', default=None, dest='VBOX_WITH_EXTPACK=');
     oParser.add_argument('--with-hardening', help='Enables hardening', action='store_true', default=None, dest='VBOX_WITH_HARDENING=1');
     oParser.add_argument('--disable-hardening', '--without-hardening', help='Disables hardening', action='store_true', default=None, dest='VBOX_WITH_HARDENING=');
-    oParser.add_argument('--file-autoconfig', help='Path to output AutoConfig.kmk file', action='store_true', default='AutoConfig.kmk', dest='config_file_autoconfig');
-    oParser.add_argument('--file-env', help='Path to output env[.bat|.sh] file', action='store_true', \
-                         default='env.bat' if g_enmHostTarget == BuildTarget.WINDOWS else 'env.sh', dest='config_file_env');
-    oParser.add_argument('--file-log', help='Path to output log file', action='store_true', default='configure.log', dest='config_file_log');
+    oParser.add_argument('--output-file-autoconfig', help='Path to output AutoConfig.kmk file', default=None, dest='config_file_autoconfig');
+    oParser.add_argument('--output-file-env', help='Path to output env[.bat|.sh] file', default=None, dest='config_file_env');
+    oParser.add_argument('--output-file-log', help='Path to output log file', default=None, dest='config_file_log');
     oParser.add_argument('--only-additions', help='Only build Guest Additions related libraries and tools', action='store_true', default=None, dest='VBOX_ONLY_ADDITIONS=');
     oParser.add_argument('--only-docs', help='Only build the documentation', action='store_true', default=None, dest='VBOX_ONLY_DOCS=1');
-    oParser.add_argument('--path-out-base', help='Specifies the output directory', default=None, dest='config_path_out_base');
+    # Note: '--odir' is kept for backwards compatibility.
+    oParser.add_argument('--output-dir', '--odir', help='Specifies the output directory for all output files', default=g_sScriptPath, dest='config_out_dir');
+    # Note: '--out-base-dir' is kept for backwards compatibility.
+    oParser.add_argument('--output-build-dir', '--out-base-dir', help='Specifies the build output directory', default=None, dest='config_build_dir');
     oParser.add_argument('--ose', help='Builds the OSE version', action='store_true', default=None, dest='VBOX_OSE=1');
     oParser.add_argument('--compat', help='Runs in compatibility mode. Only use for development', action='store_true', default=False, dest='config_compat');
     oParser.add_argument('--debug', help='Runs in debug mode. Only use for development', action='store_true', default=False, dest='config_debug');
@@ -2979,55 +2992,6 @@ def main():
         print(__revision__);
         return 0;
 
-    g_fhLog = open(g_sFileLog, "w", encoding="utf-8");
-    sys.stdout = Log(sys.stdout, g_fhLog);
-    sys.stderr = Log(sys.stderr, g_fhLog);
-
-    printLogHeader();
-
-    g_cVerbosity = oArgs.config_verbose;
-    if not g_fCompatMode:
-        g_fCompatMode = oArgs.config_compat;
-    g_fDebug = oArgs.config_debug;
-    g_fContOnErr = oArgs.config_nofatal;
-    g_sFileLog = oArgs.config_file_log;
-
-    # Set defaults.
-    g_oEnv.set('KBUILD_HOST', g_enmHostTarget);
-    g_oEnv.set('KBUILD_HOST_ARCH', g_enmHostArch);
-    g_oEnv.set('KBUILD_TYPE', BuildType.RELEASE);
-    g_oEnv.set('KBUILD_TARGET', oArgs.config_build_target if oArgs.config_build_target else g_enmHostTarget);
-    g_oEnv.set('KBUILD_TARGET_ARCH', oArgs.config_build_arch if oArgs.config_build_arch else g_enmHostArch);
-    g_oEnv.set('KBUILD_TARGET_CPU', 'blend'); ## @todo Check this.
-    g_oEnv.set('KBUILD_PATH', oArgs.config_tools_path_kbuild);
-    g_oEnv.set('VBOX_WITH_HARDENING', '1');
-    g_oEnv.set('PATH_OUT_BASE', oArgs.config_path_out_base);
-
-    # Handle prepending / appending certain paths ('--[prepend|append]-<whatever>-path') arguments.
-    for sArgCur, _ in g_asPathsPrepend.items(): # ASSUMES that g_asPathsAppend and g_asPathsPrepend are in sync.
-        sPath = getattr(oArgs, f'config_path_append_{sArgCur}');
-        if sPath:
-            g_asPathsAppend[ sArgCur ].extend( [ sPath ] );
-        sPath = getattr(oArgs, f'config_path_prepend_{sArgCur}');
-        if sPath:
-            g_asPathsPrepend[ sArgCur ].extend( [ sPath ] );
-
-    if getattr(oArgs, 'config_python_path'):
-        oArgs.config_libs_path_python_c_api = getattr(oArgs, 'config_python_path');
-
-    # Apply updates from command line arguments.
-    g_oEnv.updateFromArgs(oArgs);
-
-    # Filter libs and tools based on --only-XXX flags.
-    # Replace '-' with '_' so that we can use variables directly w/o getattr lateron.
-    aoOnlyLibs = [lib for lib in g_aoLibs if getattr(oArgs, f'config_libs_only_{lib.sName.replace("-", "_")}', False)];
-    aoOnlyTools = [tool for tool in g_aoTools if getattr(oArgs, f'config_tools_only_{tool.sName.replace("-", "_")}', False)];
-    aoLibsToCheck = aoOnlyLibs if aoOnlyLibs else g_aoLibs;
-    aoToolsToCheck = aoOnlyTools if aoOnlyTools else g_aoTools;
-    # Filter libs and tools based on build target.
-    aoLibsToCheck  = [lib for lib in aoLibsToCheck if lib.isInTarget()];
-    aoToolsToCheck = [tool for tool in aoToolsToCheck if tool.isInTarget()];
-
     print(f'VirtualBox configuration script - r{__revision__ }');
     print();
     print(f'Running on {platform.system()} {platform.release()} ({platform.machine()})');
@@ -3046,6 +3010,94 @@ def main():
         g_fContOnErr = True;
         print('Running in compatibility mode');
         print();
+
+    if not oArgs.config_file_log:
+        g_sFileLog = os.path.join(oArgs.config_out_dir, 'configure.log');
+    else:
+        g_sFileLog = oArgs.config_file_log;
+    try:
+        g_fhLog = open(g_sFileLog, "w", encoding="utf-8");
+    except OSError as ex:
+        printError(f"Failed to open log file '{g_sFileLog}' for writing: {str(ex)}");
+        return 3;
+    sys.stdout = Log(sys.stdout, g_fhLog);
+    sys.stderr = Log(sys.stderr, g_fhLog);
+
+    printLogHeader();
+
+    g_cVerbosity = oArgs.config_verbose;
+    if not g_fCompatMode:
+        g_fCompatMode = oArgs.config_compat;
+    g_fDebug = oArgs.config_debug;
+    g_fContOnErr = oArgs.config_nofatal;
+
+    # Set defaults.
+    g_oEnv.set('KBUILD_HOST', g_enmHostTarget);
+    g_oEnv.set('KBUILD_HOST_ARCH', g_enmHostArch);
+    g_oEnv.set('KBUILD_TYPE', BuildType.RELEASE);
+    g_oEnv.set('KBUILD_TARGET', oArgs.config_build_target if oArgs.config_build_target else g_enmHostTarget);
+    g_oEnv.set('KBUILD_TARGET_ARCH', oArgs.config_build_arch if oArgs.config_build_arch else g_enmHostArch);
+    g_oEnv.set('KBUILD_TARGET_CPU', 'blend'); ## @todo Check this.
+    g_oEnv.set('KBUILD_PATH', oArgs.config_tools_path_kbuild);
+    g_oEnv.set('VBOX_WITH_HARDENING', '1');
+
+    # Handle out directory.
+    if  oArgs.config_out_dir \
+    and not isDir(oArgs.config_out_dir):
+        printWarn(f"Output directory '{oArgs.config_out_dir}' does not exist -- using script directory as output base");
+        oArgs.config_out_dir = g_sScriptPath;
+
+    # Handle build directory.
+    if  oArgs.config_build_dir \
+    and not isDir(oArgs.config_build_dir):
+        printWarn(f"Build output directory '{oArgs.config_build_dir}' does not exist -- using script directory as output base");
+        oArgs.config_build_dir = g_sScriptPath;
+    g_oEnv.set('PATH_OUT_BASE', oArgs.config_build_dir);
+
+    # Handle prepending / appending certain paths ('--[prepend|append]-<whatever>-path') arguments.
+    for sArgCur, _ in g_asPathsPrepend.items(): # ASSUMES that g_asPathsAppend and g_asPathsPrepend are in sync.
+        sPath = getattr(oArgs, f'config_path_append_{sArgCur}');
+        if sPath:
+            g_asPathsAppend[ sArgCur ].extend( [ sPath ] );
+        sPath = getattr(oArgs, f'config_path_prepend_{sArgCur}');
+        if sPath:
+            g_asPathsPrepend[ sArgCur ].extend( [ sPath ] );
+
+    oArgs.config_libs_path_python_c_api = oArgs.config_python_path;
+
+    # Handle env[.sh|.bat] output file.
+    sEnvFile = 'env.bat' if g_enmHostTarget == BuildTarget.WINDOWS else 'env.sh';
+    if not oArgs.config_file_env:
+        oArgs.config_file_env = os.path.join(oArgs.config_out_dir, sEnvFile);
+    else:
+        sEnvDir = os.path.dirname(oArgs.config_file_env);
+        if not isDir(sEnvDir):
+            printWarn(f"Directory for environment file '{sEnvDir}' does not exist -- using output directory as base");
+            oArgs.config_file_env = os.path.join(oArgs.config_out_dir, sEnvFile);
+
+    # Handle AutoConfig.kmk output file.
+    if not oArgs.config_file_autoconfig:
+        oArgs.config_file_autoconfig = os.path.join(oArgs.config_out_dir, 'AutoConfig.kmk');
+    else: # AutoConfig.kmk location will be written to the env[.sh|.bat] file.
+        sAutoConfigDir = os.path.dirname(oArgs.config_file_autoconfig);
+        if not isDir(sAutoConfigDir):
+            printWarn(f"Directory for AutoConfig.kmk '{sAutoConfigDir}' does not exist -- using output directory as base");
+            oArgs.config_file_autoconfig = os.path.join(oArgs.config_out_dir, 'AutoConfig.kmk');
+        else:
+            g_oEnv.set('AUTOCFG', oArgs.config_file_autoconfig);
+
+    # Apply updates from command line arguments.
+    g_oEnv.updateFromArgs(oArgs);
+
+    # Filter libs and tools based on --only-XXX flags.
+    # Replace '-' with '_' so that we can use variables directly w/o getattr lateron.
+    aoOnlyLibs = [lib for lib in g_aoLibs if getattr(oArgs, f'config_libs_only_{lib.sName.replace("-", "_")}', False)];
+    aoOnlyTools = [tool for tool in g_aoTools if getattr(oArgs, f'config_tools_only_{tool.sName.replace("-", "_")}', False)];
+    aoLibsToCheck = aoOnlyLibs if aoOnlyLibs else g_aoLibs;
+    aoToolsToCheck = aoOnlyTools if aoOnlyTools else g_aoTools;
+    # Filter libs and tools based on build target.
+    aoLibsToCheck  = [lib for lib in aoLibsToCheck if lib.isInTarget()];
+    aoToolsToCheck = [tool for tool in aoToolsToCheck if tool.isInTarget()];
 
     #
     # Handle OSE building.
@@ -3136,6 +3188,14 @@ def main():
     if g_cVerbosity >= 2:
         printVerbose(2, 'Environment manager variables:');
         print(g_oEnv.env);
+        print();
+
+    print(f'Log file                    : {g_sFileLog }');
+    print(f'Output directory            : {oArgs.config_out_dir}');
+    print(f'Build directory             : {oArgs.config_build_dir}');
+    print(f'Location of environment file: {oArgs.config_file_env}');
+    print(f'Location of AutoConfig.kmk  : {oArgs.config_file_autoconfig}');
+    print();
 
     #
     # Perform OS tool checks.
