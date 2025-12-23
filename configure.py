@@ -6,7 +6,7 @@ Requires >= Python 3.4.
 """
 
 # -*- coding: utf-8 -*-
-# $Id: configure.py 112196 2025-12-23 10:59:21Z andreas.loeffler@oracle.com $
+# $Id: configure.py 112197 2025-12-23 11:03:35Z andreas.loeffler@oracle.com $
 # pylint: disable=bare-except
 # pylint: disable=consider-using-f-string
 # pylint: disable=global-statement
@@ -39,7 +39,7 @@ along with this program; if not, see <https://www.gnu.org/licenses>.
 SPDX-License-Identifier: GPL-3.0-only
 """
 
-__revision__ = "$Revision: 112196 $"
+__revision__ = "$Revision: 112197 $"
 
 import argparse
 import ctypes
@@ -2967,7 +2967,7 @@ def main():
     oParser.add_argument('--with-win-midl-path', '--with-midl', help='Where midl.exe is to be found', dest='config_win_midl_path');
     oParser.add_argument('--with-win-vcpkg-root', help='Where the VCPKG root directory to be found', dest='config_win_vcpkg_root');
     # The following arguments are deprecated and undocumented -- kept for backwards compatibility.
-    oParser.add_argument('--enable-webservice', help=argparse.SUPPRESS, default=None, dest='VBOX_WITH_WEBSERVICES=1');
+    oParser.add_argument('--enable-webservice', help=argparse.SUPPRESS, action='store_true', default=None, dest='VBOX_WITH_WEBSERVICES=1');
     oParser.add_argument('--with-ddk', help=argparse.SUPPRESS, dest='config_tools_path_win_ddk');
     oParser.add_argument('--with-qt', '--with-qt-dir', help=argparse.SUPPRESS, dest='config_libs_path_qt6');
     oParser.add_argument('--with-sdk10', help=argparse.SUPPRESS, dest='config_tools_path_win_sdk10');
