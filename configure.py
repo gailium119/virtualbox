@@ -6,7 +6,7 @@ Requires >= Python 3.4.
 """
 
 # -*- coding: utf-8 -*-
-# $Id: configure.py 112224 2025-12-24 11:51:19Z andreas.loeffler@oracle.com $
+# $Id: configure.py 112225 2025-12-24 12:09:13Z andreas.loeffler@oracle.com $
 # pylint: disable=bare-except
 # pylint: disable=consider-using-f-string
 # pylint: disable=global-statement
@@ -39,7 +39,7 @@ along with this program; if not, see <https://www.gnu.org/licenses>.
 SPDX-License-Identifier: GPL-3.0-only
 """
 
-__revision__ = "$Revision: 112224 $"
+__revision__ = "$Revision: 112225 $"
 
 import argparse
 import ctypes
@@ -2613,7 +2613,7 @@ class EnvManager:
         to the given file handle.
         """
         fn = self.write_single;
-        return self.write_all_fn(fh, fn, enmBuildTarget, sSep = '=', sWhat = None, asPrefixInclude = asPrefixInclude, asPrefixExclude = asPrefixExclude);
+        return self.write_all_fn(fh, fn, enmBuildTarget, asPrefixInclude = asPrefixInclude, asPrefixExclude = asPrefixExclude);
 
     def write_all_as_exports(self, fh, enmBuildTarget = g_enmHostTarget, asPrefixInclude = None, asPrefixExclude = None):
         """
@@ -2900,7 +2900,7 @@ def write_autoconfig_kmk(sFilePath, enmBuildTarget, oEnv, aoLibs, aoTools):
 
     _ = enmBuildTarget, aoTools; # Unused for now.
 
-    g_oEnv.setSep(':=');        # For kBuild Makefiles.
+    g_oEnv.setSep(' := ');        # For kBuild Makefiles.
     g_oEnv.setKeyAlignment(32); # Makes it easier to read.
 
     try:
