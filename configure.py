@@ -6,7 +6,7 @@ Requires >= Python 3.4.
 """
 
 # -*- coding: utf-8 -*-
-# $Id: configure.py 112221 2025-12-24 11:21:58Z andreas.loeffler@oracle.com $
+# $Id: configure.py 112222 2025-12-24 11:27:36Z andreas.loeffler@oracle.com $
 # pylint: disable=bare-except
 # pylint: disable=consider-using-f-string
 # pylint: disable=global-statement
@@ -39,7 +39,7 @@ along with this program; if not, see <https://www.gnu.org/licenses>.
 SPDX-License-Identifier: GPL-3.0-only
 """
 
-__revision__ = "$Revision: 112221 $"
+__revision__ = "$Revision: 112222 $"
 
 import argparse
 import ctypes
@@ -3061,6 +3061,7 @@ def main():
     oParser.add_argument('--disable-sdl', '--without-sdl', help='Disables building the SDL frontend', action='store_true', default=None, dest='VBOX_WITH_SDL=');
     oParser.add_argument('--disable-udptunnel', '--without-udptunnel', help='Disables building UDP tunnel support', action='store_true', default=None, dest='VBOX_WITH_UDPTUNNEL=');
     oParser.add_argument('--disable-additions', '--without-additions', help='Disables building the Guest Additions', action='store_true', default=None, dest='VBOX_WITH_ADDITIONS=');
+    oParser.add_argument('--disable-opengl', '--without-opengl', help='Disables building features which require OpenGL', action='store_true', default=None, dest='config_disable_opengl');
     # Disables building the Extension Pack explicitly. Only makes sense for the non-OSE build.
     oParser.add_argument('--disable-extpack', '--without-extpack', help='Disables building the Extension Pack', action='store_true', default=None, dest='VBOX_WITH_EXTPACK=');
     oParser.add_argument('--with-hardening', help='Enables hardening', action='store_true', default=None, dest='VBOX_WITH_HARDENING=1');
@@ -3295,6 +3296,10 @@ def main():
                       'VBOX_WITH_VMSVGA3D': '', \
                       'VBOX_WITH_3D_ACCELERATION' : '', \
                       'VBOX_GUI_USE_QGL' : '' } if g_oEnv['config_build_headless'] else {},
+        # Disable features when OpenGL is disabled.
+        lambda env: { 'VBOX_WITH_VMSVGA3D': '', \
+                      'VBOX_WITH_3D_ACCELERATION' : '', \
+                      'VBOX_GUI_USE_QGL' : '' } if g_oEnv['config_disable_opengl'] else {},
         # Disable recording if libvpx is disabled.
         lambda env: { 'VBOX_WITH_LIBVPX': '', \
                       'VBOX_WITH_RECORDING': '' } if g_oEnv['config_libs_disable_libvpx'] else {},
