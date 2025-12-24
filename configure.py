@@ -6,7 +6,7 @@ Requires >= Python 3.4.
 """
 
 # -*- coding: utf-8 -*-
-# $Id: configure.py 112218 2025-12-24 10:03:39Z andreas.loeffler@oracle.com $
+# $Id: configure.py 112219 2025-12-24 10:44:50Z andreas.loeffler@oracle.com $
 # pylint: disable=bare-except
 # pylint: disable=consider-using-f-string
 # pylint: disable=global-statement
@@ -39,7 +39,7 @@ along with this program; if not, see <https://www.gnu.org/licenses>.
 SPDX-License-Identifier: GPL-3.0-only
 """
 
-__revision__ = "$Revision: 112218 $"
+__revision__ = "$Revision: 112219 $"
 
 import argparse
 import ctypes
@@ -507,7 +507,7 @@ def getPosixError(uCode):
     return f"Non-standard exit code {uCode} (out of range)";
 
 def compileAndExecute(sName, enmBuildTarget, enmBuildArch, asIncPaths, asLibPaths, asIncFiles, asLibFiles, sCode, \
-                      oEnv = None, asLinkerFlags = None, asDefines = None, fLog = True, fLinkMayFail = False):
+                      oEnv = None, asLinkerFlags = None, asDefines = None, fLog = True, fCompileMayFail = False):
     """
     Compiles and executes a test program.
 
@@ -596,15 +596,17 @@ def compileAndExecute(sName, enmBuildTarget, enmBuildArch, asIncPaths, asLibPath
         if oProc.returncode != 0:
             sStdOut = oProc.stdout.decode("utf-8", errors="ignore");
             if fLog:
-                fnLog = printLog if fLinkMayFail else printError;
+                fnLog = printWarn if fCompileMayFail else printError;
                 fnLog   (f'Compilation of test program for {sName} failed:');
                 printLog(f'    { " ".join(asCmd) }');
                 printLog(sStdOut);
         else:
+            printLog(f'Compilation of test program for {sName} successful');
             # Try executing the compiled binary and capture stdout + stderr.
             try:
                 oProc = subprocess.run([sFileImage], env = oProcEnv.env, shell = True, stdout = subprocess.PIPE, stderr = subprocess.STDOUT, check = False, timeout = 10);
                 if oProc.returncode == 0:
+                    printLog(f'Running test program for {sName} successful (exit code 0)');
                     sStdOut = oProc.stdout.decode('utf-8', 'replace').strip();
                     fRet = True;
                 else:
@@ -929,10 +931,12 @@ class LibraryCheck(CheckBase):
         if not sCode:
             return True, None, None; # No code? Skip.
 
+        # Note: We set fCompileMayFail if this library is in-tree, as we ASSUME
+        #       that we only have working libraries in there.
         fRc, sStdOut, sStdErr = compileAndExecute(self.sName, enmBuildTarget, enmBuildArch, \
                                                   self.asIncPaths, self.asLibPaths, self.asIncFiles, self.asLibFiles, \
                                                   sCode, asLinkerFlags = self.asLinkerFlags, asDefines = self.asDefines,
-                                                  fLinkMayFail = self.fInTree);
+                                                  fCompileMayFail = self.fInTree);
         if fRc and sStdOut:
             self.sVer = sStdOut;
         return fRc, sStdOut, sStdErr;
