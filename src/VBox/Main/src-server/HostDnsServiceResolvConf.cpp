@@ -1,4 +1,4 @@
-/* $Id: HostDnsServiceResolvConf.cpp 112213 2025-12-24 03:41:13Z jack.doherty@oracle.com $ */
+/* $Id: HostDnsServiceResolvConf.cpp 112217 2025-12-24 04:53:04Z jack.doherty@oracle.com $ */
 /** @file
  * Base class for Host DNS & Co services.
  */
@@ -118,15 +118,15 @@ int HostDnsServiceResolvConf::i_rcpParse(const char *filename, HostDnsInformatio
     PRTSTREAM stream;
     char buf[RCPS_BUFFER_SIZE];
 
-    int rc;
+    int vrc;
 
     if (RT_UNLIKELY(filename == NULL))
         return VERR_INVALID_PARAMETER;
     else
     {
-        rc = RTStrmOpen(filename, "r", &stream);
-        if (RT_FAILURE(rc))
-            return rc;
+        vrc = RTStrmOpen(filename, "r", &stream);
+        if (RT_FAILURE(vrc))
+            return vrc;
     }
 
     unsigned i = 0;
@@ -134,11 +134,11 @@ int HostDnsServiceResolvConf::i_rcpParse(const char *filename, HostDnsInformatio
     {
         char *s, *tok;
 
-        rc = RTStrmGetLine(stream, buf, sizeof(buf));
-        if (RT_FAILURE(rc))
+        vrc = RTStrmGetLine(stream, buf, sizeof(buf));
+        if (RT_FAILURE(vrc))
         {
-            if (rc == VERR_EOF)
-                rc = VINF_SUCCESS;
+            if (vrc == VERR_EOF)
+                vrc = VINF_SUCCESS;
             break;
         }
 
@@ -194,8 +194,8 @@ int HostDnsServiceResolvConf::i_rcpParse(const char *filename, HostDnsInformatio
             NetAddr.uPort = RTNETADDR_PORT_NA;
 
             /* Check if entry is IPv4 nameserver, save if true */
-            rc = RTNetStrToIPv4AddrEx(tok, &NetAddr.uAddr.IPv4, &pszNext);
-            if (RT_SUCCESS(rc))
+            vrc = RTNetStrToIPv4AddrEx(tok, &NetAddr.uAddr.IPv4, &pszNext);
+            if (RT_SUCCESS(vrc))
             {
                 if (*pszNext == '\0')
                     NetAddr.enmType = RTNETADDRTYPE_IPV4;
@@ -212,8 +212,8 @@ int HostDnsServiceResolvConf::i_rcpParse(const char *filename, HostDnsInformatio
             }
 
             /* Check if entry is IPv6 nameserver, save if true*/
-            rc = RTNetStrToIPv6AddrEx(tok, &NetAddr.uAddr.IPv6, &pszNext);
-            if (RT_SUCCESS(rc))
+            vrc = RTNetStrToIPv6AddrEx(tok, &NetAddr.uAddr.IPv6, &pszNext);
+            if (RT_SUCCESS(vrc))
             {
                 if (*pszNext == '%') /* XXX: TODO: IPv6 zones */
                 {
@@ -312,8 +312,8 @@ int HostDnsServiceResolvConf::i_rcpParse(const char *filename, HostDnsInformatio
     if (filename != NULL)
         RTStrmClose(stream);
 
-    if (RT_FAILURE(rc))
-        return rc;
+    if (RT_FAILURE(vrc))
+        return vrc;
 
     return VINF_SUCCESS;
 }
