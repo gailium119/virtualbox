@@ -6,7 +6,7 @@ Requires >= Python 3.4.
 """
 
 # -*- coding: utf-8 -*-
-# $Id: configure.py 112225 2025-12-24 12:09:13Z andreas.loeffler@oracle.com $
+# $Id: configure.py 112226 2025-12-24 13:06:14Z andreas.loeffler@oracle.com $
 # pylint: disable=bare-except
 # pylint: disable=consider-using-f-string
 # pylint: disable=global-statement
@@ -39,7 +39,7 @@ along with this program; if not, see <https://www.gnu.org/licenses>.
 SPDX-License-Identifier: GPL-3.0-only
 """
 
-__revision__ = "$Revision: 112225 $"
+__revision__ = "$Revision: 112226 $"
 
 import argparse
 import ctypes
@@ -2955,6 +2955,7 @@ def write_autoconfig_kmk(sFilePath, enmBuildTarget, oEnv, aoLibs, aoTools):
             g_oEnv.write_single(fh, 'VBOX_WITH_EXTPACK');
             g_oEnv.write_single(fh, 'VBOX_WITH_EXTPACK_PUEL');
             g_oEnv.write_single(fh, 'VBOX_WITH_EXTPACK_PUEL_BUILD');
+            g_oEnv.write_single(fh, 'VBOX_WITH_EXTPACK_VBOXDTRACE');
 
         return True;
     except OSError as ex:
@@ -3284,7 +3285,8 @@ def main():
         # or with Extension Pack feature disabled.
         lambda env: { 'VBOX_WITH_EXTPACK': '', \
                       'VBOX_WITH_EXTPACK_PUEL': '', \
-                      'VBOX_WITH_EXTPACK_PUEL_BUILD': '' } if  g_oEnv['VBOX_ONLY_ADDITIONS'] == '1'
+                      'VBOX_WITH_EXTPACK_PUEL_BUILD': '', \
+                      'VBOX_WITH_EXTPACK_VBOXDTRACE': '' } if  g_oEnv['VBOX_ONLY_ADDITIONS'] == '1'
                                                             or g_oEnv['VBOX_WITH_EXTPACK'] == '' else {},
         # Disable FE/Qt if qt6 is disabled.
         lambda env: { 'VBOX_WITH_QTGUI': '' } if g_oEnv['config_libs_disable_qt6'] else {},
