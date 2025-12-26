@@ -6,7 +6,7 @@ Requires >= Python 3.4.
 """
 
 # -*- coding: utf-8 -*-
-# $Id: configure.py 112235 2025-12-26 20:03:52Z andreas.loeffler@oracle.com $
+# $Id: configure.py 112236 2025-12-26 22:30:28Z andreas.loeffler@oracle.com $
 # pylint: disable=bare-except
 # pylint: disable=consider-using-f-string
 # pylint: disable=global-statement
@@ -39,7 +39,7 @@ along with this program; if not, see <https://www.gnu.org/licenses>.
 SPDX-License-Identifier: GPL-3.0-only
 """
 
-__revision__ = "$Revision: 112235 $"
+__revision__ = "$Revision: 112236 $"
 
 import argparse
 import ctypes
@@ -2957,6 +2957,14 @@ def write_autoconfig_kmk(sFilePath, enmBuildTarget, oEnv, aoLibs, aoTools):
             g_oEnv.write_single(fh, 'VBOX_WITH_EXTPACK_PUEL_BUILD');
             g_oEnv.write_single(fh, 'VBOX_WITH_EXTPACK_VBOXDTRACE');
 
+        if g_fDebug:
+            abBuf = None;
+            print(f'Contents of {sFilePath}:');
+            with open(sFilePath, 'r', encoding = 'utf-8') as fh:
+                abBuf = fh.read();
+            if abBuf:
+                print(abBuf);
+
         return True;
     except OSError as ex:
         printError(f"Failed to write AutoConfig.kmk to {sFilePath}: {str(ex)}");
@@ -3014,6 +3022,14 @@ rem\n""");
 
             oEnv.prependPath('PATH', os.path.join(g_sScriptPath, g_oEnv['KBUILD_PATH'], 'bin', f'{enmBuildTarget}.{enmBuildArch}'));
             oEnv.write_as_export(fh, 'PATH', enmBuildTarget);
+
+        if g_fDebug:
+            abBuf = None;
+            print(f'Contents of {sFilePath}:');
+            with open(sFilePath, 'r', encoding = 'utf-8') as fh:
+                abBuf = fh.read();
+            if abBuf:
+                print(abBuf);
 
         return True;
     except OSError as ex:
