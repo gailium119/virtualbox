@@ -1,4 +1,4 @@
-/* $Id: HostDnsServiceResolvConf.cpp 112244 2025-12-28 23:54:35Z knut.osmundsen@oracle.com $ */
+/* $Id: HostDnsServiceResolvConf.cpp 112245 2025-12-28 23:59:20Z knut.osmundsen@oracle.com $ */
 /** @file
  * Base class for Host DNS & Co services.
  */
@@ -187,7 +187,6 @@ static char *getToken(char *psz, char **ppszSavePtr)
 
 /*static*/ int HostDnsServiceResolvConf::i_rcpParseInner(PRTSTREAM a_pStream, HostDnsInformation &dnsInfo)
 {
-    unsigned i = 0; /** @todo pointless. */
     for (unsigned iLine = 1;; iLine++)
     {
         char buf[RCPS_BUFFER_SIZE];
@@ -224,9 +223,7 @@ static char *getToken(char *psz, char **ppszSavePtr)
          */
         if (RTStrCmp(tok, "nameserver") == 0)
         {
-            if (RT_UNLIKELY(dnsInfo.servers.size() >= RCPS_MAX_NAMESERVERS))
-                LogRel(("HostDnsServiceResolvConf: line %u: too many nameserver lines, ignoring %s\n", iLine, s));
-            else
+            if (dnsInfo.servers.size() < RCPS_MAX_NAMESERVERS)
             {
 
                 /*
@@ -286,15 +283,15 @@ static char *getToken(char *psz, char **ppszSavePtr)
                     }
                 }
             }
+            else
+                LogRel(("HostDnsServiceResolvConf: line %u: too many nameserver lines, ignoring %s\n", iLine, s));
         }
         /*
          * DOMAIN
          */
         else if (RTStrCmp(tok, "domain") == 0)
         {
-            if (dnsInfo.domain.isNotEmpty())
-                LogRel(("HostDnsServiceResolvConf: line %u: ignoring multiple domain lines\n", iLine));
-            else
+            if (dnsInfo.domain.isEmpty())
             {
                 tok = getToken(NULL, &s);
                 if (tok == NULL)
@@ -302,27 +299,25 @@ static char *getToken(char *psz, char **ppszSavePtr)
                 else if (strlen(tok) > 253) /* Max FQDN Length */
                     LogRel(("HostDnsServiceResolvConf: line %u: domain name too long\n", iLine));
                 else
-                {
-                    vrc = dnsInfo.domain.assignNoThrow(tok);
-                    if (RT_FAILURE(vrc))
-                        return vrc;
-                }
+                    dnsInfo.domain.assign(tok);
             }
+            else
+                LogRel(("HostDnsServiceResolvConf: line %u: ignoring multiple domain lines\n", iLine));
         }
         /*
          * SEARCH
          */
         else if (RTStrCmp(tok, "search") == 0)
         {
-            while ((tok = getToken(NULL, &s)) && tok != NULL)
+            while ((tok = getToken(NULL, &s)) != NULL)
             {
-                if (RT_UNLIKELY(i >= RCPS_MAX_SEARCHLIST)) /** @todo r=bird: i isn't modified, so this isn't doing any good... */
-                    LogRel(("HostDnsServiceResolvConf: line %u: too many search domains, ignoring %s\n", iLine, tok));
-                else
+                if (dnsInfo.searchList.size() < RCPS_MAX_SEARCHLIST)
                 {
                     dnsInfo.searchList.push_back(tok);
                     LogRel(("HostDnsServiceResolvConf: line %u: search domain %s", iLine, tok));
                 }
+                else
+                    LogRel(("HostDnsServiceResolvConf: line %u: too many search domains, ignoring %s\n", iLine, tok));
             }
         }
         else
