@@ -1,4 +1,4 @@
-# $Id: .scm-settings 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $
+# $Id: .scm-settings 112266 2026-01-05 03:44:44Z knut.osmundsen@oracle.com $
 ## @file
 # Source code massager settings for the manual.
 #
@@ -30,5 +30,8 @@
 /titlepage-htmlhelp.xml: --external-copyright --no-convert-tabs
 /testcase/*.xml:         --external-copyright
 
---filter-out-dirs  /texfiles/.
+#--filter-out-dirs  /texfiles/.
+/texfiles/*:            --3rd-party
+/texfiles/*.sty:        --treat-as plaintext
+/texfiles/*.dat:        --treat-as plaintext --skip-unicode-checks
 
