@@ -1,4 +1,4 @@
-# $Id: .scm-settings 112258 2026-01-05 02:58:41Z knut.osmundsen@oracle.com $
+# $Id: .scm-settings 112263 2026-01-05 03:13:52Z knut.osmundsen@oracle.com $
 ## @file
 # Source code massager settings for src/libs.
 #
@@ -34,7 +34,7 @@
 #
 # Subdirectories are exported in full or not all at all.
 #
-##--svn-sync-process-export subdir-either-or
+--svn-sync-process-export subdir-either-or
 
 
 #
