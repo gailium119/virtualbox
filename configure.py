@@ -6,7 +6,7 @@ Requires >= Python 3.4.
 """
 
 # -*- coding: utf-8 -*-
-# $Id: configure.py 112276 2026-01-05 17:09:25Z andreas.loeffler@oracle.com $
+# $Id: configure.py 112277 2026-01-05 17:11:03Z andreas.loeffler@oracle.com $
 # pylint: disable=bare-except
 # pylint: disable=consider-using-f-string
 # pylint: disable=global-statement
@@ -40,7 +40,7 @@ along with this program; if not, see <https://www.gnu.org/licenses>.
 SPDX-License-Identifier: GPL-3.0-only
 """
 
-__revision__ = "$Revision: 112276 $"
+__revision__ = "$Revision: 112277 $"
 
 import argparse
 import ctypes
@@ -1377,7 +1377,7 @@ class LibraryCheck(CheckBase):
                 self.printWarn('Library check failed and is optional');
                 self.printWarn('Disabling the following features:', fDontCount = True);
                 for sDef in self.asDefinesToDisableIfNotFound:
-                    self.printWarn('    - {sDef}', fDontCount = True);
+                    self.printWarn(f'    - {sDef}', fDontCount = True);
                     g_oEnv.set(sDef, '');
                 return True;
             else:
