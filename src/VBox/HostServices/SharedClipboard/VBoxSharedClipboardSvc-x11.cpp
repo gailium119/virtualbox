@@ -1,4 +1,4 @@
-/* $Id: VBoxSharedClipboardSvc-x11.cpp 111962 2025-12-01 14:17:06Z brent.paulson@oracle.com $ */
+/* $Id: VBoxSharedClipboardSvc-x11.cpp 112275 2026-01-05 16:55:22Z andreas.loeffler@oracle.com $ */
 /** @file
  * Shared Clipboard Service - Linux host.
  */
@@ -427,7 +427,7 @@ static DECLCALLBACK(int) shClSvcX11TransferOnInitCallback(PSHCLTRANSFERCALLBACKC
     PSHCLTRANSFER pTransfer = pCbCtx->pTransfer;
     AssertPtr(pTransfer);
 
-    int rc;
+    int rc = VERR_NOT_SUPPORTED; /* Shut up GCC. */
 
     switch (ShClTransferGetDir(pTransfer))
     {
