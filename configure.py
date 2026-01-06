@@ -6,7 +6,7 @@ Requires >= Python 3.4.
 """
 
 # -*- coding: utf-8 -*-
-# $Id: configure.py 112285 2026-01-06 13:12:16Z andreas.loeffler@oracle.com $
+# $Id: configure.py 112292 2026-01-06 17:41:32Z andreas.loeffler@oracle.com $
 # pylint: disable=bare-except
 # pylint: disable=consider-using-f-string
 # pylint: disable=global-statement
@@ -40,7 +40,7 @@ along with this program; if not, see <https://www.gnu.org/licenses>.
 SPDX-License-Identifier: GPL-3.0-only
 """
 
-__revision__ = "$Revision: 112285 $"
+__revision__ = "$Revision: 112292 $"
 
 import argparse
 import ctypes
@@ -1649,10 +1649,10 @@ class ToolCheck(CheckBase):
             # Still not found? Try harder by finding the binaries.
             if  not self.fHave \
             and     self.sRootPath:
-                asCmd = self.findFiles(self.sRootPath, self.asCmd);
+                asCmd, _ = self.findFiles(self.sRootPath, self.asCmd);
                 for sCmdCur in asCmd:
                     self.sCmdPath, self.sVer = checkWhich(sCmdCur, self.sName, os.path.dirname(sCmdCur));
-                    self.fHave = self.sCmdPath; # Note: Version is optional.
+                    self.fHave = True if self.sCmdPath else False; # Note: Version is optional.
 
         if not self.fHave:
             if self.asDefinesToDisableIfNotFound: # Implies being optional.
@@ -2946,9 +2946,12 @@ Hint: Combine any supported --disable-<lib|tool> and --with-<lib>-path=PATH opti
 
 # The sorting order is important here -- don't change without proper testing!
 g_aoLibs = [
+    LibraryCheck("linux-kernel-headers", [ "linux/version.h" ], [ ],  aeTargets = [ BuildTarget.LINUX ],
+                 sCode = '#include <linux/version.h>\nint printf(const char *f,...);\nint main(void) { printf("%d.%d.%d", LINUX_VERSION_CODE / 65536, (LINUX_VERSION_CODE % 65536) / 256,LINUX_VERSION_CODE % 256);\n#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,32)\nreturn 0;\n#else\nprintf("Expected version 2.6.32 or higher"); return 1;\n#endif\n }\n'),
     # Must come first, as some libraries below depend on libstdc++.
+    # Also is required for the Linux Guest Additions.
     LibraryCheck("libstdc++", [ "iostream" ], [ ], aeTargets = [ BuildTarget.LINUX, BuildTarget.SOLARIS ],
-                 sCode = 'int main() { \n #ifdef __GLIBCXX__\nstd::cout << __GLIBCXX__;\n#elif defined(__GLIBCPP__)\nstd::cout << __GLIBCPP__;\n#else\nreturn 1\n#endif\nreturn 0; }\n'),
+                 sCode = 'int main() { \nstd::string s = \"test";\n#ifdef __GLIBCXX__\nstd::cout << __GLIBCXX__;\n#elif defined(__GLIBCPP__)\nstd::cout << __GLIBCPP__;\n#else\nreturn 1\n#endif\nreturn 0; }\n'),
     ## @todo Undefined symbols for architecture arm64: _f32_add
     LibraryCheck("softfloat", [ "softfloat.h", "iprt/cdefs.h" ], [ "libsoftfloat" ], aeTargets = [ BuildTarget.ANY ], aeArchs = [ BuildArch.AMD64, BuildArch.X86 ],
                  sCode = '#define IN_RING3\n#include <softfloat.h>\nint main() { softfloat_state_t s; float32_t x, y; f32_add(x, y, &s); printf("<found>"); return 0; }\n',
@@ -2964,7 +2967,7 @@ g_aoLibs = [
     LibraryCheck("libcap", [ "sys/capability.h" ], [ "libcap" ], aeTargets = [ BuildTarget.LINUX, BuildTarget.SOLARIS ],
                  sCode = '#include <sys/capability.h>\nint main() { cap_t c = cap_init(); printf("<found>"); return 0; }\n'),
     LibraryCheck("libXcursor", [ "X11/cursorfont.h" ], [ "libXcursor" ], aeTargets = [ BuildTarget.LINUX, BuildTarget.SOLARIS ],
-                 sCode = '#include <X11/Xcursor/Xcursor.h>\nint main() { printf("%d.%d", XCURSOR_LIB_MAJOR, XCURSOR_LIB_MINOR); return 0; }\n'),
+                 sCode = '#include <X11/Xcursor/Xcursor.h>\nint main() { XcursorImage *cursor = XcursorImageCreate (10, 10); XcursorImageDestroy(cursor); printf("%d.%d", XCURSOR_LIB_MAJOR, XCURSOR_LIB_MINOR); return 0; }\n'),
     LibraryCheck("libxcb-cursor", [ "xcb/xcb_cursor.h" ], [ "libxcb-cursor" ], aeTargets = [ BuildTarget.LINUX, BuildTarget.SOLARIS ],
                  sCode = '#include <xcb/xcb_cursor.h>\nint main() { printf("<found>"); return 0; }\n'),
     LibraryCheck("curl", [ "curl/curl.h" ], [ "libcurl" ], aeTargets = [ BuildTarget.ANY ],
@@ -3034,7 +3037,7 @@ g_aoLibs = [
                  sCode = '#include <SDL2/SDL_ttf.h>\nint main() { printf("%d.%d.%d", SDL_TTF_MAJOR_VERSION, SDL_TTF_MINOR_VERSION, SDL_TTF_PATCHLEVEL); return 0; }\n',
                  asDefinesToDisableIfNotFound = [ 'VBOX_WITH_SECURE_LABEL' ]),
     LibraryCheck("x11", [ "X11/Xlib.h" ], [ "libX11" ], aeTargets = [ BuildTarget.LINUX, BuildTarget.SOLARIS ],
-                 sCode = '#include <X11/Xlib.h>\nint main() { XOpenDisplay(NULL); printf("<found>"); return 0; }\n'),
+                 sCode = '#include <X11/Xlib.h>\nint main() { Display *d = XOpenDisplay(NULL); XCloseDisplay(d); printf("<found>"); return 0; }\n'),
     LibraryCheck("xext", [ "X11/extensions/Xext.h" ], [ "libXext" ], aeTargets = [ BuildTarget.LINUX, BuildTarget.SOLARIS ],
                  sCode = '#include <X11/Xlib.h>\n#include <X11/extensions/Xext.h>\nint main() { XSetExtensionErrorHandler(NULL); printf("<found>"); return 0; }\n'),
     LibraryCheck("libXmu", [ "X11/Xmu/Xmu.h" ], [ "libXmu" ], aeTargets = [ BuildTarget.LINUX, BuildTarget.SOLARIS ],
