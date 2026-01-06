@@ -6,7 +6,7 @@ Requires >= Python 3.4.
 """
 
 # -*- coding: utf-8 -*-
-# $Id: configure.py 112284 2026-01-06 13:11:00Z andreas.loeffler@oracle.com $
+# $Id: configure.py 112285 2026-01-06 13:12:16Z andreas.loeffler@oracle.com $
 # pylint: disable=bare-except
 # pylint: disable=consider-using-f-string
 # pylint: disable=global-statement
@@ -40,7 +40,7 @@ along with this program; if not, see <https://www.gnu.org/licenses>.
 SPDX-License-Identifier: GPL-3.0-only
 """
 
-__revision__ = "$Revision: 112284 $"
+__revision__ = "$Revision: 112285 $"
 
 import argparse
 import ctypes
@@ -3060,7 +3060,7 @@ g_aoTools = [
     ToolCheck("gsoapsources", asCmd = [ ], fnCallback = ToolCheck.checkCallback_GSOAPSources ),
     ToolCheck("openjdk", asCmd = [ ], fnCallback = ToolCheck.checkCallback_OpenJDK,
               asDefinesToDisableIfNotFound = [ 'VBOX_WITH_WEBSERVICES' ]),
-    ToolCheck("makeself", asCmd = [ "makeself", "makeself.sh" ], aeTargets = [ BuildTarget.LINUX ]),
+    ToolCheck("makeself", asCmd = [ "makeself" ], aeTargets = [ BuildTarget.LINUX ]),
     ToolCheck("nasm", asCmd = [ "nasm" ], fnCallback = ToolCheck.checkCallback_NASM),
     ToolCheck("openwatcom", asCmd = [ "wcl", "wcl386", "wlink" ], fnCallback = ToolCheck.checkCallback_OpenWatcom,
               asDefinesToDisableIfNotFound = [ 'VBOX_WITH_OPEN_WATCOM' ]),
