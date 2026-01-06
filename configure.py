@@ -6,7 +6,7 @@ Requires >= Python 3.4.
 """
 
 # -*- coding: utf-8 -*-
-# $Id: configure.py 112296 2026-01-06 19:15:37Z andreas.loeffler@oracle.com $
+# $Id: configure.py 112297 2026-01-06 19:21:47Z andreas.loeffler@oracle.com $
 # pylint: disable=bare-except
 # pylint: disable=consider-using-f-string
 # pylint: disable=global-statement
@@ -61,7 +61,7 @@ SPDX-License-Identifier: GPL-3.0-only
 # External Python modules or other dependencies are not allowed!
 #
 
-__revision__ = "$Revision: 112296 $"
+__revision__ = "$Revision: 112297 $"
 
 import argparse
 import ctypes
@@ -1866,7 +1866,6 @@ class ToolCheck(CheckBase):
             sHead, sTail = os.path.split(os.path.normpath(sJavaHome));
             if sTail == 'jre':
                 sJavaHome = sHead;
-            g_oEnv.set('VBOX_JAVA_HOME', sJavaHome);
 
             mapCmds = { 'java':  [ r'openjdk (\d+)\.(\d+)\.(\d+)' ],
                         'javac': [ r'javac (\d+)\.(\d+)\.(\d+)_?.*' ] };
@@ -1895,6 +1894,10 @@ class ToolCheck(CheckBase):
                         break;
             if fRc:
                 self.printVerbose(1, f'OpenJDK {uMaj} installed');
+                if uMaj:
+                    self.sVer = str(uMaj);
+                self.sCmdPath = sJavaHome;
+                g_oEnv.set('VBOX_JAVA_HOME', sJavaHome);
         else:
             self.printWarn('Unable to detect Java home directory');
 
