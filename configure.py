@@ -6,7 +6,7 @@ Requires >= Python 3.4.
 """
 
 # -*- coding: utf-8 -*-
-# $Id: configure.py 112277 2026-01-05 17:11:03Z andreas.loeffler@oracle.com $
+# $Id: configure.py 112284 2026-01-06 13:11:00Z andreas.loeffler@oracle.com $
 # pylint: disable=bare-except
 # pylint: disable=consider-using-f-string
 # pylint: disable=global-statement
@@ -40,7 +40,7 @@ along with this program; if not, see <https://www.gnu.org/licenses>.
 SPDX-License-Identifier: GPL-3.0-only
 """
 
-__revision__ = "$Revision: 112277 $"
+__revision__ = "$Revision: 112284 $"
 
 import argparse
 import ctypes
@@ -361,7 +361,7 @@ def getLinuxGnuTypeFromPlatform():
     };
     return mapPlatform2GnuType.get(platform.machine().lower());
 
-def checkWhich(sCmdName, sToolDesc = None, sCustomPath = None, asVersionSwitches = None):
+def checkWhich(sCmdName, sToolDesc = None, sCustomPath = None, asVersionSwitches = None, fMultiline = False):
     """
     Helper to check for a command in PATH or custom path.
 
@@ -399,10 +399,14 @@ def checkWhich(sCmdName, sToolDesc = None, sCustomPath = None, asVersionSwitches
                 oProc = subprocess.run([sCmdPath, sSwitch], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False, timeout=10);
                 if oProc.returncode == 0:
                     try:
-                        sVer = oProc.stdout.decode('utf-8', 'replace').strip().splitlines()[0];
+                        sVer = oProc.stdout.decode('utf-8', 'replace').strip().splitlines();
                     except: # Some programs (java, for instance) output their version info in stderr.
-                        sVer = oProc.stderr.decode('utf-8', 'replace').strip().splitlines()[0];
-                    printVerbose(1, f"Detected version for '{sCmdName}' is: {sVer}");
+                        sVer = oProc.stderr.decode('utf-8', 'replace').strip().splitlines();
+                    if sVer:
+                        sVer = sVer[0] if (not fMultiline or isinstance(sVer, str)) else sVer;
+                        printVerbose(1, f"Detected version for '{sCmdName}' is: {sVer}");
+                    else:
+                        printVerbose(1, f"No version for '{sCmdName}' returned");
                     return sCmdPath, sVer;
             return sCmdPath, '<unknown>';
         except subprocess.SubprocessError as ex:
@@ -2368,12 +2372,12 @@ class ToolCheck(CheckBase):
 
     def checkCallback_OpenWatcom(self):
         """
-        Checks for OpenWatcom tools.
+        Checks for Open Watcom tools.
         """
 
         if  g_oEnv['KBUILD_TARGET']      == BuildTarget.DARWIN \
         and g_oEnv['KBUILD_TARGET_ARCH'] == BuildArch.ARM64:
-            self.printVerbose(1, 'OpenWatcom not used here (yet), skipping');
+            self.printVerbose(1, 'Open Watcom not used here (yet), skipping');
             return True;
 
         # These are the sub directories OpenWatcom ships its binaries in.
@@ -2387,7 +2391,7 @@ class ToolCheck(CheckBase):
 
         sBinSubdir = mapBuildTarget2Bin.get(g_oEnv['KBUILD_TARGET'], None);
         if not sBinSubdir:
-            self.printError(f"OpenWatcom not supported on host target { g_oEnv['KBUILD_TARGET'] }.");
+            self.printError(f"Open Watcom not supported on host target { g_oEnv['KBUILD_TARGET'] }.");
             return False;
 
         sPath = self.sRootPath;
@@ -2400,11 +2404,18 @@ class ToolCheck(CheckBase):
                     self.printVerbose(1, f"Detected snap package at '{sPath}'");
 
         for sCmdCur in self.asCmd:
-            self.sCmdPath, self.sVer = checkWhich(sCmdCur, 'OpenWatcom', os.path.join(sPath, sBinSubdir) if sPath else None);
-            if  self.sVer \
-            and 'Version 2.' in self.sVer: # We don't support Open Watconm 2.0 (yet).
-                self.printError('Open Watcom 2.x found, but is not supported yet!');
-                return False;
+            # Open Watcom 2.x prints its version info on the second line, so we have to use multiline output.
+            self.sCmdPath, self.sVer = checkWhich(sCmdCur, 'OpenWatcom', os.path.join(sPath, sBinSubdir) if sPath else None,
+                                                  fMultiline = True);
+            if self.sVer:
+                if  isinstance(self.sVer, list) \
+                and len(self.sVer) >= 2:
+                    if any( 'Version 2.' in l for l in self.sVer): # We don't support Open Watconm 2.0 (yet).
+                        self.printWarn('Open Watcom 2.x found, but is not supported yet!');
+                        self.sVer = self.sVer[1];
+                        return False;
+                    self.sVer = self.sVer[0]; # Open Watcom 1.x.
+
             if not self.sCmdPath:
                 return False;
 
