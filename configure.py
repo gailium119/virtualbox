@@ -6,7 +6,7 @@ Requires >= Python 3.4.
 """
 
 # -*- coding: utf-8 -*-
-# $Id: configure.py 112292 2026-01-06 17:41:32Z andreas.loeffler@oracle.com $
+# $Id: configure.py 112294 2026-01-06 18:32:34Z andreas.loeffler@oracle.com $
 # pylint: disable=bare-except
 # pylint: disable=consider-using-f-string
 # pylint: disable=global-statement
@@ -17,6 +17,7 @@ Requires >= Python 3.4.
 # pylint: disable=import-outside-toplevel
 # pylint: disable=invalid-name
 # pylint: disable=multiple-statements
+# pylint: disable=line-too-long
 __copyright__ = \
 """
 Copyright (C) 2025 Oracle and/or its affiliates.
@@ -40,7 +41,27 @@ along with this program; if not, see <https://www.gnu.org/licenses>.
 SPDX-License-Identifier: GPL-3.0-only
 """
 
-__revision__ = "$Revision: 112292 $"
+#
+# The script is designed to check for the presence of various libraries and tools required for building VirtualBox.
+# It uses a modular approach with classes like `LibraryCheck` and `ToolCheck` to verify the availability of dependencies.
+# Each class instance represents a specific library or tool and contains methods to check for its presence,
+# validate its version, and provide appropriate feedback.
+#
+# To add a new library check:
+# 1. Create an instance of `LibraryCheck` with the required parameters (name, header files, library files, etc.).
+# 2. Append this instance to the `g_aoLibs` list.
+#
+# To add a new tool check:
+# 1. Create an instance of `ToolCheck` with the required parameters (name, command names, etc.).
+# 2. Append this instance to the `g_aoTools` list.
+#
+# The script handles different build targets and architectures, and it generates output files like 'AutoConfig.kmk'
+# and 'env.sh' / 'env.bat' based on the checks performed.
+#
+# External Python modules or other dependencies are not allowed!
+#
+
+__revision__ = "$Revision: 112294 $"
 
 import argparse
 import ctypes
@@ -975,20 +996,30 @@ class LibraryCheck(CheckBase):
     """
     def __init__(self, sName, asIncFiles, asLibFiles, aeTargets = None, aeArchs = None, sCode = None,
                  asIncPaths = None, asLibPaths = None,
-                 fnCallback = None, aeTargetsExcluded = None, asAltIncFiles = None, sSdkName = None,
+                 fnCallback = None, aeTargetsExcluded = None, sSdkName = None,
                  asDefinesToDisableIfNotFound = None):
         """
         Constructor.
         """
         super().__init__(sName, aeTargets, aeArchs, aeTargetsExcluded);
 
+        # List of library include (.h) files required to be found.
         self.asIncFiles = asIncFiles or [];
+        # List of library shared object / static file names for this library check (without OS suffix).
         self.asLibFiles = asLibFiles or [];
+        # Optional C/C++ test code to compile and execute to proof that the library is installed correctly
+        # and in a working shape.
         self.sCode = sCode;
+        # Optional callback function to assist handling the library check.
+        # Will be executed before anything else. The success value (True / False) will decide whether the
+        # library checking process will continue or not.
         self.fnCallback = fnCallback;
-        self.asAltIncFiles = asAltIncFiles or [];
+        # A string for constructing kBuild / VBox SDK defines (e.g. "MYLIB" -> SDK_MYLIB_INCS / SDK_MYLIB_LIBS).
         self.sSdkName  = sSdkName if sSdkName else self.sName;
+        # Defines which are getting disabled (e.g. "VBOX_WITH_MYFEATURE:=<empty>") if the library has not been found.
+        # A non-empty list makes the library optional.
         self.asDefinesToDisableIfNotFound = asDefinesToDisableIfNotFound or [];
+        # Whether the library is disabled or not.
         self.fDisabled = False;
         # Base (root) path of the library. None if not (yet) found or not specified.
         self.sRootPath = None;
@@ -1006,7 +1037,7 @@ class LibraryCheck(CheckBase):
         self.asDefines = [];
         # Is a tri-state: None if not required (optional or not needed), False if required but not found, True if found.
         self.fHave = None;
-        # If the library is part of our tree.
+        # If the library is part of our source tree.
         self.fInTree = False;
         # Contains the (parsable) version string if detected.
         # Only valid if self.fHave is True.
@@ -1016,19 +1047,18 @@ class LibraryCheck(CheckBase):
         """
         Return minimal program *with version print* for header check, per-library logic.
         """
-        header = self.asIncFiles or (self.asAltIncFiles[0] if self.asAltIncFiles else None);
-        if not header:
-            return "";
-
+        if not self.asIncFiles:
+            return '';
         if self.sCode:
             if hasCPPHeader(self.asIncFiles):
                 return '#include <iostream>\n' + self.sCode;
             else:
                 return '#include <stdio.h>\n' + self.sCode;
         else:
+            sIncludes = [f'#include <{h}>' for h in self.asIncFiles];
             if hasCPPHeader(self.asIncFiles):
-                return f"#include <{header}>\n#include <iostream>\nint main() {{ std::cout << \"1\" << std::endl; return 0; }}\n";
-        return f'#include <{header}>\n#include <stdio.h>\nint main(void) {{ printf("<found>"); return 0; }}\n';
+                return '\n'.join(sIncludes) + '#include <iostream>\nint main() {{ std::cout << "<found>" << std::endl; return 0; }}\n';
+        return '\n'.join(sIncludes) + '#include <stdio.h>\nint main(void) {{ printf("<found>"); return 0; }}\n';
 
     def compileAndExecute(self, enmBuildTarget, enmBuildArch):
         """
@@ -1273,13 +1303,11 @@ class LibraryCheck(CheckBase):
         Checks for headers in standard/custom include paths.
         """
         self.printVerbose(1, 'Checking include paths ...');
-        if not self.asIncFiles and not self.asAltIncFiles:
+        if not self.asIncFiles:
             return True;
         asHeaderToSearch = [];
         if self.asIncFiles:
             asHeaderToSearch.extend(self.asIncFiles);
-        if self.asAltIncFiles:
-            asHeaderToSearch.extend(self.asAltIncFiles);
         if hasCPPHeader(self.asIncFiles):
             asHeaderToSearch.extend([ 'iostream' ]); # Non-library headers must come last.
 
@@ -1569,14 +1597,22 @@ class ToolCheck(CheckBase):
         """
         super().__init__(sName, aeTargets, aeArchs, aeTargetsExcluded);
 
+        # Optional callback function to assist handling the tool check.
+        # Will be executed before anything else. The success value (True / False) will decide whether the
+        # tool checking process will continue or not.
         self.fnCallback = fnCallback;
+        # Defines which are getting disabled (e.g. "VBOX_WITH_MYFEATURE:=<empty>") if the tool has not been found.
+        # A non-empty list makes the tool optional.
         self.asDefinesToDisableIfNotFound = asDefinesToDisableIfNotFound or [];
+        # Whether the tool is disabled or not.
         self.fDisabled = False;
+        # Absolute root path of the tool found.
         self.sRootPath = None;
+        # Represents the overall outcome of the tool check.
         # Is a tri-state: None if not required (optional or not needed), False if required but not found, True if found.
         self.fHave = None;
         # List of command names (binaries) to check for.
-        # A tool can have multiple binaries.
+        # A tool can have multiple binaries, and all binaries are considered as being required.
         self.asCmd = asCmd;
         # Path to the found command.
         # Only valid if self.fHave is True.
