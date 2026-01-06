@@ -6,7 +6,7 @@ Requires >= Python 3.4.
 """
 
 # -*- coding: utf-8 -*-
-# $Id: configure.py 112297 2026-01-06 19:21:47Z andreas.loeffler@oracle.com $
+# $Id: configure.py 112298 2026-01-06 19:40:01Z andreas.loeffler@oracle.com $
 # pylint: disable=bare-except
 # pylint: disable=consider-using-f-string
 # pylint: disable=global-statement
@@ -61,7 +61,7 @@ SPDX-License-Identifier: GPL-3.0-only
 # External Python modules or other dependencies are not allowed!
 #
 
-__revision__ = "$Revision: 112297 $"
+__revision__ = "$Revision: 112298 $"
 
 import argparse
 import ctypes
@@ -1832,18 +1832,17 @@ class ToolCheck(CheckBase):
         g_oEnv.set('VBOX_PATH_GSOAP_IMPORT', sPathImport);
         return True;
 
-    def checkCallback_OpenJDK(self):
+    def checkCallback_JDK(self):
         """
-        Checks for OpenJDK.
+        Checks for JDK.
 
-        Note: We need OpenJDK <= 8, as only there the 'wsimport' binary is available.
+        Note: We need JDK <= 17, as only there the 'wsimport' binary is available.
               Otherwise other packages need to be installed in order to find 'wsimport'.
         """
 
         # Detect Java home directory.
         fRc       = True;
-        sJavaHome = None;
-        self.sRootPath = self.sRootPath;
+        sJavaHome = self.sRootPath;
         if not sJavaHome:
             sJavaHome = os.environ.get('JAVA_HOME');
         if not sJavaHome:
@@ -1867,7 +1866,7 @@ class ToolCheck(CheckBase):
             if sTail == 'jre':
                 sJavaHome = sHead;
 
-            mapCmds = { 'java':  [ r'openjdk (\d+)\.(\d+)\.(\d+)' ],
+            mapCmds = { 'java':  [ r'java (\d+)\.(\d+)\.(\d+)' ],
                         'javac': [ r'javac (\d+)\.(\d+)\.(\d+)_?.*' ] };
             for sCmd, (asRegEx) in mapCmds.items():
                 for sRegEx in asRegEx:
@@ -1881,7 +1880,7 @@ class ToolCheck(CheckBase):
                             if uMaj == 1:
                                 uMaj = int(reMatch.group(2));
                             if uMaj > 17:
-                                self.print(f'OpenJDK {uMaj} installed ({sCmd}), but need <= 8');
+                                self.print(f'JDK {uMaj} installed ({sCmd}), but need <= 17');
                                 fRc = False;
                                 break;
                         else:
@@ -1893,7 +1892,7 @@ class ToolCheck(CheckBase):
                         fRc = False;
                         break;
             if fRc:
-                self.printVerbose(1, f'OpenJDK {uMaj} installed');
+                self.printVerbose(1, f'JDK {uMaj} installed');
                 if uMaj:
                     self.sVer = str(uMaj);
                 self.sCmdPath = sJavaHome;
@@ -3122,7 +3121,7 @@ g_aoTools = [
     ToolCheck("devtools", asCmd = [ ], fnCallback = ToolCheck.checkCallback_devtools ),
     ToolCheck("gsoap", asCmd = [ ], fnCallback = ToolCheck.checkCallback_GSOAP ),
     ToolCheck("gsoapsources", asCmd = [ ], fnCallback = ToolCheck.checkCallback_GSOAPSources ),
-    ToolCheck("openjdk", asCmd = [ ], fnCallback = ToolCheck.checkCallback_OpenJDK,
+    ToolCheck("jdk", asCmd = [ ], fnCallback = ToolCheck.checkCallback_JDK,
               asDefinesToDisableIfNotFound = [ 'VBOX_WITH_WEBSERVICES' ]),
     ToolCheck("makeself", asCmd = [ ], fnCallback = ToolCheck.checkCallback_makeself, aeTargets = [ BuildTarget.LINUX ]),
     ToolCheck("nasm", asCmd = [ "nasm" ], fnCallback = ToolCheck.checkCallback_NASM),
@@ -3498,7 +3497,7 @@ def main():
         oArgs.config_tools_disable_yasm = True;
 
     if oArgs.config_disable_java:
-        oArgs.config_tools_disable_openjdk = True;
+        oArgs.config_tools_disable_jdk = True;
 
     if not oArgs.config_file_log:
         g_sFileLog = os.path.join(oArgs.config_out_dir, 'configure.log');
