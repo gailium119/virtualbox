@@ -1,4 +1,4 @@
-/* $Id: ntDisplay.cpp 112234 2025-12-26 16:16:48Z dmitrii.grigorev@oracle.com $ */
+/* $Id: ntDisplay.cpp 112281 2026-01-06 11:50:35Z dmitrii.grigorev@oracle.com $ */
 /** @file
  * Test cases for Display device and DirectX 3D rendering - NT.
  */
@@ -51,6 +51,7 @@
 #include <iprt/string.h>
 #include <iprt/thread.h>
 #include <iprt/errcore.h>
+#include <iprt/file.h>
 
 
 /*********************************************************************************************************************************
@@ -175,7 +176,6 @@ static HWND   g_aHWnd[DISPLAYS_NUM_MAX];
 static HWND   g_hWndPrimary = NULL;
 static HBRUSH g_ahBrush[3];
 static WNDCLASSEX g_WindowClass;
-static char *g_pszWallPaperPath;
 
 LRESULT CALLBACK WindowProcGDIFullScreen(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -337,6 +337,59 @@ bool ShowFullScreenWindows()
     return true;
 }
 
+int SetDesktopWallpaper(const char *pszWallPaperPath)
+{
+    int rc;
+
+    if (!RTFileExists(pszWallPaperPath))
+    {
+        RTPrintf("File not found '%s'\n", pszWallPaperPath);
+        return -1;
+    }
+
+    rc = SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, (PVOID)pszWallPaperPath, SPIF_SENDCHANGE);
+    RTPrintf("SystemParametersInfo SPI_SETDESKWALLPAPER '%s' rc=0x%x \n", pszWallPaperPath, rc);
+
+    return rc;
+}
+
+int SetDesktopPowerState(const char *pszPowerState)
+{
+    int rc;
+    LPARAM lParam;
+
+    if (RTStrNCmp(pszPowerState, RT_STR_TUPLE("on")) == 0)
+    {
+        lParam = -1;
+    }
+    else if (RTStrNCmp(pszPowerState, RT_STR_TUPLE("low")) == 0)
+    {
+        lParam = 1;
+    }
+    else if (RTStrNCmp(pszPowerState, RT_STR_TUPLE("off")) == 0)
+    {
+        lParam = 2;
+    }
+    else
+    {
+        RTPrintf("\nChoose on|off|low, not '%s'\n", pszPowerState);
+        return -1;
+    }
+
+    rc = SendMessage(HWND_BROADCAST, WM_SYSCOMMAND, SC_MONITORPOWER, lParam);
+    RTPrintf("\nSendMessage HWND_BROADCAST, WM_SYSCOMMAND, SC_MONITORPOWER, 0x%x. rc=0x%x\n", lParam, rc);
+
+    if (lParam == -1)
+    {
+        rc = SetThreadExecutionState(ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED);
+        RTPrintf("\nSetThreadExecutionState(ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED) rc=0x%x\n", rc);
+        rc = SetThreadExecutionState(ES_USER_PRESENT);
+        RTPrintf("\nSetThreadExecutionState(ES_USER_PRESENT) rc=0x%x\n", rc);
+    }
+
+    return 0;
+}
+
 int main(int argc, char **argv)
 {
     /*
@@ -356,6 +409,8 @@ int main(int argc, char **argv)
         { "--enable",       'e',  RTGETOPT_REQ_UINT32  },
         { "--quiet",        'q',  RTGETOPT_REQ_NOTHING },
         { "--wallpaper",    'w',  RTGETOPT_REQ_STRING  },
+        { "--power",        'p',  RTGETOPT_REQ_STRING  },
+        { "--fullscrwnd",   'f',  RTGETOPT_REQ_NOTHING },
         { "--verbose",      'v',  RTGETOPT_REQ_NOTHING },
     };
 
@@ -370,25 +425,18 @@ int main(int argc, char **argv)
             case 'e': SetDisplayDeviceState(RT_BOOL(ValueUnion.u32)); break;
             case 'q': g_cVerbosity = 0; break;
             case 'v': g_cVerbosity += 1; break;
-            case 'w': g_pszWallPaperPath = RTStrDup(ValueUnion.psz); break;
+            case 'w': SetDesktopWallpaper(ValueUnion.psz); break;
+            case 'p': SetDesktopPowerState(ValueUnion.psz); break;
+            case 'f': ShowFullScreenWindows(); break;
             case 'h':
-                RTPrintf("Usage: ntDisplay.exe [-e|--enable <0 or 1>] [-w|--wallpaper <filename>]\n");
+                RTPrintf("Usage: ntDisplay.exe "
+                         "[-e|--enable <0 or 1>] [-w|--wallpaper <filename>] [-p|--power <on|off|low>] [-f|--fullscrwnd]\n");
                 return 0;
 
             default:
                 return RTGetOptPrintError(chOpt, &ValueUnion);
         }
     }
-
-    if (g_pszWallPaperPath)
-    {
-        rc = SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, (PVOID)g_pszWallPaperPath, SPIF_SENDCHANGE);
-        RTPrintf("SystemParametersInfo SPI_SETDESKWALLPAPER returns %d for '%s'\n", rc, g_pszWallPaperPath);
-        RTStrFree(g_pszWallPaperPath);
-        return 0;
-    }
-
-    ShowFullScreenWindows();
 
     return !CheckDXFeatureLevel();
 }
