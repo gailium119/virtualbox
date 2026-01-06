@@ -6,7 +6,7 @@ Requires >= Python 3.4.
 """
 
 # -*- coding: utf-8 -*-
-# $Id: configure.py 112294 2026-01-06 18:32:34Z andreas.loeffler@oracle.com $
+# $Id: configure.py 112295 2026-01-06 18:38:31Z andreas.loeffler@oracle.com $
 # pylint: disable=bare-except
 # pylint: disable=consider-using-f-string
 # pylint: disable=global-statement
@@ -61,7 +61,7 @@ SPDX-License-Identifier: GPL-3.0-only
 # External Python modules or other dependencies are not allowed!
 #
 
-__revision__ = "$Revision: 112294 $"
+__revision__ = "$Revision: 112295 $"
 
 import argparse
 import ctypes
@@ -1003,8 +1003,8 @@ class LibraryCheck(CheckBase):
         """
         super().__init__(sName, aeTargets, aeArchs, aeTargetsExcluded);
 
-        # List of library include (.h) files required to be found.
-        self.asIncFiles = asIncFiles or [];
+        # List of library header (.h) files required to be found.
+        self.asHdrFiles = asIncFiles or [];
         # List of library shared object / static file names for this library check (without OS suffix).
         self.asLibFiles = asLibFiles or [];
         # Optional C/C++ test code to compile and execute to proof that the library is installed correctly
@@ -1047,16 +1047,16 @@ class LibraryCheck(CheckBase):
         """
         Return minimal program *with version print* for header check, per-library logic.
         """
-        if not self.asIncFiles:
+        if not self.asHdrFiles:
             return '';
         if self.sCode:
-            if hasCPPHeader(self.asIncFiles):
+            if hasCPPHeader(self.asHdrFiles):
                 return '#include <iostream>\n' + self.sCode;
             else:
                 return '#include <stdio.h>\n' + self.sCode;
         else:
-            sIncludes = [f'#include <{h}>' for h in self.asIncFiles];
-            if hasCPPHeader(self.asIncFiles):
+            sIncludes = [f'#include <{h}>' for h in self.asHdrFiles];
+            if hasCPPHeader(self.asHdrFiles):
                 return '\n'.join(sIncludes) + '#include <iostream>\nint main() {{ std::cout << "<found>" << std::endl; return 0; }}\n';
         return '\n'.join(sIncludes) + '#include <stdio.h>\nint main(void) {{ printf("<found>"); return 0; }}\n';
 
@@ -1078,7 +1078,7 @@ class LibraryCheck(CheckBase):
         # Note: We set fCompileMayFail if this library is in-tree, as we ASSUME
         #       that we only have working libraries in there.
         fRc, sStdOut, sStdErr = compileAndExecute(self.sName, enmBuildTarget, enmBuildArch, \
-                                                  self.asIncPaths, self.asLibPaths, self.asIncFiles, self.asLibFiles, \
+                                                  self.asIncPaths, self.asLibPaths, self.asHdrFiles, self.asLibFiles, \
                                                   sCode, asCompilerArgs = self.asCompilerArgs, asLinkerArgs = self.asLinkerArgs, asDefines = self.asDefines,
                                                   fCompileMayFail = self.fInTree);
         if fRc and sStdOut:
@@ -1222,7 +1222,7 @@ class LibraryCheck(CheckBase):
         # Walk the custom path to guess where the include files are.
         #
         if self.sRootPath:
-            for sIncFile in self.asIncFiles:
+            for sIncFile in self.asHdrFiles:
                 for sRoot, _, asFiles in os.walk(self.sRootPath):
                     if sIncFile in asFiles:
                         asPaths = [ sRoot ] + asPaths;
@@ -1298,34 +1298,34 @@ class LibraryCheck(CheckBase):
 
         return [p for p in asPaths if pathExists(p)];
 
-    def checkInc(self):
+    def checkHdr(self):
         """
         Checks for headers in standard/custom include paths.
         """
-        self.printVerbose(1, 'Checking include paths ...');
-        if not self.asIncFiles:
+        self.printVerbose(1, 'Checking headers ...');
+        if not self.asHdrFiles:
             return True;
-        asHeaderToSearch = [];
-        if self.asIncFiles:
-            asHeaderToSearch.extend(self.asIncFiles);
-        if hasCPPHeader(self.asIncFiles):
-            asHeaderToSearch.extend([ 'iostream' ]); # Non-library headers must come last.
+        asHdrToSearch = [];
+        if self.asHdrFiles:
+            asHdrToSearch.extend(self.asHdrFiles);
+        if hasCPPHeader(self.asHdrFiles):
+            asHdrToSearch.extend([ 'iostream' ]); # Non-library headers must come last.
 
-        asHeaderFound = [];
+        asHdrFound = [];
 
         asSearchPaths = list(set(self.asIncPaths + self.getIncSearchPaths()));
         self.printVerbose(2, f"asSearchPaths: {asSearchPaths}");
         for sCurSearchPath in asSearchPaths:
-            self.printVerbose(1, f"Checking include path for '{asHeaderToSearch}': {sCurSearchPath}");
-            asResults, _ = self.findFiles(sCurSearchPath, asHeaderToSearch, fAbsolute = True, fStripFilenames = True);
+            self.printVerbose(1, f"Checking include path for '{asHdrToSearch}': {sCurSearchPath}");
+            asResults, _ = self.findFiles(sCurSearchPath, asHdrToSearch, fAbsolute = True, fStripFilenames = True);
             for sResIncFile, dictRes in asResults.items():
                 sIncPath = dictRes['found_path'];
                 if sIncPath:
                     self.asIncPaths.extend([ sIncPath ]);
-                    asHeaderFound.extend([ sResIncFile ]);
+                    asHdrFound.extend([ sResIncFile ]);
 
-        for sHdr in asHeaderToSearch:
-            if sHdr not in asHeaderFound:
+        for sHdr in asHdrToSearch:
+            if sHdr not in asHdrFound:
                 self.printWarn(f"Header file {sHdr} not found in paths: {asSearchPaths}");
                 return False;
 
@@ -1398,7 +1398,7 @@ class LibraryCheck(CheckBase):
         if self.fnCallback:
             fRc = self.fnCallback(self);
         if fRc:
-            fRc = self.checkInc();
+            fRc = self.checkHdr();
             if fRc:
                 fRc = self.checkLib();
                 if      fRc \
