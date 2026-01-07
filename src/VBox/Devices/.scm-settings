@@ -1,4 +1,4 @@
-# $Id: .scm-settings 112323 2026-01-07 03:41:39Z knut.osmundsen@oracle.com $
+# $Id: .scm-settings 112324 2026-01-07 03:48:17Z knut.osmundsen@oracle.com $
 ## @file
 # Source code massager settings for the PDM Devices and Drivers.
 #
@@ -25,8 +25,11 @@
 # SPDX-License-Identifier: GPL-3.0-only
 #
 
-## Export everything.
-#--svn-sync-process-export all
+# Export almost everything.
+--svn-sync-process-export all
+/Bus/*PciRaw.*: --svn-sync-process-export none
+## @todo export: why isn't this exported?
+/Network/scripts/ArpValidator.py: --svn-sync-process-export none
 
 /*.h: --guard-relative-to-dir .
 /Graphics/vmsvga_glext/*.h|/Graphics/vmsvga/*.h: --guard-relative-to-dir ''
