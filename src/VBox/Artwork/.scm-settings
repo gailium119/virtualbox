@@ -1,4 +1,4 @@
-# $Id: .scm-settings 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $
+# $Id: .scm-settings 112314 2026-01-07 01:59:04Z knut.osmundsen@oracle.com $
 ## @file
 # Source code massager settings for the Artwork.
 #
@@ -25,7 +25,20 @@
 # SPDX-License-Identifier: GPL-3.0-only
 #
 
---filter-out-files /unused/VirtualBox.ai
---filter-out-files *.svg
---filter-out-files *.txt
+#--filter-out-files /unused/VirtualBox.ai
+#--filter-out-files *.svg
+#--filter-out-files *.txt
+
+# Exporting most things everything.
+--svn-sync-process-export all
+/*NonOSE*: --svn-sync-process-export none
+/unused/*: --svn-sync-process-export none
+## @todo export: why is this secret?
+/resolutions.txt: --svn-sync-process-export none
+
+# SVG is xml, but apparently spec'ed to LF.
+*.svg: --treat-as xml --external-copyright --del-action force-native-eol --add-action force-lf --dont-set-svn-keywords
+
+# Some PDF related stuff.
+*.ai: --treat-as binary
 
