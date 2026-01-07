@@ -17,7 +17,7 @@
 
  wstring                        BSTR        PRUnichar*      xsd:string          std::string            String            string
 
- result                                                     xsd:unsignedInt(1)  (undefined)                             
+ result                                                     xsd:unsignedInt(1)  (undefined)
 
  uuid                                                       xsd:string(1)       (undefined)
 
