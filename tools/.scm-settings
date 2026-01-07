@@ -1,4 +1,4 @@
-# $Id: .scm-settings 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $
+# $Id: .scm-settings 112363 2026-01-07 23:49:45Z knut.osmundsen@oracle.com $
 ## @file
 # Source code massager settings for the tools.
 #
@@ -25,17 +25,44 @@
 # SPDX-License-Identifier: GPL-3.0-only
 #
 
+#
+# The default here is not to export stuff.
+#
+--svn-sync-process-export none
+
+.scm-settings:          --svn-sync-process-export all
+/pylintrc:              --svn-sync-process-export all
+/envSub.vbs:            --svn-sync-process-export all
+## @todo export: Why do we export envSub.vbs but not anything using it? (env.cmd, envSub.cmd)
+
+/bin/backport*|/bin/common-*|/bin/gen-*|/bin/prerequisites*.sh|/bin/RemoveDirFromPath.sh: --svn-sync-process-export all
+/bin/retry*|/bin/vboxlogabstime.pl: --svn-sync-process-export all
+/bin/ose-tarball.sh:    --svn-sync-process-export all ## @todo export: odd one out?
+
+/darwin.amd64/bin/*:    --svn-sync-process-export all
+/darwin.x86/bin/*:      --svn-sync-process-export all
+
+/linux.x86/kmodbuild/*: --svn-sync-process-export all
+
+/win/vbscript/*:        --svn-sync-process-export all
+
+/kBuildTools/*:         --svn-sync-process-export all
+/kBuildUnits/*:         --svn-sync-process-export all
+
+#
+# Other config.
+#
+/envSub.cmd: --treat-as batch --del-action copyright-* --add-action copyright-c-style
+/pylintrc: --treat-as plaintext
+/bashrc:   --treat-as shell
+/parfait*.conf: --treat-as rc
+/parfait-vbox-baseline.conf|/parfait-vbox-exclude.conf: --no-update-license --external-copyright
+
+# filter out fetched directories... ## @todo revise & update
 --filter-out-dirs /common/.
 --filter-out-dirs /freebsd.*/.
 --filter-out-dirs /linux.amd64/.
 --filter-out-dirs /os2.*/.
 --filter-out-dirs /solaris.*/.
 --filter-out-dirs /win.*/.
-
-
-/envSub.cmd: --treat-as batch --del-action copyright-* --add-action copyright-c-style
-/pylintrc: --treat-as plaintext
-/bashrc:   --treat-as shell
-/parfait*.conf: --treat-as rc
-/parfait-vbox-baseline.conf|/parfait-vbox-exclude.conf: --no-update-license --external-copyright
 
