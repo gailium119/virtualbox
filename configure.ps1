@@ -1,4 +1,4 @@
-# $Id: configure.ps1 112140 2025-12-16 17:21:05Z andreas.loeffler@oracle.com $
+# $Id: configure.ps1 112339 2026-01-07 17:55:59Z andreas.loeffler@oracle.com $
 # Thin PowerShell wrapper to call configure.py with passed arguments.
 #
 # Copyright (C) 2025 Oracle and/or its affiliates.
@@ -23,13 +23,13 @@
 #
 
 $python = Get-Command python3 -ErrorAction SilentlyContinue
-if (-not $python) 
+if (-not $python)
 {
     $python = Get-Command python -ErrorAction SilentlyContinue
 }
 
 if (-not $python)
- {
+{
     Write-Host "Python 3 is required in order to build VirtualBox." -ForegroundColor Red
     Write-Host "Please install Python 3 and ensure it is in your PATH." -ForegroundColor Red
     exit 1
