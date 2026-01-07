@@ -1,4 +1,4 @@
-# $Id: .scm-settings 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $
+# $Id: .scm-settings 112300 2026-01-07 00:47:30Z knut.osmundsen@oracle.com $
 ## @file
 # Source code massager settings for VBoxGL.
 #
@@ -25,5 +25,10 @@
 # SPDX-License-Identifier: GPL-3.0-only
 #
 
+## @todo r=bird: Someone please explain how these two files are generated!
+## Looks like mesa/mesa-24.0.2/src/gallium/targets/libgl-gdi/opengl32.def.in
+## is the source and that mesa-24.0.2/bin/gen_vs_module_defs.py (or something)
+## have been used do the mangling.  So, external-copyright is probably
+## approrpiate here, then.
+/opengl32*.def: --external-copyright --no-convert-tabs
 
---filter-out-files "opengl32*def"
