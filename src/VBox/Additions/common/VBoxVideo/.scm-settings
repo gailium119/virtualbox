@@ -1,4 +1,4 @@
-# $Id: .scm-settings 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $
+# $Id: .scm-settings 112302 2026-01-07 00:57:31Z knut.osmundsen@oracle.com $
 ## @file
 # Source code massager settings for common/VBoxVideo
 #
@@ -31,3 +31,5 @@
 # This graphics stuff is using MIT to encourage kernel upstreaming.
 --license-mit
 
+# Zero-byte dummy/todo file.
+/todo-create-library-from-these-files-for-windows: --treat-as plaintext
