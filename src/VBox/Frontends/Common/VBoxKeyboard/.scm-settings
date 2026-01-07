@@ -1,4 +1,4 @@
-# $Id: .scm-settings 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $
+# $Id: .scm-settings 112330 2026-01-07 12:37:54Z knut.osmundsen@oracle.com $
 ## @file
 # Source code massager settings for VBoxKeyboard.
 #
@@ -29,3 +29,4 @@
 # These are LGPL and generally external.
 /keyboard*|/xkbtoscan.h: --external-copyright --no-fix-header-guards
 
+/COPYING.LIB: --treat-as plaintext
