@@ -1,4 +1,4 @@
-# $Id: .scm-settings 111731 2025-11-14 12:02:32Z knut.osmundsen@oracle.com $
+# $Id: .scm-settings 112310 2026-01-07 01:38:44Z knut.osmundsen@oracle.com $
 ## @file
 # Source code massager settings for the NT GA installer.
 #
@@ -25,14 +25,14 @@
 # SPDX-License-Identifier: GPL-3.0-only
 #
 
-/ISO/AUTORUN.INF: --treat-as drvinf --del-action force-native-eol --add-action force-crlf
-/ISO/NT3xReadme.txt: --add-action force-crlf
+/ISO/AUTORUN.INF:       --treat-as drvinf --del-action force-native-eol --add-action force-crlf
+/ISO/NT3xReadme.txt:    --add-action force-crlf
 
 /dumplog.nsh:           --external-copyright
 /ReplaceDLL.nsh:        --external-copyright
 /servicepack.nsh:       --external-copyright --no-convert-tabs
 /strstr.nsh:            --external-copyright
 /winver.nsh:            --external-copyright
-/VBoxWHQLFake.au3:      --treat-as .nsh
+/VBoxWHQLFake.au3:      --treat-as nsis
 
 /InstallHelper/exdll.h: --external-copyright

@@ -1,4 +1,4 @@
-# $Id: .scm-settings 111731 2025-11-14 12:02:32Z knut.osmundsen@oracle.com $
+# $Id: .scm-settings 112310 2026-01-07 01:38:44Z knut.osmundsen@oracle.com $
 ## @file
 # Source code massager settings for the NT additions.
 #
@@ -24,6 +24,9 @@
 #
 # SPDX-License-Identifier: GPL-3.0-only
 #
+
+# Exporting everything.
+--svn-sync-process-export all
 
 # .reg-files uses ';' as comment, so throw them in with linker definition
 # files but with force CRLF ending style.  We also skip the copyright and
