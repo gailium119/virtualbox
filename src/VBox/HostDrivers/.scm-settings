@@ -1,4 +1,4 @@
-# $Id: .scm-settings 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $
+# $Id: .scm-settings 112332 2026-01-07 12:47:28Z knut.osmundsen@oracle.com $
 ## @file
 # Source code massager settings for the host installers.
 #
@@ -34,9 +34,12 @@
 # SPDX-License-Identifier: GPL-3.0-only OR CDDL-1.0
 #
 
-# Driver code is dual licensed.
---license-ose-dual
+# Almost all is exported.
+--svn-sync-process-export all
+/win/ca/bootstrap-ca.sh|/win/ca/issue-cert.sh:  --svn-sync-process-export none
 
+# Driver code is dual licensed, except for adpctl.
+--license-ose-dual
 /adpctl/*: --license-ose-gpl
 
 # External stuff.
@@ -46,28 +49,28 @@
 /Support/os2/SUPDrvA-os2.asm:                   --external-copyright
 /VBoxNetAdp/freebsd/VBoxNetAdp-freebsd.c:       --external-copyright
 /VBoxNetFlt/freebsd/VBoxNetFlt-freebsd.c:       --external-copyright
---filter-out-files /VBoxUSB/solaris/include/usbai_private.h
+/VBoxUSB/solaris/include/usbai_private.h:       --3rd-party
 
 # No license header (public domain).
 /VBoxUSB/os2/usbcalls.c:                        --external-copyright
 /VBoxUSB/os2/usbcalls.h:                        --external-copyright --no-convert-tabs
 
 # Trivial dual C and assembly include files which cannot have comments.
-/Support/win/import-template-kernel32.h: --no-update-copyright-year --no-update-license --no-fix-header-guards
-/Support/win/import-template-ntdll.h:    --no-update-copyright-year --no-update-license --no-fix-header-guards
+/Support/win/import-template-kernel32.h:        --no-update-copyright-year --no-update-license --no-fix-header-guards
+/Support/win/import-template-ntdll.h:           --no-update-copyright-year --no-update-license --no-fix-header-guards
 
-# Ignore binary files
---filter-out-files /Support/Certificates/*.taf
---filter-out-files /Support/Certificates/*.cer
+# Binary files
+/Support/Certificates/*.taf:                    --treat-as binary
+/Support/Certificates/*.cer:                    --treat-as binary
+/Support/Certificates/*.crt:                    --treat-as binary
+/Support/win/winstub.com:                       --treat-as binary
 
 # Misc
-/linux/build_in_tmp: --treat-as .sh
-/*/solaris/*.conf: --treat-as .sh
---filter-out-files /VBoxNetAdp/solaris/hostname.vboxnet0
---filter-out-files /VBoxNetFlt/win/nobj/VBoxNetFltNobj.rgs
-/VBoxNetFlt/win/nobj/VBoxNetFltNobjT.idl: --treat-as .h --no-fix-header-guards
-/Support/solaris/mod.sh: --no-convert-tabs
-/Support/linux/SUPDrv-linux.mod.c: --no-convert-tabs
+/linux/build_in_tmp:                            --treat-as .sh
+/*/solaris/*.conf:                              --treat-as .sh
+/VBoxNetAdp/solaris/hostname.vboxnet0:          --treat-as plaintext --del-action force-native-eol --add-action force-lf --dont-set-svn-keywords
+/Support/solaris/mod.sh:                        --no-convert-tabs
+/Support/linux/SUPDrv-linux.mod.c:              --no-convert-tabs
 
-/*.h: --guard-relative-to-dir .
+/*.h:                                           --guard-relative-to-dir .
 
