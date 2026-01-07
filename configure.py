@@ -6,7 +6,7 @@ Requires >= Python 3.4.
 """
 
 # -*- coding: utf-8 -*-
-# $Id: configure.py 112338 2026-01-07 17:22:34Z andreas.loeffler@oracle.com $
+# $Id: configure.py 112341 2026-01-07 18:19:03Z andreas.loeffler@oracle.com $
 # pylint: disable=bare-except
 # pylint: disable=consider-using-f-string
 # pylint: disable=global-statement
@@ -61,7 +61,7 @@ SPDX-License-Identifier: GPL-3.0-only
 # External Python modules or other dependencies are not allowed!
 #
 
-__revision__ = "$Revision: 112338 $"
+__revision__ = "$Revision: 112341 $"
 
 import argparse
 import ctypes
@@ -2660,7 +2660,7 @@ int main()
             self.printVerbose(1, 'Python disbled, skipping');
             return True;
 
-        asModulesToCheck = [ 'packaging' ];
+        asModulesToCheck = [ 'packaging' ]; # Required by XPCOM.
 
         self.printVerbose(1, 'Checking modules ...');
 
@@ -3244,7 +3244,9 @@ g_aoTools = [
               asDefinesToDisableIfNotFound = [ 'VBOX_WITH_OPEN_WATCOM' ]),
     ToolCheck("python_c_api", asCmd = [ ], fnCallback = ToolCheck.checkCallback_PythonC_API,
               asDefinesToDisableIfNotFound = [ 'VBOX_WITH_PYTHON' ]),
+    # Note: Currently only required for XPCOM.
     ToolCheck("python_modules", asCmd = [ ], fnCallback = ToolCheck.checkCallback_PythonModules,
+              aeTargets = [ BuildTarget.DARWIN, BuildTarget.LINUX, BuildTarget.SOLARIS ],
               asDefinesToDisableIfNotFound = [ 'VBOX_WITH_PYTHON' ]),
     ToolCheck("xcode", asCmd = [], fnCallback = ToolCheck.checkCallback_XCode, aeTargets = [ BuildTarget.DARWIN ]),
     ToolCheck("yasm", asCmd = [ 'yasm' ], fnCallback = ToolCheck.checkCallback_YASM),
@@ -3948,13 +3950,13 @@ def main():
         print(f'Configuration completed with {g_cWarnings} warning(s). See {g_sFileLog} for details.');
         print('');
         for sWarn in g_asWarnings:
-            printLog(sWarn, sPrefix = "    *** WARN:");
+            print(sWarn, sPrefix = "    *** WARN:");
     if g_cErrors:
         print('');
         print(f'Configuration failed with {g_cErrors} error(s). See {g_sFileLog} for details.');
         print('');
         for sErr in g_asErrors:
-            printLog(sErr, sPrefix = "    *** ERROR:");
+            print(sErr, sPrefix = "    *** ERROR:");
     if  g_fContOnErr \
     and g_cErrors:
         print('');
