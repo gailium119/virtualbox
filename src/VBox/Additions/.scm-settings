@@ -1,4 +1,4 @@
-# $Id: .scm-settings 111731 2025-11-14 12:02:32Z knut.osmundsen@oracle.com $
+# $Id: .scm-settings 112313 2026-01-07 01:50:55Z knut.osmundsen@oracle.com $
 ## @file
 # Source code massager settings for the Additions.
 #
@@ -25,6 +25,10 @@
 # SPDX-License-Identifier: GPL-3.0-only
 #
 
+# Exporting everything.
+--svn-sync-process-export all
+
+# Header configs.
 /*.h: --guard-relative-to-dir . --guard-prefix GA_INCLUDED_SRC_
 /3D/mesa/include/*.h:   --guard-relative-to-dir 3D/mesa/include --guard-prefix GA_INCLUDED_3D_MESA_
 /3D/win/include/*.h:    --guard-relative-to-dir 3D/win/include  --guard-prefix GA_INCLUDED_3D_WIN_
