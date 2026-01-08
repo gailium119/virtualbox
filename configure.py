@@ -6,7 +6,7 @@ Requires >= Python 3.4.
 """
 
 # -*- coding: utf-8 -*-
-# $Id: configure.py 112342 2026-01-07 18:25:18Z andreas.loeffler@oracle.com $
+# $Id: configure.py 112381 2026-01-08 16:04:03Z andreas.loeffler@oracle.com $
 # pylint: disable=bare-except
 # pylint: disable=consider-using-f-string
 # pylint: disable=global-statement
@@ -61,7 +61,7 @@ SPDX-License-Identifier: GPL-3.0-only
 # External Python modules or other dependencies are not allowed!
 #
 
-__revision__ = "$Revision: 112342 $"
+__revision__ = "$Revision: 112381 $"
 
 import argparse
 import ctypes
@@ -132,6 +132,8 @@ g_mapPythonArch2BuildArch = {
     "aarch64": BuildArch.ARM64,
     "arm64": BuildArch.ARM64
 };
+# Supported build architectures.
+g_aeBuildArchs = [ BuildArch.X86, BuildArch.AMD64, BuildArch.ARM64 ];
 
 # Defines the host architecture.
 g_sHostArch = platform.machine().lower();
@@ -153,6 +155,8 @@ class BuildTarget:
     BSD = "bsd";
     HAIKU = "haiku";
     UNKNOWN = "unknown";
+# Supported build targets.
+g_aeBuildTargets = [ BuildTarget.LINUX, BuildTarget.WINDOWS, BuildTarget.SOLARIS, BuildTarget.BSD, BuildTarget.HAIKU ];
 
 g_fDebug = False;             # Enables debug mode. For development.
 g_fContOnErr = False;         # Continue on fatal errors.
@@ -353,6 +357,30 @@ def getExeSuff(enmBuildTarget = g_enmHostTarget):
         return '';
     return ".exe";
 
+# Map of library suffixes. Index 0 marks the ending for static libs, index 1 for dynamic ones.
+g_mapLibSuffix = {
+    BuildTarget.BSD:     [ ".a",   ".so"    ],
+    BuildTarget.WINDOWS: [ ".lib", ".dll"   ],
+    BuildTarget.LINUX:   [ ".a",   ".so"    ],
+    BuildTarget.SOLARIS: [ ".a",   ".so"    ],
+    BuildTarget.DARWIN:  [ ".a",   ".dylib" ]
+}
+
+def getFileLibSuff(sFilename, enmBuildTarget = g_enmHostTarget, sDefaultSuff = None):
+    """
+    Returns the suffix of the given library file name. Must match the given target (host target by default).
+
+    If no suffix found and sDefaultSuff is empty, the dynamic suffix for the given target will be returned.
+    """
+    asExt = os.path.splitext(sFilename);
+    if asExt and len(asExt) >= 1:
+        sSuff = asExt[1];
+        if not sSuff:
+            sSuff = sDefaultSuff if sDefaultSuff else g_mapLibSuffix[enmBuildTarget][1];
+        assert sSuff in g_mapLibSuffix[enmBuildTarget];
+        return sSuff;
+    return '';
+
 def getLibSuff(fStatic = True, enmBuildTarget = g_enmHostTarget):
     """
     Returns the (dot) library suffix for a given build target.
@@ -360,19 +388,16 @@ def getLibSuff(fStatic = True, enmBuildTarget = g_enmHostTarget):
     By default static libraries suffixes will be returned.
     Defaults to the host target.
     """
-    if enmBuildTarget == BuildTarget.WINDOWS:
-        return '.lib' if fStatic else '.dll';
-    elif enmBuildTarget == BuildTarget.DARWIN:
-        return '.a' if fStatic else '.dylib';
-    return '.a' if fStatic else '.so';
+    return g_mapLibSuffix[enmBuildTarget][0 if fStatic else 1];
 
-def hasLibSuff(sFile, fStatic = True):
+
+def hasLibSuff(sFilename, fStatic = True):
     """
     Return True if a given file name has a (static) library suffix,
     or False if not.
     """
-    assert sFile;
-    return sFile.endswith(getLibSuff(fStatic));
+    assert sFilename;
+    return sFilename.endswith(getLibSuff(fStatic));
 
 def withLibSuff(sFile, fStatic = True):
     """
@@ -386,7 +411,7 @@ def withLibSuff(sFile, fStatic = True):
         return sFile;
     return sFile + getLibSuff(fStatic);
 
-def libraryFileStripSuffix(sLib):
+def stripLibSuff(sLib):
     """
     Strips common static/dynamic library suffixes (UNIX, macOS, Windows) from a filename.
 
@@ -399,18 +424,6 @@ def libraryFileStripSuffix(sLib):
     # Handle .dylib (macOS), .dll/.lib (Windows), .a (static).
     sLib = re.sub(r'\.(dylib|dll|lib|a)$', '', sLib, flags = re.IGNORECASE);
     return sLib;
-
-def libraryFileGetLinkerArg(sLib, fStripPath = False):
-    """
-    Returns the library file ready to be used as a linker argument.
-    """
-    sLibName = os.path.basename(sLib);
-    if g_enmHostTarget != BuildTarget.WINDOWS: # On Windows we can use the lib name as-is.
-        if      sLibName.startswith('lib') \
-        and not fStripPath:
-            sLibName = sLibName[3:]; # Strip 'lib' prefix.
-        sLibName = libraryFileStripSuffix(sLibName);
-    return sLibName if not fStripPath else os.path.join(os.path.dirname(sLib), sLibName);
 
 def getLinuxGnuTypeFromPlatform():
     """
@@ -486,33 +499,38 @@ def checkWhich(sCmdName, sToolDesc = None, sCustomPath = None, asVersionSwitches
     printVerbose(1, f"'{sCmdName}' not found in PATH.");
     return None, None;
 
-def getLinkerArgs(enmBuildTarget, asLibFiles):
+def getLinkerArgs(enmBuildTarget, asLibPaths, asLibFiles):
     """
     Returns the linker arguments for the library as a list.
 
-    Returns an empty list for no libs.
+    Returns an empty list for no arguments.
     """
     if not asLibFiles:
         return [];
 
-    asLibArgs = [];
+    asLinkerArg = [];
 
     if enmBuildTarget == BuildTarget.WINDOWS:
-        asLibArgs.extend( [ '/link' ]);
+        asLinkerArg.extend([ '/link' ]);
 
     for sLibCur in asLibFiles:
         if not sLibCur:
             continue;
         if enmBuildTarget == BuildTarget.WINDOWS:
-            asLibArgs.extend([ withLibSuff(sLibCur) ]);
+            asLinkerArg.extend([ withLibSuff(sLibCur) ]);
         else:
-            # Remove 'lib' prefix if present for -l on UNIX-y OSes.
-            if sLibCur.startswith('lib'):
-                sLibCur = sLibCur[3:];
+            sLibPath = os.path.dirname(sLibCur);
+            # Absolute path not covered by the library paths?
+            if sLibPath and sLibPath not in asLibPaths:
+                asLinkerArg += [ f'{sLibCur}' ];
             else:
-                sLibCur = ':' + sLibCur;
-            asLibArgs += [ f'-l{sLibCur}' ];
-    return asLibArgs;
+                sLibName = os.path.basename(sLibCur);
+                # Remove 'lib' prefix if present for -l on UNIX-y OSes (libfoo -> -lfoo):
+                if sLibName.startswith('lib'):
+                    sLibName = sLibName[3:];
+                    sLibName = stripLibSuff(sLibName);
+                asLinkerArg += [ f'-l{sLibName}' ];
+    return asLinkerArg;
 
 def hasCPPHeader(asHeader):
     """
@@ -619,7 +637,7 @@ def compileAndExecute(sName, enmBuildTarget, enmBuildArch, asIncPaths, asLibPath
 
     sFileSource = os.path.join(sTempDir, "testlib.cpp" if fCPP else "testlib.c");
     asFilesToDelete.extend( [sFileSource] );
-    sFileImage  = os.path.join(sTempDir, "a.out" if enmBuildTarget != BuildTarget.WINDOWS else "a.exe");
+    sFileImage  = os.path.join(sTempDir, "testlib" if enmBuildTarget != BuildTarget.WINDOWS else "testlib.exe");
     asFilesToDelete.extend( [sFileImage] );
 
     with open(sFileSource, "w", encoding = 'utf-8') as fh:
@@ -664,7 +682,7 @@ def compileAndExecute(sName, enmBuildTarget, enmBuildArch, asIncPaths, asLibPath
             for sDef in asCompilerArgs:
                 asCmd.extend( [ sDef ] );
 
-    asCmd.extend(getLinkerArgs(enmBuildTarget, asLibFiles));
+    asCmd.extend(getLinkerArgs(enmBuildTarget, asLibPaths, asLibFiles));
     if asLinkerArgs:
         asCmd.extend(asLinkerArgs);
 
@@ -1060,7 +1078,7 @@ class LibraryCheck(CheckBase):
     """
     def __init__(self, sName, asIncFiles, asLibFiles, aeTargets = None, aeArchs = None, sCode = None,
                  asIncPaths = None, asLibPaths = None,
-                 fnCallback = None, aeTargetsExcluded = None, sSdkName = None,
+                 fnCallback = None, aeTargetsExcluded = None, fUseInTree = False, sSdkName = None,
                  asDefinesToDisableIfNotFound = None):
         """
         Constructor.
@@ -1069,7 +1087,10 @@ class LibraryCheck(CheckBase):
 
         # List of library header (.h) files required to be found.
         self.asHdrFiles = asIncFiles or [];
-        # List of library shared object / static file names for this library check (without OS suffix).
+        # List of library shared object / static library names for this library check.
+        # The first entry (index 0) is the main library of the check.
+        # The following indices are for auxillary libraries needed.
+        # Without suffix a dynamic library will be ASSUMED.
         self.asLibFiles = asLibFiles or [];
         # Optional C/C++ test code to compile and execute to proof that the library is installed correctly
         # and in a working shape.
@@ -1102,8 +1123,12 @@ class LibraryCheck(CheckBase):
         self.asDefines = [];
         # Is a tri-state: None if not required (optional or not needed), False if required but not found, True if found.
         self.fHave = None;
-        # If the library is part of our source tree and is source-only.
-        self.fInTreeSourceOnly = False;
+        # Whether the library will be used from (in-tree) sources (if available) or not. Default is False.
+        # Can be explicitly specified via '--build-<libname>'.
+        self.fUseInTree = fUseInTree;
+        # Flag if the library is part of our source tree (and thus is source-only).
+        # Will be determined at runtime.
+        self.fIsInTree = False;
         # Contains the (parsable) version string if detected.
         # Only valid if self.fHave is True.
         self.sVer = None;
@@ -1145,7 +1170,7 @@ class LibraryCheck(CheckBase):
         fRc, sStdOut, sStdErr = compileAndExecute(self.sName, enmBuildTarget, enmBuildArch, \
                                                   self.asIncPaths, self.asLibPaths, self.asHdrFiles, self.asLibFiles, \
                                                   sCode, asCompilerArgs = self.asCompilerArgs, asLinkerArgs = self.asLinkerArgs, asDefines = self.asDefines,
-                                                  fCompileMayFail = self.fInTreeSourceOnly);
+                                                  fCompileMayFail = self.fUseInTree);
         if fRc and sStdOut:
             self.sVer = sStdOut;
         return fRc, sStdOut, sStdErr;
@@ -1154,27 +1179,43 @@ class LibraryCheck(CheckBase):
         """
         Applies argparse options for disabling and custom paths.
         """
+        fUseInTree = getattr(args, f'config_libs_build_{self.sName.replace("-", "_")}', None);
+        if fUseInTree:
+            self.fUseInTree = fUseInTree; # Only set if explicitly specified on command line -- otherwise take the lib's default.
         self.fDisabled = getattr(args, f'config_libs_disable_{self.sName.replace("-", "_")}', False);
         self.sRootPath = getattr(args, f'config_libs_path_{self.sName.replace("-", "_")}', None);
 
+        # Sanity checks.
+        if self.fDisabled and (   self.fUseInTree \
+                               or self.sRootPath):
+            self.printError(f"Disabling and setting other parameters for library '{self.sName}' really makes no sense?!");
+            return False;
+
+        return True;
+
     def getRootPath(self):
         """
-        Returns the tuple (root path, in tree) of the library.
+        Returns the library's root path.
 
-        Will return (None, False) if not found.
+        Will return a tuple (root path, in tree) of the library, or (None, False) if not found.
+        This also will take care of custom root paths (if specified).
         """
         sRootPath = self.sRootPath; # A custom path has precedence.
         fInTree   = False;
         if sRootPath:
-            printVerbose(1, f'Root path for tool {self.sName} was set to: {sRootPath}');
+            printVerbose(1, f'Root path for library {self.sName} was set to custom path: {sRootPath}');
         if  not g_oEnv['config_ignore_in_tree_libs'] \
         and not sRootPath : # Search for in-tree libs.
             sPath  = os.path.join(g_sScriptPath, 'src', 'libs');
             asPath = glob.glob(os.path.join(sPath, self.sName + '*'));
             for sCurDir in asPath:
-                sRootPath = os.path.join(sPath, sCurDir);
-                printVerbose(1, f'In-tree path found for library {self.sName}: {sRootPath}');
-                fInTree = True;
+                sPath = os.path.join(sPath, sCurDir);
+                printVerbose(1, f'In-tree path found for library {self.sName}: {sPath}');
+                if self.fUseInTree:
+                    sRootPath = sPath;
+                    fInTree   = True;
+                else:
+                    printVerbose(1, 'In-tree usage is disabled or not specified, ignoring');
         if not sRootPath:
             printVerbose(1, f'No root path found for library {self.sName}');
         else:
@@ -1404,17 +1445,18 @@ class LibraryCheck(CheckBase):
 
     def checkLib(self, fStatic = False):
         """
-        Checks for libraries in standard/custom lib paths.
+        Checks libraries in standard/custom lib paths and returns the results.
 
-        Returns a tuple of (True, list of lib paths found) on success or (False, None) on failure.
+        Returns a tuple of (True, list of lib paths, list of absolute lib file paths) on success
+        or (False, None, None) on failure.
         """
         self.printVerbose(1, 'Checking library paths ...');
         if not self.asLibFiles:
             self.printVerbose(1, 'No libraries defined, skipping');
-            return True, [];
-        if self.fInTreeSourceOnly:
-            self.printVerbose(1, 'Library in-tree and source only, skipping');
-            return True, [];
+            return True, [], [];
+        if self.fUseInTree:
+            self.printVerbose(1, 'Library needs to be used in-tree and thus is source only, skipping');
+            return True, [], [];
 
         asSearchPath = self.asLibPaths + self.getLibSearchPaths(); # Own lib paths have precedence.
         setLibFound  = {}; # Key = Lib file, Value = Path to lib file.
@@ -1425,22 +1467,26 @@ class LibraryCheck(CheckBase):
                 if hasLibSuff(sCurLib):
                     sPattern = os.path.join(sCurSearchPath, sCurLib);
                 else:
-                    sPattern = os.path.join(sCurSearchPath, f"{sCurLib}*{getLibSuff(fStatic)}*");
+                    sPattern = os.path.join(sCurSearchPath, f"{sCurLib}{getLibSuff(fStatic)}*");
                 self.printVerbose(2, f"Checking '{sPattern}'");
                 for sCurFile in glob.glob(sPattern):
                     if isFile(sCurFile) \
                     or os.path.islink(sCurFile):
                         if sCurLib not in setLibFound:
-                            setLibFound[sCurLib] = os.path.dirname(sCurFile);
+                            setLibFound[sCurLib] = sCurFile;
                         break;
 
         fRc = True;
 
         asLibPaths = [];
+        asLibFiles = [];
         self.printVerbose(1, 'Found library files:');
-        for sLib, sPath in setLibFound.items():
-            self.printVerbose(1, f'\t{os.path.join(sPath, sLib)}');
-            asLibPaths.extend([ sPath ]);
+        for sLib, sFile in setLibFound.items():
+            self.printVerbose(1, f'\t{sFile}');
+            sPath = os.path.dirname(sFile);
+            if sPath not in asLibPaths:
+                asLibPaths.extend([ sPath ]);
+            asLibFiles.extend([ sFile ]);
 
         for sLib in asLibToSearch:
             if sLib not in setLibFound:
@@ -1449,7 +1495,9 @@ class LibraryCheck(CheckBase):
 
         if fRc:
             self.printVerbose(1, 'All libraries found');
-        return fRc, asLibPaths if fRc else None;
+            return True, asLibPaths, asLibFiles;
+
+        return False, None, None;
 
     def checkPackage(self, sPackageName):
         """"
@@ -1489,7 +1537,7 @@ class LibraryCheck(CheckBase):
         self.print('Performing library check ...');
 
         # Check if no custom path was specified and we have the lib in-tree.
-        sPath, self.fInTreeSourceOnly = self.getRootPath();
+        sPath, self.fIsInTree = self.getRootPath();
         if sPath:
             self.fHave     = True;
             self.sRootPath = sPath;
@@ -1501,10 +1549,20 @@ class LibraryCheck(CheckBase):
         if fRc:
             fRc, self.asIncPaths = self.checkHdr();
             if fRc:
-                fRc, self.asLibPaths = self.checkLib();
+                fRc, self.asLibPaths, self.asLibFiles = self.checkLib();
                 if      fRc \
-                and not self.fInTreeSourceOnly:
+                and not self.fIsInTree:
+                    # Only try to compile libraries which are not in-tree, as we only have sources in-tree, not binaries.
                     self.fHave, _, _ = self.compileAndExecute(g_oEnv['KBUILD_TARGET'], g_oEnv['KBUILD_TARGET_ARCH']);
+                if self.fUseInTree and not self.fIsInTree:
+                    self.printWarn('Library needs to be used from in-tree sources but was not detected there -- might lead to build errors');
+
+                # Define the SDK location so that the external lib can be found by our build system.
+                if  self.fHave \
+                and not self.fUseInTree:
+                    g_oEnv.set(f'SDK_{self.sSdkName}_INCS'       , ' '.join(self.asIncPaths));
+                    g_oEnv.set(f'SDK_{self.sSdkName}_LIBS'       , ' '.join(self.asLibFiles));
+                    g_oEnv.set(f'SDK_{self.sSdkName}BldProg_LIBS', ' '.join(self.asLibFiles)); ## @todo Filter that out for most of the stuff.
         if not fRc:
             if self.asDefinesToDisableIfNotFound: # Implies being optional.
                 self.printWarn('Library check failed and is optional');
@@ -1524,7 +1582,7 @@ class LibraryCheck(CheckBase):
         if self.fDisabled:
             return "DISABLED";
         elif self.fHave:
-            return "in-tree" if self.fInTreeSourceOnly else "ok";
+            return "in-tree" if self.fUseInTree else "ok";
         elif self.fHave is None:
             return "?";
         else:
@@ -1742,6 +1800,13 @@ class ToolCheck(CheckBase):
         sToolName = self.sName.replace("-", "_"); # So that we can use variables directly w/o getattr.
         self.fDisabled = getattr(oArgs, f"config_tools_disable_{sToolName}", False);
         self.sRootPath = getattr(oArgs, f"config_tools_path_{sToolName}", None);
+
+        # Sanity checks.
+        if self.fDisabled and self.sRootPath:
+            self.printError(f"Disabling and setting a root path for tool '{self.sName}' really makes no sense?!");
+            return False;
+
+        return True;
 
     def getRootPath(self):
         """
@@ -2638,7 +2703,7 @@ int main()
         asLibDir.extend([ sysconfig.get_config_var("LIBDIR") ]);
 
         asLib = [];
-        asLib.extend([ libraryFileStripSuffix(sysconfig.get_config_var("LDLIBRARY")) ]);
+        asLib.extend([ stripLibSuff(sysconfig.get_config_var("LDLIBRARY")) ]);
 
         # Make sure that the Python .dll / .so files are in PATH.
         g_oEnv.prependPath('PATH', sysconfig.get_paths()[ 'data' ]);
@@ -3120,6 +3185,7 @@ Hint: Combine any supported --disable-<lib|tool> and --with-<lib>-path=PATH opti
 """);
 
 # The sorting order is important here -- don't change without proper testing!
+# Also note: The library name can be arbitrary and should match the library name.
 g_aoLibs = [
     LibraryCheck("linux-kernel-headers", [ "linux/version.h" ], [ ],  aeTargets = [ BuildTarget.LINUX ],
                  sCode = '#include <linux/version.h>\nint printf(const char *f,...);\nint main(void) { printf("%d.%d.%d", LINUX_VERSION_CODE / 65536, (LINUX_VERSION_CODE % 65536) / 256,LINUX_VERSION_CODE % 256);\n#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,32)\nreturn 0;\n#else\nprintf("Expected version 2.6.32 or higher"); return 1;\n#endif\n }\n'),
@@ -3128,13 +3194,13 @@ g_aoLibs = [
     LibraryCheck("libstdc++", [ "iostream" ], [ ], aeTargets = [ BuildTarget.LINUX, BuildTarget.SOLARIS ],
                  sCode = 'int main() { \nstd::string s = \"test";\n#ifdef __GLIBCXX__\nstd::cout << __GLIBCXX__;\n#elif defined(__GLIBCPP__)\nstd::cout << __GLIBCPP__;\n#else\nreturn 1\n#endif\nreturn 0; }\n'),
     ## @todo Undefined symbols for architecture arm64: _f32_add
-    LibraryCheck("softfloat", [ "softfloat.h", "iprt/cdefs.h" ], [ "libsoftfloat" ], aeTargets = [ BuildTarget.ANY ], aeArchs = [ BuildArch.AMD64, BuildArch.X86 ],
+    LibraryCheck("softfloat", [ "softfloat.h", "iprt/cdefs.h" ], [ "libsoftfloat" ], aeTargets = [ BuildTarget.ANY ], aeArchs = [ BuildArch.AMD64, BuildArch.X86 ], fUseInTree = True,
                  sCode = '#define IN_RING3\n#include <softfloat.h>\nint main() { softfloat_state_t s; float32_t x, y; f32_add(x, y, &s); printf("<found>"); return 0; }\n',
                  asIncPaths = [ os.path.join(g_sScriptPath, 'include') ]),
-    LibraryCheck("dxmt", [ "version.h" ], [ "libdxmt" ], aeTargets = [ BuildTarget.LINUX, BuildTarget.SOLARIS ],
+    LibraryCheck("dxmt", [ "version.h" ], [ "libdxmt" ], aeTargets = [ BuildTarget.LINUX, BuildTarget.SOLARIS ], fUseInTree = True,
                  sCode = '#include <version.h>\nint main() { return 0; }\n',
                  asDefinesToDisableIfNotFound = [ 'VBOX_WITH_DXMT' ]),
-    LibraryCheck("dxvk", [ "version.h" ], [ "libdxvk" ],  aeTargets = [ BuildTarget.LINUX ],
+    LibraryCheck("dxvk", [ "version.h" ], [ "libdxvk" ],  aeTargets = [ BuildTarget.LINUX ], fUseInTree = True,
                  sCode = '#include <version.h>\nint main() { printf(DXVK_VERSION); return 0; }\n',
                  asDefinesToDisableIfNotFound = [ 'VBOX_WITH_DXVK' ]),
     LibraryCheck("libasound", [ "alsa/asoundlib.h", "alsa/version.h" ], [ "libasound" ], aeTargets = [ BuildTarget.LINUX, BuildTarget.SOLARIS ],
@@ -3145,7 +3211,7 @@ g_aoLibs = [
                  sCode = '#include <X11/Xcursor/Xcursor.h>\nint main() { XcursorImage *cursor = XcursorImageCreate (10, 10); XcursorImageDestroy(cursor); printf("%d.%d", XCURSOR_LIB_MAJOR, XCURSOR_LIB_MINOR); return 0; }\n'),
     LibraryCheck("libxcb-cursor", [ "xcb/xcb_cursor.h" ], [ "libxcb-cursor" ], aeTargets = [ BuildTarget.LINUX, BuildTarget.SOLARIS ],
                  sCode = '#include <xcb/xcb_cursor.h>\nint main() { printf("<found>"); return 0; }\n'),
-    LibraryCheck("curl", [ "curl/curl.h" ], [ "libcurl" ], aeTargets = [ BuildTarget.ANY ],
+    LibraryCheck("curl", [ "curl/curl.h" ], [ "libcurl" ], aeTargets = [ BuildTarget.ANY ], fUseInTree = True,
                  sCode = '#include <curl/curl.h>\nint main() { printf("%s", LIBCURL_VERSION); return 0; }\n',
                  sSdkName = "VBoxLibCurl"),
     LibraryCheck("libdevmapper", [ "libdevmapper.h" ], [ "libdevmapper" ], aeTargets = [ BuildTarget.LINUX, BuildTarget.SOLARIS ],
@@ -3153,51 +3219,51 @@ g_aoLibs = [
     LibraryCheck("libgsoapssl++", [ "stdsoap2.h" ], [ "libgsoapssl++" ], aeTargets = [ BuildTarget.LINUX, BuildTarget.SOLARIS ],
                  sCode = '#include <stdsoap2.h>\nint main() { printf("%ld", GSOAP_VERSION); return 0; }\n',
                  asDefinesToDisableIfNotFound = [ 'VBOX_WITH_WEBSERVICES' ]),
-    LibraryCheck("libjpeg-turbo", [ "turbojpeg.h" ], [ "libturbojpeg" ], aeTargets = [ BuildTarget.ANY ],
+    LibraryCheck("libjpeg-turbo", [ "turbojpeg.h" ], [ "libturbojpeg" ], aeTargets = [ BuildTarget.ANY ], fUseInTree = True,
                  sCode = '#include <turbojpeg.h>\nint main() { tjInitCompress(); printf("<found>"); return 0; }\n'),
-    LibraryCheck("liblzf", [ "lzf.h" ], [ "liblzf" ], aeTargets = [ BuildTarget.ANY ],
+    LibraryCheck("liblzf", [ "lzf.h" ], [ "liblzf" ], aeTargets = [ BuildTarget.ANY ], fUseInTree = True,
                  sCode = '#include <liblzf/lzf.h>\nint main() { printf("%d.%d", LZF_VERSION >> 8, LZF_VERSION & 0xff);\n#if LZF_VERSION >= 0x0105\nreturn 0;\n#else\nreturn 1;\n#endif\n }\n'),
-    LibraryCheck("liblzma", [ "lzma.h" ], [ "liblzma" ], aeTargets = [ BuildTarget.ANY ],
+    LibraryCheck("liblzma", [ "lzma.h" ], [ "liblzma" ], aeTargets = [ BuildTarget.ANY ], fUseInTree = True,
                  sCode = '#include <lzma.h>\nint main() { printf("%s", lzma_version_string()); return 0; }\n'),
-    LibraryCheck("libogg", [ "ogg/ogg.h" ], [ "libogg" ], aeTargets = [ BuildTarget.ANY ],
+    LibraryCheck("libogg", [ "ogg/ogg.h" ], [ "libogg" ], aeTargets = [ BuildTarget.ANY ], fUseInTree = True,
                  sCode = '#include <ogg/ogg.h>\nint main() { oggpack_buffer o; oggpack_get_buffer(&o); printf("<found>"); return 0; }\n',
                  sSdkName = "VBoxLibOgg"),
     LibraryCheck("libpam", [ "security/pam_appl.h" ], [ "libpam" ], aeTargets = [ BuildTarget.LINUX, BuildTarget.SOLARIS ],
                  sCode = '#include <security/pam_appl.h>\nint main() { \n#ifdef __LINUX_PAM__\nprintf("%d.%d", __LINUX_PAM__, __LINUX_PAM_MINOR__); if (__LINUX_PAM__ >= 1) return 0;\n#endif\nreturn 1; }\n'),
-    LibraryCheck("libpng", [ "png.h" ], [ "libpng" ], aeTargets = [ BuildTarget.ANY ],
+    LibraryCheck("libpng", [ "png.h" ], [ "libpng" ], aeTargets = [ BuildTarget.ANY ], fUseInTree = True,
                  sCode = '#include <png.h>\nint main() { printf("%s", PNG_LIBPNG_VER_STRING); return 0; }\n'),
     LibraryCheck("libpthread", [ "pthread.h" ], [ "libpthread" ], aeTargets = [ BuildTarget.LINUX, BuildTarget.SOLARIS ],
                  sCode = '#include <unistd.h>\n#include <pthread.h>\nint main() { pthread_mutex_t mutex; if (pthread_mutex_init(&mutex, NULL))\n{ printf("pthread_mutex_init() failed"); return 1; }\nif (pthread_mutex_lock(&mutex))\n{ printf("pthread_mutex_lock() failed"); return 1; }\nif (pthread_mutex_unlock(&mutex))\n{ printf("pthread_mutex_unlock() failed"); return 1; }\n#ifdef _POSIX_VERSION\nprintf("%d", (long)_POSIX_VERSION); return 0;\n#endif\nreturn 1;\n }'),
     LibraryCheck("libpulse", [ "pulse/pulseaudio.h", "pulse/version.h" ], [ "libpulse" ], aeTargets = [ BuildTarget.LINUX, BuildTarget.SOLARIS ],
                  sCode = '#include <pulse/version.h>\nint main() { printf("%s", pa_get_library_version()); return 0; }\n'),
-    LibraryCheck("libslirp", [ "slirp/libslirp.h", "slirp/libslirp-version.h" ], [ "libslirp" ], aeTargets = [ BuildTarget.ANY ],
+    LibraryCheck("libslirp", [ "slirp/libslirp.h", "slirp/libslirp-version.h" ], [ "libslirp" ], aeTargets = [ BuildTarget.ANY ], fUseInTree = True,
                  sCode = '#include <slirp/libslirp.h>\n#include <slirp/libslirp-version.h>\nint main() { printf("%d.%d.%d", SLIRP_MAJOR_VERSION, SLIRP_MINOR_VERSION, SLIRP_MICRO_VERSION); return 0; }\n'),
-    LibraryCheck("libssh", [ "libssh/libssh.h" ], [ "libssh" ], aeTargets = [ BuildTarget.LINUX, BuildTarget.SOLARIS ],
+    LibraryCheck("libssh", [ "libssh/libssh.h" ], [ "libssh" ], aeTargets = [ BuildTarget.LINUX, BuildTarget.SOLARIS ], fUseInTree = True,
                  sCode = '#include <libssh/libssh.h>\n#include <libssh/libssh_version.h>\nint main() { printf("%d.%d.%d", LIBSSH_VERSION_MAJOR, LIBSSH_VERSION_MINOR, LIBSSH_VERSION_MICRO); return 0; }\n'),
-    LibraryCheck("libtpms", [ "libtpms/tpm_library.h" ], [ "libtpms" ], aeTargets = [ BuildTarget.ANY ],
+    LibraryCheck("libtpms", [ "libtpms/tpm_library.h" ], [ "libtpms" ], aeTargets = [ BuildTarget.ANY ], fUseInTree = True,
                  sCode = '#include <libtpms/tpm_library.h>\nint main() { printf("%d.%d.%d", TPM_LIBRARY_VER_MAJOR, TPM_LIBRARY_VER_MINOR, TPM_LIBRARY_VER_MICRO); return 0; }\n'),
     LibraryCheck("libvncserver", [ "rfb/rfb.h", "rfb/rfbclient.h" ], [ "libvncserver" ], aeTargets = [ BuildTarget.LINUX, BuildTarget.SOLARIS ],
                  sCode = '#include <rfb/rfb.h>\nint main() { printf("%s", LIBVNCSERVER_PACKAGE_VERSION); return 0; }\n',
                  asDefinesToDisableIfNotFound = [ 'VBOX_WITH_EXTPACK_VNC' ]),
-    LibraryCheck("libvorbis", [ "vorbis/vorbisenc.h" ], [ "libvorbis", "libvorbisenc" ], aeTargets = [ BuildTarget.ANY ],
+    LibraryCheck("libvorbis", [ "vorbis/vorbisenc.h" ], [ "libvorbis", "libvorbisenc" ], aeTargets = [ BuildTarget.ANY ], fUseInTree = True,
                  sCode = '#include <vorbis/vorbisenc.h>\nint main() { vorbis_info v; vorbis_info_init(&v); int vorbis_rc = vorbis_encode_init_vbr(&v, 2 /* channels */, 44100 /* hz */, (float).4 /* quality */); printf("<found>"); return 0; }\n',
                  sSdkName = "VBoxLibVorbis"),
-    LibraryCheck("libvpx", [ "vpx/vpx_decoder.h" ], [ "libvpx" ], aeTargets = [ BuildTarget.ANY ],
+    LibraryCheck("libvpx", [ "vpx/vpx_decoder.h" ], [ "libvpx" ], aeTargets = [ BuildTarget.ANY ], fUseInTree = True,
                  sCode = '#include <vpx/vpx_codec.h>\nint main() { printf("%s", vpx_codec_version_str()); return 0; }\n',
                  sSdkName = "VBoxLibVpx"),
-    LibraryCheck("libxml2", [ "libxml/parser.h" ] , [ "libxml2" ], aeTargets = [ BuildTarget.ANY ],
+    LibraryCheck("libxml2", [ "libxml/parser.h" ] , [ "libxml2" ], aeTargets = [ BuildTarget.ANY ], fUseInTree = True,
                  sCode = '#include <libxml/xmlversion.h>\nint main() { printf("%s", LIBXML_DOTTED_VERSION); return 0; }\n',
                  sSdkName = "VBoxLibXml2"),
     LibraryCheck("libxslt", [], [], [ BuildTarget.ANY ], None, fnCallback = LibraryCheck.checkCallback_libxslt),
-    LibraryCheck("zlib", [ "zlib.h" ], [ "libz" ], aeTargets = [ BuildTarget.ANY ],
+    LibraryCheck("zlib", [ "zlib.h" ], [ "libz" ], aeTargets = [ BuildTarget.ANY ], fUseInTree = True,
                  sCode = '#include <zlib.h>\nint main() { printf("%s", ZLIB_VERSION); return 0; }\n'),
     ## @todo Compiling in-tree lib fails because of dragging in too much stuff like IN_RING3 and other includes.
     #LibraryCheck("lwip", [ "lwip/init.h" ], [ "liblwip" ], [ BuildTarget.ANY ],
     #             '#include <lwip/init.h>\nint main() { printf("%d.%d.%d", LWIP_VERSION_MAJOR, LWIP_VERSION_MINOR, LWIP_VERSION_REVISION); return 0; }\n'),
     LibraryCheck("libgl", [ "GL/gl.h" ], [ "libGL" ], aeTargets = [ BuildTarget.LINUX, BuildTarget.DARWIN, BuildTarget.SOLARIS ],
                  sCode = '#include <GL/gl.h>\n#include <stdio.h>\nint main() { const GLubyte *s = glGetString(GL_VERSION); printf("%s", s ? (const char *)s : "<found>"); return 0; }\n'),
-    LibraryCheck("openssl", [ "openssl/crypto.h" ], [ "libcrypto" ], aeTargets = [ BuildTarget.WINDOWS ],
-                 sCode = '#include <openssl/crypto.h>\n#include <stdio.h>\nint main() { OpenSSL_version(OPENSSL_VERSION); return 0; }\n',
+    LibraryCheck("openssl", [ "openssl/crypto.h" ], [ "libcrypto", "libssl", "libz", "libzstd" ], fUseInTree = True,
+                 sCode = '#include <openssl/crypto.h>\n#include <stdio.h>\nint main() { printf("%s", OpenSSL_version(OPENSSL_VERSION)); return 0; }\n',
                  sSdkName = "VBoxOpenSslStatic"),
     # Note: The required libs for qt6 can differ (VBox infix and whatnot), and thus will
     #       be resolved in the check callback.
@@ -3266,7 +3332,7 @@ def write_autoconfig_kmk(sFilePath, enmBuildTarget, oEnv, aoLibs, aoTools):
 
     _ = enmBuildTarget, aoTools; # Unused for now.
 
-    w = MakefileWriter(sFilePath, enmBuildTarget, oEnv, 32);
+    w = MakefileWriter(sFilePath, enmBuildTarget, oEnv, 36);
     w.write_raw(f"""
 # -*- Makefile -*-
 #
@@ -3288,11 +3354,12 @@ def write_autoconfig_kmk(sFilePath, enmBuildTarget, oEnv, aoLibs, aoTools):
         if      oLibCur.isInTarget() \
         and not oLibCur.fHave:
             sVarBase = oLibCur.sName.upper().replace("+", "PLUS").replace("-", "_");
-            w.write_raw(f"VBOX_WITH_{sVarBase.ljust(22)} :=");
+            w.write_raw(f"VBOX_WITH_{sVarBase.ljust(26)} :=");
 
     w.write_raw('\n');
 
     # SDKs
+    w.write_all(asPrefixInclude = ['SDK_' ]);
     w.write_all(asPrefixInclude = ['PATH_SDK_' ]);
 
     # Serialize all changes to disk.
@@ -3483,16 +3550,17 @@ def main():
     oParser.add_argument('-v', '--verbose', help="Enables verbose output", action='count', default=4, dest='config_verbose');
     oParser.add_argument('-V', '--version', help="Prints the version of this script", action='store_true');
     for oLibCur in g_aoLibs:
-        oParser.add_argument(f'--disable-{oLibCur.sName}', f'--without-{oLibCur.sName}', action='store_true', default=None, dest=f'config_libs_disable_{oLibCur.sName}');
-        oParser.add_argument(f'--with-{oLibCur.sName}-path', dest=f'config_libs_path_{oLibCur.sName}');
+        oParser.add_argument(f'--build-{oLibCur.sName}', help=f'Explicitly build {oLibCur.sName} from in-tree sources', action='store_true', default=None, dest=f'config_libs_build_{oLibCur.sName}');
+        oParser.add_argument(f'--disable-{oLibCur.sName}', f'--without-{oLibCur.sName}', help=f'Disables using {oLibCur.sName}', action='store_true', default=None, dest=f'config_libs_disable_{oLibCur.sName}');
+        oParser.add_argument(f'--with-{oLibCur.sName}-path', help=f'Sets the (root) path for {oLibCur.sName}', dest=f'config_libs_path_{oLibCur.sName}');
         # For debugging / development only. We don't expose this in the syntax help.
-        oParser.add_argument(f'--only-{oLibCur.sName}', action='store_true', default=None, dest=f'config_libs_only_{oLibCur.sName}');
+        oParser.add_argument(f'--only-{oLibCur.sName}', help=argparse.SUPPRESS, action='store_true', default=None, dest=f'config_libs_only_{oLibCur.sName}');
     for oToolCur in g_aoTools:
         sToolName = oToolCur.sName.replace("-", "_"); # So that we can use variables directly w/o getattr.
-        oParser.add_argument(f'--disable-{oToolCur.sName}', f'--without-{oToolCur.sName}', action='store_true', default=None, dest=f'config_tools_disable_{sToolName}');
-        oParser.add_argument(f'--with-{oToolCur.sName}-path', dest=f'config_tools_path_{sToolName}');
+        oParser.add_argument(f'--disable-{oToolCur.sName}', f'--without-{oToolCur.sName}', help=f'Disables using {oToolCur.sName}', action='store_true', default=None, dest=f'config_tools_disable_{sToolName}');
+        oParser.add_argument(f'--with-{oToolCur.sName}-path', help=f'Sets the (root) path for {oToolCur.sName}', dest=f'config_tools_path_{sToolName}');
         # For debugging / development only. We don't expose this in the syntax help.
-        oParser.add_argument(f'--only-{oToolCur.sName}', action='store_true', default=None, dest=f'config_tools_only_{sToolName}');
+        oParser.add_argument(f'--only-{oToolCur.sName}', help=argparse.SUPPRESS, action='store_true', default=None, dest=f'config_tools_only_{sToolName}');
 
     oParser.add_argument('--disable-docs', '--without-docs', help='Disables building the documentation', action='store_true', default=None, dest='VBOX_WITH_DOCS=');
     oParser.add_argument('--disable-dtrace', '--without-dtrace', help='Disables building features requiring DTrace ', action='store_true', default=None, dest='config_disable_dtrace');
@@ -3522,8 +3590,8 @@ def main():
     oParser.add_argument('--debug', help='Runs in debug mode. Only use for development', action='store_true', default=True, dest='config_debug');
     oParser.add_argument('--nofatal', '--continue-on-error', help='Continues execution on fatal errors', action='store_true', dest='config_nofatal');
     oParser.add_argument('--build-profile', help='Build with a profiling support', action='store_true', default=None, dest='KBUILD_TYPE=profile');
-    oParser.add_argument('--build-target', help='Specifies the build target', action='store_true', default=None, dest='config_build_target');
-    oParser.add_argument('--build-arch', help='Specifies the build architecture', action='store_true', default=None, dest='config_build_arch');
+    oParser.add_argument('--build-target', help='Specifies the build target', default=None, dest='config_build_target');
+    oParser.add_argument('--build-arch', help='Specifies the build architecture', default=None, dest='config_build_arch');
     oParser.add_argument('--build-debug', help='Build with debugging symbols and assertions', action='store_true', default=None, dest='KBUILD_TYPE=debug');
     oParser.add_argument('--build-headless', help='Build headless (without any GUI frontend)', action='store_true', dest='config_build_headless');
     oParser.add_argument('--internal-first', help='Check internal tools (tools/win.*) first (default)', action='store_true', dest='config_internal_first');
@@ -3540,7 +3608,9 @@ def main():
     oParser.add_argument('--with-win-midl-path', '--with-midl', help='Where midl.exe is to be found', dest='config_win_midl_path');
     oParser.add_argument('--with-win-vcpkg-root', help='Where the VCPKG root directory to be found', dest='config_win_vcpkg_root');
     # The following arguments are deprecated and undocumented -- kept for backwards compatibility.
+    oParser.add_argument('--build-libssl', help=argparse.SUPPRESS, action='store_true', dest='config_libs_build_openssl');
     oParser.add_argument('--enable-webservice', help=argparse.SUPPRESS, action='store_true', default=None, dest='VBOX_WITH_WEBSERVICES=1');
+    oParser.add_argument('--passive-mesa', help=argparse.SUPPRESS, action='store_true', default=None, dest='DISPLAY=');
     oParser.add_argument('--with-ddk', help=argparse.SUPPRESS, dest='config_tools_path_win_ddk');
     oParser.add_argument('--with-qt', '--with-qt-dir', help=argparse.SUPPRESS, dest='config_libs_path_qt6');
     oParser.add_argument('--with-sdk10', help=argparse.SUPPRESS, dest='config_tools_path_win_sdk10');
@@ -3672,6 +3742,14 @@ def main():
     # Apply updates from command line arguments.
     # This can override the defaults set above.
     g_oEnv.updateFromArgs(oArgs);
+
+    #
+    # Check build target / architecture
+    #
+    if oArgs.config_build_target and oArgs.config_build_target not in g_aeBuildTargets:
+        printError(f"Unsupported build target '{oArgs.config_build_target}'");
+    if oArgs.config_build_arch and oArgs.config_build_arch not in g_aeBuildArchs:
+        printError(f"Unsupported build architecture '{oArgs.config_build_arch}\'");
 
     print(f'Host OS / arch     : { g_sHostTarget}.{g_sHostArch}');
     print(f'Building for target: { g_oEnv["KBUILD_TARGET"] }.{ g_oEnv["KBUILD_TARGET_ARCH"] }');
@@ -3839,7 +3917,8 @@ def main():
     or g_fContOnErr:
         print();
         for oToolCur in aoToolsToCheck:
-            oToolCur.setArgs(oArgs);
+            if not oToolCur.setArgs(oArgs):
+                break;
             if  not oToolCur.performCheck() \
             and not g_fContOnErr:
                 break;
@@ -3851,7 +3930,8 @@ def main():
     or g_fContOnErr:
         print();
         for oLibCur in aoLibsToCheck:
-            oLibCur.setArgs(oArgs);
+            if not oLibCur.setArgs(oArgs):
+                break;
             if  not oLibCur.performCheck() \
             and not g_fContOnErr:
                 break;
@@ -3950,7 +4030,7 @@ def main():
         print(f'Configuration completed with {g_cWarnings} warning(s). See {g_sFileLog} for details.');
         print('');
         for sWarn in g_asWarnings:
-            print(f'    *** WARN: ${sWarn}');
+            print(f'    *** WARN: {sWarn}');
     if g_cErrors:
         print('');
         print(f'Configuration failed with {g_cErrors} error(s). See {g_sFileLog} for details.');
