@@ -1,4 +1,4 @@
-# $Id: .scm-settings 112349 2026-01-07 19:11:35Z knut.osmundsen@oracle.com $
+# $Id: .scm-settings 112375 2026-01-08 13:53:25Z klaus.espenlaub@oracle.com $
 ## @file
 # Source code massager settings for the host installers.
 #
@@ -28,8 +28,6 @@
 # Much of the stuff is exported here.
 --svn-sync-process-export all
 /common/keygen*|/win/InstallHelper/internal*: --svn-sync-process-export none
-## @todo export: Explain why this one is private and the other one isn't!
-/darwin/VirtualBox/VYAKS7W7VC.provisionprofile: --svn-sync-process-export none
 ## @todo export: Explain why the following is private.
 /linux/rpm-kmod*|/linux/rpm-VBoxGuestAdditions*: --svn-sync-process-export none
 
