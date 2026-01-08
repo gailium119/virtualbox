@@ -1,4 +1,4 @@
-# $Id: .scm-settings 112364 2026-01-07 23:49:54Z knut.osmundsen@oracle.com $
+# $Id: .scm-settings 112376 2026-01-08 13:59:05Z klaus.espenlaub@oracle.com $
 ## @file
 # Source code massager settings for the Artwork.
 #
@@ -29,8 +29,6 @@
 --svn-sync-process-export all
 /*NonOSE*: --svn-sync-process-export none
 /unused/*: --svn-sync-process-export none
-## @todo export: why is this secret?
-/resolutions.txt: --svn-sync-process-export none
 
 # Some PDF related stuff.
 *.ai: --treat-as binary
