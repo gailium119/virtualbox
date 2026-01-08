@@ -6,7 +6,7 @@ Requires >= Python 3.4.
 """
 
 # -*- coding: utf-8 -*-
-# $Id: configure.py 112381 2026-01-08 16:04:03Z andreas.loeffler@oracle.com $
+# $Id: configure.py 112384 2026-01-08 16:31:48Z andreas.loeffler@oracle.com $
 # pylint: disable=bare-except
 # pylint: disable=consider-using-f-string
 # pylint: disable=global-statement
@@ -61,7 +61,7 @@ SPDX-License-Identifier: GPL-3.0-only
 # External Python modules or other dependencies are not allowed!
 #
 
-__revision__ = "$Revision: 112381 $"
+__revision__ = "$Revision: 112384 $"
 
 import argparse
 import ctypes
@@ -3209,8 +3209,6 @@ g_aoLibs = [
                  sCode = '#include <sys/capability.h>\nint main() { cap_t c = cap_init(); printf("<found>"); return 0; }\n'),
     LibraryCheck("libXcursor", [ "X11/cursorfont.h" ], [ "libXcursor" ], aeTargets = [ BuildTarget.LINUX, BuildTarget.SOLARIS ],
                  sCode = '#include <X11/Xcursor/Xcursor.h>\nint main() { XcursorImage *cursor = XcursorImageCreate (10, 10); XcursorImageDestroy(cursor); printf("%d.%d", XCURSOR_LIB_MAJOR, XCURSOR_LIB_MINOR); return 0; }\n'),
-    LibraryCheck("libxcb-cursor", [ "xcb/xcb_cursor.h" ], [ "libxcb-cursor" ], aeTargets = [ BuildTarget.LINUX, BuildTarget.SOLARIS ],
-                 sCode = '#include <xcb/xcb_cursor.h>\nint main() { printf("<found>"); return 0; }\n'),
     LibraryCheck("curl", [ "curl/curl.h" ], [ "libcurl" ], aeTargets = [ BuildTarget.ANY ], fUseInTree = True,
                  sCode = '#include <curl/curl.h>\nint main() { printf("%s", LIBCURL_VERSION); return 0; }\n',
                  sSdkName = "VBoxLibCurl"),
