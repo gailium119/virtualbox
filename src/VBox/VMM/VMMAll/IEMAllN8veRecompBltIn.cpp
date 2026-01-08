@@ -1,4 +1,4 @@
-/* $Id: IEMAllN8veRecompBltIn.cpp 111870 2025-11-25 15:04:16Z knut.osmundsen@oracle.com $ */
+/* $Id: IEMAllN8veRecompBltIn.cpp 112367 2026-01-08 11:13:12Z alexander.eichner@oracle.com $ */
 /** @file
  * IEM - Native Recompiler, Emitters for Built-In Threaded Functions.
  */
@@ -306,7 +306,7 @@ DECL_FORCE_INLINE_THROW(uint32_t) iemNativeRecompFunc_BltIn_CheckTimersAndIrqsCo
             if (idxTmpReg2 >= 8)
                 pCodeBuf[off++] = X86_OP_REX_R | X86_OP_REX_B;
             pCodeBuf[off++] = 0x8b; /* mov */
-            iemNativeEmitGprByGprDisp(pCodeBuf, off, idxTmpReg2, idxTmpReg2, 0);
+            off = iemNativeEmitGprByGprDisp(pCodeBuf, off, idxTmpReg2, idxTmpReg2, 0);
         }
 
         /* or reg1, reg2 */
