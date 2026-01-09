@@ -1,4 +1,4 @@
-/* $Id: APICR3Nem-win-x86.cpp 112126 2025-12-16 07:18:33Z ramshankar.venkataraman@oracle.com $ */
+/* $Id: APICR3Nem-win-x86.cpp 112388 2026-01-09 05:47:34Z ramshankar.venkataraman@oracle.com $ */
 /** @file
  * APIC - Advanced Programmable Interrupt Controller - NEM Hyper-V backend.
  */
@@ -760,7 +760,7 @@ static DECLCALLBACK(VBOXSTRICTRC) apicR3HvSetIcr(PVMCPUCC pVCpu, uint64_t u64Icr
     VMCPU_ASSERT_EMT(pVCpu);
     RT_NOREF(rcRZ);
 
-#if 0
+#if 1
     /* Validate. */
     uint32_t const uLo = RT_LO_U32(u64Icr);
     uint32_t const uHi = RT_HI_U32(u64Icr);
@@ -1642,8 +1642,8 @@ DECLCALLBACK(int) apicR3HvConstruct(PPDMDEVINS pDevIns, int iInstance, PCFGMNODE
     /*
      * Register debugger info callbacks.
      */
-    DBGFR3InfoRegisterInternalEx(pVM, "apic",      "Dumps APIC basic information.", apicR3HvInfo, DBGFINFO_FLAGS_ALL_EMTS);
-    DBGFR3InfoRegisterInternalEx(pVM, "apiclvt",   "Dumps APIC LVT information.",   apicR3HvInfoLvt, DBGFINFO_FLAGS_ALL_EMTS);
+    DBGFR3InfoRegisterInternalEx(pVM, "apic",      "Dumps APIC basic information.", apicR3HvInfo,      DBGFINFO_FLAGS_ALL_EMTS);
+    DBGFR3InfoRegisterInternalEx(pVM, "apiclvt",   "Dumps APIC LVT information.",   apicR3HvInfoLvt,   DBGFINFO_FLAGS_ALL_EMTS);
     DBGFR3InfoRegisterInternalEx(pVM, "apictimer", "Dumps APIC timer information.", apicR3HvInfoTimer, DBGFINFO_FLAGS_ALL_EMTS);
 
     /*
