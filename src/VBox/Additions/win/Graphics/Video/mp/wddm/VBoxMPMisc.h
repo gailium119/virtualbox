@@ -1,4 +1,4 @@
-/* $Id: VBoxMPMisc.h 111731 2025-11-14 12:02:32Z knut.osmundsen@oracle.com $ */
+/* $Id: VBoxMPMisc.h 112395 2026-01-09 17:37:46Z dmitrii.grigorev@oracle.com $ */
 /** @file
  * VBox WDDM Miniport driver
  */
@@ -174,5 +174,7 @@ void vboxWddmDiToAllocData(PVBOXMP_DEVEXT pDevExt, const DXGK_DISPLAY_INFORMATIO
 void vboxWddmDmSetupDefaultVramLocation(PVBOXMP_DEVEXT pDevExt, D3DDDI_VIDEO_PRESENT_SOURCE_ID ModifiedVidPnSourceId, struct VBOXWDDM_SOURCE *paSources);
 
 char const *vboxWddmAllocTypeString(PVBOXWDDM_ALLOCATION pAlloc);
+
+int vboxDumpRect2BMP(void const *pvSrc, uint32_t cbBytesPerPixel, uint32_t cbPitch, RECT *pRect, const char *pszWhat, uint32_t index);
 
 #endif /* !GA_INCLUDED_SRC_WINNT_Graphics_Video_mp_wddm_VBoxMPMisc_h */

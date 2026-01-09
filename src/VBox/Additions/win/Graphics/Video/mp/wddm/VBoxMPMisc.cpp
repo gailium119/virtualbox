@@ -1,4 +1,4 @@
-/* $Id: VBoxMPMisc.cpp 111731 2025-11-14 12:02:32Z knut.osmundsen@oracle.com $ */
+/* $Id: VBoxMPMisc.cpp 112395 2026-01-09 17:37:46Z dmitrii.grigorev@oracle.com $ */
 /** @file
  * VBox WDDM Miniport driver
  */
@@ -29,6 +29,7 @@
 #include <VBoxVideoVBE.h>
 #include <iprt/param.h>
 #include <iprt/utf16.h>
+#include <iprt/formats/bmp.h>
 
 /* simple handle -> value table API */
 NTSTATUS vboxWddmHTableCreate(PVBOXWDDM_HTABLE pTbl, uint32_t cSize)
@@ -1602,4 +1603,96 @@ char const *vboxWddmAllocTypeString(PVBOXWDDM_ALLOCATION pAlloc)
     }
     AssertFailed();
     return "UNKNOWN";
+}
+
+int vboxDumpRect2BMP(void const *pvSrc, uint32_t cbBytesPerPixel, uint32_t cbPitch, RECT *pRect, const char *pszWhat, uint32_t index)
+{
+    AssertReturn(KeGetCurrentIrql() == PASSIVE_LEVEL, VERR_INVALID_CONTEXT);
+
+    static uint32_t s_cBmpsDumped = 0;
+
+    RTUTF16 wszPath[RTPATH_MAX];
+    ssize_t const cwchPath = RTUtf16Printf(wszPath, RT_ELEMENTS(wszPath),
+            "\\DosDevices\\C:\\Temp\\VBox\\dump%03d-%02d%s.bmp", s_cBmpsDumped, index, pszWhat);
+
+    AssertReturn(cwchPath > 0, VERR_BUFFER_OVERFLOW);
+
+    UNICODE_STRING     uniName;
+    OBJECT_ATTRIBUTES  objAttr;
+    HANDLE   hFile;
+    NTSTATUS rcNt;
+    IO_STATUS_BLOCK    ioStatusBlock;
+
+    RtlInitUnicodeString(&uniName, wszPath);
+    InitializeObjectAttributes(&objAttr, &uniName,
+                               OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
+                               NULL, NULL);
+
+    rcNt = ZwCreateFile(&hFile,
+                        GENERIC_WRITE,
+                        &objAttr, &ioStatusBlock, NULL,
+                        FILE_ATTRIBUTE_NORMAL,
+                        0,
+                        FILE_OVERWRITE_IF,
+                        FILE_SYNCHRONOUS_IO_NONALERT,
+                        NULL, 0);
+
+    if (!NT_SUCCESS(rcNt))
+        return -1;
+
+    uint32_t uWidth  = pRect->right  - pRect->left;
+    uint32_t uHeight = pRect->bottom - pRect->top;
+    const uint32_t cbLine = uWidth * cbBytesPerPixel;
+    const uint32_t cbData = uHeight * cbLine;
+
+    BMPFILEHDR fileHdr;
+    RT_ZERO(fileHdr);
+
+    BMPWINV4INFOHDR infoHdr;
+    RT_ZERO(infoHdr);
+
+    fileHdr.uType      = BMP_HDR_MAGIC;
+    fileHdr.cbFileSize = (uint32_t)(sizeof(BMPFILEHDR) + sizeof(BMPWINV4INFOHDR) + cbData);
+    fileHdr.offBits    = (uint32_t)(sizeof(BMPFILEHDR) + sizeof(BMPWINV4INFOHDR));
+
+    infoHdr.cbSize         = sizeof(BMPWINV4INFOHDR);
+    infoHdr.cx             = (int32_t)uWidth;
+    infoHdr.cy             = -(int32_t)uHeight;
+    infoHdr.cBits          = cbBytesPerPixel * 8;
+    infoHdr.cPlanes        = 1;
+    infoHdr.cbImage        = cbData;
+    infoHdr.cXPelsPerMeter = 2835;
+    infoHdr.cYPelsPerMeter = 2835;
+    infoHdr.fRedMask       = 0x00ff0000;
+    infoHdr.fGreenMask     = 0x0000ff00;
+    infoHdr.fBlueMask      = 0x000000ff;
+    infoHdr.fAlphaMask     = 0xff000000;
+#ifdef RT_OS_WINDOWS
+    infoHdr.enmCSType      = 0x57696e20; // LCS_WINDOWS_COLOR_SPACE
+#endif
+
+    rcNt = ZwWriteFile(hFile, NULL, NULL, NULL, &ioStatusBlock,
+        (PVOID)&fileHdr, sizeof(fileHdr), NULL, NULL);
+
+    rcNt = ZwWriteFile(hFile, NULL, NULL, NULL, &ioStatusBlock,
+        (PVOID)&infoHdr, sizeof(infoHdr), NULL, NULL);
+
+    uint8_t const *pu8Src = (uint8_t *)pvSrc;
+    pu8Src += pRect->top * cbPitch + pRect->left * cbBytesPerPixel;
+
+    for (uint32_t y = 0; y < uHeight; ++y)
+    {
+        rcNt = ZwWriteFile(hFile, NULL, NULL, NULL, &ioStatusBlock,
+                            (PVOID)pu8Src, cbLine, NULL, NULL);
+        AssertBreak(NT_SUCCESS(rcNt));
+
+        pu8Src += cbPitch;
+    }
+
+    ZwClose(hFile);
+
+    if (index == 0)
+        s_cBmpsDumped++;
+
+    return 0;
 }

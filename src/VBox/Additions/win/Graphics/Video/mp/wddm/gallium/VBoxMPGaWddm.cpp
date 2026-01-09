@@ -1,4 +1,4 @@
-/* $Id: VBoxMPGaWddm.cpp 112187 2025-12-22 12:39:55Z vitali.pelenjow@oracle.com $ */
+/* $Id: VBoxMPGaWddm.cpp 112395 2026-01-09 17:37:46Z dmitrii.grigorev@oracle.com $ */
 /** @file
  * VirtualBox Windows Guest Mesa3D - Gallium driver interface for WDDM kernel mode driver.
  */
@@ -2318,6 +2318,11 @@ NTSTATUS APIENTRY GaDxgkDdiPresentDisplayOnly(const HANDLE hAdapter,
     for (ULONG i = 0; i < pPresentDisplayOnly->NumMoves; ++i)
     {
         RECT *pRect = &pPresentDisplayOnly->pMoves[i].DestRect;
+        AssertContinue(pRect->left < pRect->right && pRect->top < pRect->bottom);
+
+        if (LogRelIs4Enabled())
+            vboxDumpRect2BMP(pPresentDisplayOnly->pSource, pPresentDisplayOnly->BytesPerPixel, pPresentDisplayOnly->Pitch, pRect, "M", i);
+
         vboxWddmRectCopy(pDevExt->pvVisibleVram + offVRAM,    // dst pointer
                          pSource->AllocData.SurfDesc.bpp / 8, // dst bytes per pixel
                          pSource->AllocData.SurfDesc.pitch,   // dst pitch
@@ -2330,10 +2335,10 @@ NTSTATUS APIENTRY GaDxgkDdiPresentDisplayOnly(const HANDLE hAdapter,
     for (ULONG i = 0; i < pPresentDisplayOnly->NumDirtyRects; ++i)
     {
         RECT *pRect = &pPresentDisplayOnly->pDirtyRect[i];
-        if (pRect->left >= pRect->right || pRect->top >= pRect->bottom)
-        {
-            continue;
-        }
+        AssertContinue(pRect->left < pRect->right && pRect->top < pRect->bottom);
+
+        if (LogRelIs4Enabled())
+            vboxDumpRect2BMP(pPresentDisplayOnly->pSource, pPresentDisplayOnly->BytesPerPixel, pPresentDisplayOnly->Pitch, pRect, "D", i);
 
         vboxWddmRectCopy(pDevExt->pvVisibleVram + offVRAM,    // dst pointer
                          pSource->AllocData.SurfDesc.bpp / 8, // dst bytes per pixel
