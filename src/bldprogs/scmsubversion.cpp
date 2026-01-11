@@ -1,10 +1,10 @@
-/* $Id: scmsubversion.cpp 110684 2025-08-11 17:18:47Z klaus.espenlaub@oracle.com $ */
+/* $Id: scmsubversion.cpp 112398 2026-01-11 16:23:55Z knut.osmundsen@oracle.com $ */
 /** @file
  * IPRT Testcase / Tool - Source Code Massager, Subversion Access.
  */
 
 /*
- * Copyright (C) 2010-2025 Oracle and/or its affiliates.
+ * Copyright (C) 2010-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.
@@ -1032,6 +1032,7 @@ static int scmSvnAbsPath(const char *pszPath, char *pszAbsPath, size_t cbAbsPath
         /* To avoid: svn: E235000: In file '..\..\..\subversion\libsvn_client\prop_commands.c' line 796: assertion failed (svn_dirent_is_absolute(target)) */
         if (pszAbsPath[1] == ':')
             pszAbsPath[0] = RT_C_TO_UPPER(pszAbsPath[0]);
+        RTPathStripTrailingSlash(pszAbsPath);
     }
 # endif
     return rc;
