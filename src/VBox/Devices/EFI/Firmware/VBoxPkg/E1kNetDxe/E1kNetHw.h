@@ -2,7 +2,7 @@
 
   E1000 hardware interface definitions.
 
-  Copyright (c) 2021-2025, Oracle and/or its affiliates.<BR>
+  Copyright (C) 2021-2026 Oracle and/or its affiliates.<BR>
 
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/

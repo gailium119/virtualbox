@@ -1,7 +1,7 @@
 /** @file
   VMware SVGA 3 Video Controller Driver
 
-  Copyright (c) 2023 - 2025, Oracle and/or its affiliates.
+  Copyright (C) 2023-2026 Oracle and/or its affiliates.
   Copyright (c) 2006 - 2019, Intel Corporation. All rights reserved.<BR>
 
   SPDX-License-Identifier: BSD-2-Clause-Patent
