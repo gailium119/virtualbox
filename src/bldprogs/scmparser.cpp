@@ -1,4 +1,4 @@
-/* $Id: scmparser.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: scmparser.cpp 112420 2026-01-12 20:29:14Z knut.osmundsen@oracle.com $ */
 /** @file
  * IPRT Testcase / Tool - Source Code Massager, Code Parsers.
  */
@@ -49,61 +49,8 @@
 
 
 /*********************************************************************************************************************************
-*   Structures and Typedefs                                                                                                      *
+*   Defined Constants And Macros                                                                                                 *
 *********************************************************************************************************************************/
-typedef size_t (*PFNISCOMMENT)(const char *pchLine, size_t cchLine, bool fSecond);
-
-
-/**
- * Callback for checking if C++ line comment.
- */
-static size_t isCppLineComment(const char *pchLine, size_t cchLine, bool fSecond)
-{
-    if (   cchLine >= 2
-        && pchLine[0] == '/'
-        && pchLine[1] == '/')
-    {
-        if (!fSecond)
-            return 2;
-        if (cchLine >= 3 && pchLine[2] == '/')
-            return 3;
-    }
-    return 0;
-}
-
-
-/**
- * Callback for checking if hash comment.
- */
-static size_t isHashComment(const char *pchLine, size_t cchLine, bool fSecond)
-{
-    if (cchLine >= 1 && *pchLine == '#')
-    {
-        if (!fSecond)
-            return 1;
-        if (cchLine >= 2 && pchLine[1] == '#')
-            return 2;
-    }
-    return 0;
-}
-
-
-/**
- * Callback for checking if semicolon comment.
- */
-static size_t isSemicolonComment(const char *pchLine, size_t cchLine, bool fSecond)
-{
-    if (cchLine >= 1 && *pchLine == ';')
-    {
-        if (!fSecond)
-            return 1;
-        if (cchLine >= 2 && pchLine[1] == ';')
-            return 2;
-    }
-    return 0;
-}
-
-
 /** Macro for checking for a XML comment start. */
 #define IS_XML_COMMENT_START(a_pch, a_off, a_cch) \
         (   (a_off) + 4 <= (a_cch) \
@@ -130,23 +77,82 @@ static size_t isSemicolonComment(const char *pchLine, size_t cchLine, bool fSeco
          && ((a_off) + 3 == (a_cch) || RT_C_IS_SPACE((a_pch)[(a_off) + 3])) )
 
 
+/*********************************************************************************************************************************
+*   Structures and Typedefs                                                                                                      *
+*********************************************************************************************************************************/
+typedef size_t (*PFNISCOMMENT)(const char *pchLine, size_t cchLine, bool fDoxygen);
+
+
+/**
+ * Callback for checking if C++ line comment.
+ */
+static size_t isCppLineComment(const char *pchLine, size_t cchLine, bool fDoxygen)
+{
+    if (   cchLine >= 2
+        && pchLine[0] == '/'
+        && pchLine[1] == '/')
+    {
+        if (!fDoxygen)
+            return 2;
+        if (cchLine >= 3 && (pchLine[2] == '/' || pchLine[2] == '!'))
+            return 3;
+    }
+    return 0;
+}
+
+
+/**
+ * Callback for checking if hash comment.
+ */
+static size_t isHashComment(const char *pchLine, size_t cchLine, bool fDoxygen)
+{
+    if (cchLine >= 1 && *pchLine == '#')
+    {
+        if (!fDoxygen)
+            return 1;
+        if (cchLine >= 2 && (pchLine[1] == '#' || pchLine[1] == '!'))
+            return 2;
+    }
+    return 0;
+}
+
+
+/**
+ * Callback for checking if semicolon comment.
+ */
+static size_t isSemicolonComment(const char *pchLine, size_t cchLine, bool fDoxygen)
+{
+    if (cchLine >= 1 && *pchLine == ';')
+    {
+        if (!fDoxygen)
+            return 1;
+        if (cchLine >= 2 && (pchLine[1] == ';' || pchLine[1] == '!'))
+            return 2;
+    }
+    return 0;
+}
+
 /**
  * Callback for checking if batch comment.
  */
-static size_t isBatchComment(const char *pchLine, size_t cchLine, bool fSecond)
+static size_t isBatchComment(const char *pchLine, size_t cchLine, bool fDoxygen)
 {
-    if (!fSecond)
+    /** @todo Batch 'rem' comments differs from the rest, in that there must be a
+     *        space or newline following.  So, perhaps we should include the
+     *        space in the returned skip count? */
+    if (IS_REM(pchLine, 0, cchLine))
     {
-        if (IS_REM(pchLine, 0, cchLine))
+        if (!fDoxygen || cchLine == 3)
             return 3;
-    }
-    else
-    {
-        /* Check for the 2nd in "rem rem" lines. */
-        if (   cchLine >= 4
-            && RT_C_IS_SPACE(*pchLine)
-            && IS_REM(pchLine, 1, cchLine))
-            return 4;
+
+        /* Check for the 2nd in "rem rem" and "rem !" lines. */
+        if (RT_C_IS_BLANK(pchLine[3])) /* paranoia */
+        {
+            if (IS_REM(pchLine, 4, cchLine))
+                return 3+1+3;
+            if (cchLine > 4 && *pchLine == '!')
+                return 3+1+1;
+        }
     }
     return 0;
 }
@@ -154,16 +160,16 @@ static size_t isBatchComment(const char *pchLine, size_t cchLine, bool fSecond)
 /**
  * Callback for checking if SQL comment.
  */
-static size_t isSqlComment(const char *pchLine, size_t cchLine, bool fSecond)
+static size_t isSqlComment(const char *pchLine, size_t cchLine, bool fDoxygen)
 {
     if (   cchLine >= 2
         && pchLine[0] == '-'
         && pchLine[1] == '-')
     {
-        if (!fSecond)
+        if (!fDoxygen)
             return 2;
         if (   cchLine >= 3
-            && pchLine[2] == '-')
+            && (pchLine[2] == '-' || pchLine[2] == '!'))
             return 3;
     }
     return 0;
@@ -172,13 +178,13 @@ static size_t isSqlComment(const char *pchLine, size_t cchLine, bool fSecond)
 /**
  * Callback for checking if tick comment.
  */
-static size_t isTickComment(const char *pchLine, size_t cchLine, bool fSecond)
+static size_t isTickComment(const char *pchLine, size_t cchLine, bool fDoxygen)
 {
     if (cchLine >= 1 && *pchLine == '\'')
     {
-        if (!fSecond)
+        if (!fDoxygen)
             return 1;
-        if (cchLine >= 2 && pchLine[1] == '\'')
+        if (cchLine >= 2 && (pchLine[1] == '\'' || pchLine[1] == '!'))
             return 2;
     }
     return 0;
@@ -221,32 +227,34 @@ static int handleLineComment(PSCMSTREAM pIn, PFNISCOMMENT pfnIsComment,
     Info.offStart           = (uint32_t)off;
     Info.offEnd             = (uint32_t)cchLine;
 
-    size_t cchSkip = pfnIsComment(&pchLine[off], cchLine - off, false);
+    size_t cchSkipDox = pfnIsComment(&pchLine[off], cchLine - off, true);
+    size_t cchSkip    = pfnIsComment(&pchLine[off], cchLine - off, false);
     Assert(cchSkip > 0);
-    off += cchSkip;
+    //off += cchSkip;
 
     /* Determine comment type. */
     Info.enmType = kScmCommentType_Line;
-    char ch;
-    cchSkip = 1;
-    if (   off < cchLine
-        && (   (ch = pchLine[off]) == '!'
-            || (cchSkip = pfnIsComment(&pchLine[off], cchLine - off, true)) > 0) )
+    if (cchSkipDox <= cchSkip)
+        off += cchSkip;
+    else
     {
+        size_t const offDoxEnd = off + cchSkipDox;
         unsigned ch2;
-        if (   off + cchSkip == cchLine
-            || RT_C_IS_SPACE(ch2 = pchLine[off + cchSkip]) )
+        if (   offDoxEnd == cchLine
+            || RT_C_IS_SPACE(ch2 = pchLine[offDoxEnd]) )
         {
-            Info.enmType = ch != '!' ? kScmCommentType_Line_JavaDoc : kScmCommentType_Line_Qt;
-            off += cchSkip;
+            Info.enmType = pchLine[offDoxEnd - 1] != '!' ? kScmCommentType_Line_JavaDoc : kScmCommentType_Line_Qt;
+            off = offDoxEnd;
         }
         else if (   ch2 == '<'
-                 && (   off + cchSkip + 1 == cchLine
-                     || RT_C_IS_SPACE(pchLine[off + cchSkip + 1]) ))
+                 && (   offDoxEnd + 1 == cchLine
+                     || RT_C_IS_SPACE(pchLine[offDoxEnd + 1]) ))
         {
-            Info.enmType = ch == '!' ? kScmCommentType_Line_JavaDoc_After : kScmCommentType_Line_Qt_After;
-            off += cchSkip + 1;
+            Info.enmType = pchLine[offDoxEnd - 1] != '!' ? kScmCommentType_Line_JavaDoc_After : kScmCommentType_Line_Qt_After;
+            off = offDoxEnd + 1;
         }
+        else
+            off += cchSkip;
     }
 
     /*
@@ -285,16 +293,21 @@ static int handleLineComment(PSCMSTREAM pIn, PFNISCOMMENT pfnIsComment,
             break;
         off += cchSkip;
 
-        /* Split on doxygen comment start (if not already in one). */
+        /* Split on doxygen (non-after) comment start (if not already in one). */
         if (   Info.enmType == kScmCommentType_Line
-            && off + 1 < cchLine
-            && (   pfnIsComment(&pchLine[off], cchLine - off, true) > 0
-                || (   pchLine[off + 1] == '!'
-                    && (   off + 2 == cchLine
-                        || pchLine[off + 2] != '!') ) ) )
+            && off < cchLine)
         {
-            off -= cchSkip;
-            break;
+            cchSkipDox = pfnIsComment(&pchLine[off - cchSkip], cchLine - off + cchSkip, true);
+            if (cchSkipDox > cchSkip)
+            {
+                size_t const offDoxEnd = off + cchSkipDox - cchSkip;
+                if (   offDoxEnd == cchLine
+                    || RT_C_IS_SPACE(pchLine[offDoxEnd]))
+                {
+                    off -= cchSkip;
+                    break;
+                }
+            }
         }
 
         /* Append the body w/o trailing spaces and some leading ones. */

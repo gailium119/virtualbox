@@ -1,4 +1,4 @@
-/* $Id: scm.h 112400 2026-01-11 18:47:16Z knut.osmundsen@oracle.com $ */
+/* $Id: scm.h 112420 2026-01-12 20:29:14Z knut.osmundsen@oracle.com $ */
 /** @file
  * IPRT Testcase / Tool - Source Code Massager.
  */
@@ -409,6 +409,8 @@ typedef struct SCMSETTINGSBASE
     bool            fLgplDisclaimer;
     /** Whether LGPGL w/o disclaimer is allowed. */
     bool            fAllowLgplWithoutDisclaimer;
+    /** Whether to allow UEFI-style copyright file headers are allowed. */
+    bool            fAllowUefiStyleCopyright;
     /** How to update the license. */
     SCMLICENSE      enmUpdateLicense;
 
