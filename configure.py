@@ -6,7 +6,7 @@ Requires >= Python 3.4.
 """
 
 # -*- coding: utf-8 -*-
-# $Id: configure.py 112542 2026-01-13 16:28:47Z andreas.loeffler@oracle.com $
+# $Id: configure.py 112547 2026-01-13 16:58:54Z andreas.loeffler@oracle.com $
 # pylint: disable=bare-except
 # pylint: disable=consider-using-f-string
 # pylint: disable=global-statement
@@ -61,7 +61,7 @@ SPDX-License-Identifier: GPL-3.0-only
 # External Python modules or other dependencies are not allowed!
 #
 
-__revision__ = "$Revision: 112542 $"
+__revision__ = "$Revision: 112547 $"
 
 import argparse
 import ctypes
@@ -137,6 +137,9 @@ g_aeBuildArchs = [ BuildArch.X86, BuildArch.AMD64, BuildArch.ARM64 ];
 
 # Defines the host architecture.
 g_sHostArch = platform.machine().lower();
+# Solaris detection (skip SPARC for simplicity, ASSUMES Intel).
+if 'i86pc' in g_sHostArch:
+    g_sHostArch = "x86_64" if "64" in platform.architecture()[0] else "i686";
 # Maps host arch to build arch.
 g_enmHostArch = g_mapPythonArch2BuildArch.get(g_sHostArch, BuildArch.UNKNOWN);
 # Maps Python (interpreter) arch to build arch. Matches g_enmHostArch.
@@ -176,7 +179,7 @@ g_enmHostTarget = {
     "linux":    BuildTarget.LINUX,
     "windows":  BuildTarget.WINDOWS,
     "darwin":   BuildTarget.DARWIN,
-    "solaris":  BuildTarget.SOLARIS,
+    "sunos":    BuildTarget.SOLARIS,
     "freebsd":  BuildTarget.BSD,
     "openbsd":  BuildTarget.BSD,
     "netbsd":   BuildTarget.BSD,
