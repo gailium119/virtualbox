@@ -6,7 +6,7 @@ Requires >= Python 3.4.
 """
 
 # -*- coding: utf-8 -*-
-# $Id: configure.py 112515 2026-01-13 15:34:04Z andreas.loeffler@oracle.com $
+# $Id: configure.py 112542 2026-01-13 16:28:47Z andreas.loeffler@oracle.com $
 # pylint: disable=bare-except
 # pylint: disable=consider-using-f-string
 # pylint: disable=global-statement
@@ -61,7 +61,7 @@ SPDX-License-Identifier: GPL-3.0-only
 # External Python modules or other dependencies are not allowed!
 #
 
-__revision__ = "$Revision: 112515 $"
+__revision__ = "$Revision: 112542 $"
 
 import argparse
 import ctypes
@@ -541,7 +541,7 @@ def hasCPPHeader(asHeader):
     """
     if len(asHeader) == 0:
         return False; # ASSUME C on empty headers.
-    asCPPHdr = [ 'c++', 'iostream', 'Qt', 'QtGlobal', 'qcoreapplication.h' ];
+    asCPPHdr = [ 'c++', 'iostream', 'Qt', 'QtGlobal', 'qcoreapplication.h', 'stdsoap2.h' ];
     for sCurHdr in asHeader:
         if sCurHdr.endswith(('.hpp', '.hxx', '.hh')):
             return True;
@@ -3218,7 +3218,9 @@ g_aoLibs = [
                  sSdkName = "VBoxLibCurl"),
     LibraryCheck("libdevmapper", [ "libdevmapper.h" ], [ "libdevmapper" ], aeTargets = [ BuildTarget.LINUX, BuildTarget.SOLARIS ],
                  sCode = '#include <libdevmapper.h>\nint main() { char v[64]; dm_get_library_version(v, sizeof(v)); printf("%s", v); return 0; }\n'),
-    LibraryCheck("libgsoapssl++", [ "stdsoap2.h" ], [ "libgsoapssl++" ], aeTargets = [ BuildTarget.LINUX, BuildTarget.SOLARIS ],
+    # Dragging in libgsoapssl++ when linking requires certain stubs to be implemented (soap_faultcode, soap_fault_subcode, ++) by the user (depending on the libgsoap version),
+    # so we only do the bare minimum here (hence the empty lib definition) to return the installed version of libgsoap[ssl][++].
+    LibraryCheck("libgsoapssl++", [ "stdsoap2.h" ], [ ], aeTargets = [ BuildTarget.LINUX, BuildTarget.SOLARIS ],
                  sCode = '#include <stdsoap2.h>\nint main() { printf("%ld", GSOAP_VERSION); return 0; }\n',
                  asDefinesToDisableIfNotFound = [ 'VBOX_WITH_WEBSERVICES' ]),
     LibraryCheck("libjpeg-turbo", [ "turbojpeg.h" ], [ "libturbojpeg" ], aeTargets = [ BuildTarget.ANY ], fUseInTree = True,
