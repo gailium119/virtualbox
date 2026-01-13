@@ -1,4 +1,4 @@
-/* $Id: UnattendedImpl.cpp 112406 2026-01-12 12:12:57Z serkan.bayraktar@oracle.com $ */
+/* $Id: UnattendedImpl.cpp 112503 2026-01-13 14:49:48Z serkan.bayraktar@oracle.com $ */
 /** @file
  * Unattended class implementation
  */
@@ -2236,6 +2236,9 @@ HRESULT Unattended::i_innerDetectIsoOSLinux(RTVFS hVfsIso, DETECTBUFFER *pBuf)
                         idxArchLine = i;
                 }
             }
+            /* Continue even if we fail to determine the version. */
+            if (mStrDetectedOSVersion.isEmpty())
+                LogRel(("Unattended: dists/**/Release: Failed to determine OS version\n"));
 
             if (mEnmOsType == VBOXOSTYPE_Unknown)
                 LogRel(("Unattended: dists/**/Release: Unknown: OS type\n"));
