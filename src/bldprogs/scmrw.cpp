@@ -1,4 +1,4 @@
-/* $Id: scmrw.cpp 112430 2026-01-13 07:57:53Z knut.osmundsen@oracle.com $ */
+/* $Id: scmrw.cpp 112550 2026-01-13 21:30:59Z knut.osmundsen@oracle.com $ */
 /** @file
  * IPRT Testcase / Tool - Source Code Massager.
  */
@@ -1514,9 +1514,10 @@ rewrite_Copyright_CommentCallback(PCSCMCOMMENTINFO pInfo, const char *pszBody, s
     {
         const char *pszNextLine = (const char *)memchr(pszBody, '\n', cchBody);
         while (pszNextLine && pszNextLine[1] != '\n')
-            pszNextLine = (const char *)memchr(pszNextLine + 1, '\n', cchBody);
+            pszNextLine = (const char *)memchr(pszNextLine + 1, '\n', pszNextLine - pszBody - 1);
         if (pszNextLine)
         {
+            Assert((uintptr_t)pszNextLine < (uintptr_t)&pszBody[cchBody]);
             pchContributedBy = pszBody;
             cchContributedBy = pszNextLine - pszBody;
             ScmVerbose(pState->pState, 3, "* contributed by '%*.*s'\n", cchContributedBy, cchContributedBy, pchContributedBy);
