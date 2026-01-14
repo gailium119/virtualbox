@@ -812,7 +812,7 @@ static void InitTraceLog(void)
           bottom = top;
         }
         for(PRInt32 serialno = bottom; serialno <= top; serialno++) {
-          PL_HashTableAdd(gObjectsToLog, (const void*)serialno, (void*)1);
+          PL_HashTableAdd(gObjectsToLog, (const void*)(intptr_t)serialno, (void*)1);
           fprintf(stdout, "%d ", serialno);
         }
         if (!cm) break;

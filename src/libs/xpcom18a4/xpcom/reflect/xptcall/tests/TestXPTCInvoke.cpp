@@ -1039,9 +1039,9 @@ protected:
 public:
     virtual const char* ImplName() = 0;
 
+    const char* Name;
     int SomeData1;
     int SomeData2;
-    const char* Name;
 };
 
 class BarImpl : public nsIBar
@@ -1058,9 +1058,9 @@ protected:
 public:
     virtual const char * ImplName() = 0;
 
+    const char* Name;
     int SomeData1;
     int SomeData2;
-    const char* Name;
 };
 
 /***************************/
