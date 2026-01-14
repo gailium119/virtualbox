@@ -1,4 +1,4 @@
-/* $Id: init-darwin.cpp 112568 2026-01-14 15:49:47Z alexander.eichner@oracle.com $ */
+/* $Id: init-darwin.cpp 112569 2026-01-14 15:52:02Z alexander.eichner@oracle.com $ */
 /** @file
  * IPRT - Init Ring-3, POSIX Specific Code.
  */
@@ -61,7 +61,6 @@
 #include <sys/types.h>
 #include <sys/sysctl.h>
 
-#include <stdio.h>
 
 /*********************************************************************************************************************************
 *   Structures and Typedefs                                                                                                      *
