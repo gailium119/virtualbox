@@ -1,4 +1,4 @@
-/* $Id: init-darwin.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: init-darwin.cpp 112564 2026-01-14 14:53:14Z alexander.eichner@oracle.com $ */
 /** @file
  * IPRT - Init Ring-3, POSIX Specific Code.
  */
@@ -56,7 +56,8 @@
 #include <ucontext.h>
 #include <mach/mach.h>
 #include <mach-o/dyld.h>
-
+#include <mach-o/dyld_images.h>
+#include <mach/mach_vm.h>
 
 /*********************************************************************************************************************************
 *   Structures and Typedefs                                                                                                      *
@@ -74,6 +75,114 @@ static struct sigaction g_SigActionAbort; /**< The default action for SIGABRT. *
 /*********************************************************************************************************************************
 *   Internal Functions                                                                                                           *
 *********************************************************************************************************************************/
+
+/**
+ * Returns a description of the given VM user tag if known.
+ */
+static const char *rtR3DarwinVmUserTagStringify(unsigned int uTag)
+{
+    switch (uTag)
+    {
+        case VM_MEMORY_MALLOC:                              return "MALLOC";
+        case VM_MEMORY_MALLOC_SMALL:                        return "MALLOC_SMALL";
+        case VM_MEMORY_MALLOC_LARGE:                        return "MALLOC_LARGE";
+        case VM_MEMORY_MALLOC_HUGE:                         return "MALLOC_HUGE";
+        case VM_MEMORY_SBRK:                                return "SBRK";
+        case VM_MEMORY_REALLOC:                             return "REALLOC";
+        case VM_MEMORY_MALLOC_TINY:                         return "MALLOC_TINY";
+        case VM_MEMORY_MALLOC_LARGE_REUSABLE:               return "MALLOC_LARGE_REUSABLE";
+        case VM_MEMORY_MALLOC_LARGE_REUSED:                 return "MALLOC_LARGE_REUSED";
+        case VM_MEMORY_ANALYSIS_TOOL:                       return "ANALYSIS_TOOL";
+        case VM_MEMORY_MALLOC_NANO:                         return "MALLOC_NANO";
+        case VM_MEMORY_MALLOC_MEDIUM:                       return "MALLOC_MEDIUM";
+        case VM_MEMORY_MALLOC_PROB_GUARD:                   return "MALLOC_PROB_GUARD";
+        case VM_MEMORY_MACH_MSG:                            return "MACH_MSG";
+        case VM_MEMORY_IOKIT:                               return "IOKIT"; 
+        case VM_MEMORY_STACK:                               return "STACK"; 
+        case VM_MEMORY_GUARD:                               return "GUARD"; 
+        case VM_MEMORY_SHARED_PMAP:                         return "SHARED_PMAP";
+        case VM_MEMORY_DYLIB:                               return "DYLIB"; 
+        case VM_MEMORY_OBJC_DISPATCHERS:                    return "OBJC_DISPATCHERS";
+        case VM_MEMORY_UNSHARED_PMAP:                       return "UNSHARED_PMAP";
+        case VM_MEMORY_APPKIT:                              return "APPKIT"; 
+        case VM_MEMORY_FOUNDATION:                          return "FOUNDATION";
+        case VM_MEMORY_COREGRAPHICS:                        return "CoreGraphics";
+        case VM_MEMORY_CORESERVICES:                        return "CoreServices";
+        case VM_MEMORY_JAVA:                                return "Java";
+        case VM_MEMORY_COREDATA:                            return "CoreData";
+        case VM_MEMORY_COREDATA_OBJECTIDS:                  return "CoreData Object Ids";
+        case VM_MEMORY_ATS:                                 return "ATS";
+        case VM_MEMORY_LAYERKIT:                            return "LayerKit";
+        case VM_MEMORY_CGIMAGE:                             return "CGImage";
+        case VM_MEMORY_TCMALLOC:                            return "TCMalloc";
+        case VM_MEMORY_COREGRAPHICS_DATA:                   return "CoreGaphics Data";
+        case VM_MEMORY_COREGRAPHICS_SHARED:                 return "CoreGaphics Shared";
+        case VM_MEMORY_COREGRAPHICS_FRAMEBUFFERS:           return "CoreGaphics Framebuffers";
+        case VM_MEMORY_COREGRAPHICS_BACKINGSTORES:          return "CoreGaphics BackingStores";
+        case VM_MEMORY_COREGRAPHICS_XALLOC:                 return "CoreGaphics XAlloc";
+        case VM_MEMORY_DYLD:                                return "Dyld"; 
+        case VM_MEMORY_DYLD_MALLOC:                         return "Dyld Malloc"; 
+        case VM_MEMORY_SQLITE:                              return "SQlite";
+        case VM_MEMORY_JAVASCRIPT_CORE:                     return "Javascript Core";
+        case VM_MEMORY_JAVASCRIPT_JIT_EXECUTABLE_ALLOCATOR: return "Javascript JIT ExecAlloc";
+        case VM_MEMORY_JAVASCRIPT_JIT_REGISTER_FILE:        return "Javascript JIT RegFile";
+        case VM_MEMORY_GLSL:                                return "GLSL";
+        case VM_MEMORY_OPENCL:                              return "OpenCL";
+        case VM_MEMORY_COREIMAGE:                           return "CoreImage";
+        case VM_MEMORY_WEBCORE_PURGEABLE_BUFFERS:           return "WebCore (Purgable Buffers)";
+        case VM_MEMORY_IMAGEIO:                             return "ImageIO";
+        case VM_MEMORY_COREPROFILE:                         return "CoreProfile";
+        case VM_MEMORY_ASSETSD:                             return "AssetSD";
+        case VM_MEMORY_OS_ALLOC_ONCE:                       return "OS Alloc Once";
+        case VM_MEMORY_LIBDISPATCH:                         return "libdispatch";
+        case VM_MEMORY_ACCELERATE:                          return "Accelerate";
+        case VM_MEMORY_COREUI:                              return "CoreUI";
+        case VM_MEMORY_COREUIFILE:                          return "CoreUIFile";
+        case VM_MEMORY_GENEALOGY:                           return "Genealogy";
+        case VM_MEMORY_RAWCAMERA:                           return "RawCamera";
+        case VM_MEMORY_CORPSEINFO:                          return "CorpseInfo";
+        case VM_MEMORY_ASL:                                 return "ASL";
+        case VM_MEMORY_SWIFT_RUNTIME:                       return "Swift Runtime";
+        case VM_MEMORY_SWIFT_METADATA:                      return "Swift Metadata";
+        case VM_MEMORY_DHMM:                                return "DHMM";
+        case VM_MEMORY_SCENEKIT:                            return "SceneKit"; 
+        case VM_MEMORY_SKYWALK:                             return "SkyWalk";
+        case VM_MEMORY_IOSURFACE:                           return "IOSurface";
+        case VM_MEMORY_LIBNETWORK:                          return "libnetwork";
+        case VM_MEMORY_AUDIO:                               return "Audio";
+        case VM_MEMORY_VIDEOBITSTREAM:                      return "Video Bitstream";
+        case VM_MEMORY_CM_XPC:                              return "CoreMedia XPC";
+        case VM_MEMORY_CM_RPC:                              return "CoreMedia RPC";
+        case VM_MEMORY_CM_MEMORYPOOL:                       return "CoreMedia memory pool";
+        case VM_MEMORY_CM_READCACHE:                        return "CoreMedia read cache";
+        case VM_MEMORY_CM_CRABS:                            return "CoreMedia crabs";
+        case VM_MEMORY_QUICKLOOK_THUMBNAILS:                return "QuickLook thumbnails";
+        case VM_MEMORY_ACCOUNTS:                            return "Accounts";
+        case VM_MEMORY_SANITIZER:                           return "Sanitizer";
+        case VM_MEMORY_IOACCELERATOR:                       return "IOAccelerator";
+        case VM_MEMORY_CM_REGWARP:                          return "CoreMedia Regwarp";
+        case VM_MEMORY_EAR_DECODER:                         return "EmbeddedAcousticRecognition decoder";
+        case VM_MEMORY_COREUI_CACHED_IMAGE_DATA:            return "CoreUI cached image data";
+        case VM_MEMORY_COLORSYNC:                           return "ColorSync";
+        case VM_MEMORY_BTINFO:                              return "backtrace info";
+        case VM_MEMORY_CM_HLS:                              return "CoreMedia HLS";
+        case VM_MEMORY_ROSETTA:                             return "Rosetta";
+        case VM_MEMORY_ROSETTA_THREAD_CONTEXT:              return "Rosetta thread context";
+        case VM_MEMORY_ROSETTA_INDIRECT_BRANCH_MAP:         return "Rosetta indirect branch map";
+        case VM_MEMORY_ROSETTA_RETURN_STACK:                return "Rosetta return stack";
+        case VM_MEMORY_ROSETTA_EXECUTABLE_HEAP:             return "Rosetta exectuable heap";
+        case VM_MEMORY_ROSETTA_USER_LDT:                    return "Rosetta user LDT";
+        case VM_MEMORY_ROSETTA_ARENA:                       return "Rosetta arena";
+        case VM_MEMORY_ROSETTA_10:                          return "ROSETTA_10";
+        default: break;
+    }
+
+    return "<UNKNOWN>";
+}
+
+extern "C" {
+extern const void *_dyld_get_shared_cache_range(size_t *length);
+}
 
 /**
  * Signal handler callback.
@@ -123,8 +232,9 @@ static void rtR3DarwinSigSegvBusHandler(int iSignum, siginfo_t *pSigInfo, void *
         /*
          * Dump the machine context.
          */
-        uintptr_t     uXcptPC = 0;
-        uintptr_t     uXcptSP = 0;
+        uintptr_t     uXcptAddr = (uintptr_t)pSigInfo->si_addr;
+        uintptr_t     uXcptPC   = 0;
+        uintptr_t     uXcptSP   = 0;
         mcontext_t    pXcptCtx = pCtx->uc_mcontext;
 #ifdef RT_ARCH_AMD64
         RTLogLoggerWeak(pLogger, NULL, "\ncs:rip=%04x:%016RX64\n",
@@ -211,6 +321,65 @@ static void rtR3DarwinSigSegvBusHandler(int iSignum, siginfo_t *pSigInfo, void *
         RTLogLoggerWeak(pLogger, NULL,  "Thread name: %s\n", RTThreadSelfName());
         RTLogLoggerWeak(pLogger, NULL,  "Thread IPRT: %p\n", hSelf);
 
+        /* Dump the address space of our process. */
+        RTLogLoggerWeak(pLogger, NULL,
+                        "\nAddress space:\n"
+                        "%-*s[*] SHM             PROT  Type\n", sizeof(void *) * 4 + 2 - 1, "Address range"
+                        );
+
+        mach_port_t hTask = mach_task_self();
+        kern_return_t krc = KERN_SUCCESS;
+        vm_address_t VmAddrCur = 0;
+        vm_size_t    cbCur = 0;
+        natural_t    uDepth = 0;
+        for (;;)
+        {
+            struct vm_region_submap_info_64 VmInfo;
+            mach_msg_type_number_t uCnt = VM_REGION_SUBMAP_INFO_COUNT_64;
+
+            krc = vm_region_recurse_64(hTask, &VmAddrCur, &cbCur, &uDepth, (vm_region_recurse_info_t)&VmInfo, &uCnt);
+            if (krc == KERN_INVALID_ADDRESS)
+                break;
+
+            const char *pszShareMode;
+            switch (VmInfo.share_mode)
+            {
+                case SM_COW:             pszShareMode = "COW            "; break;
+                case SM_PRIVATE:         pszShareMode = "PRIVATE        "; break;
+                case SM_EMPTY:           pszShareMode = "EMPTY          "; break;
+                case SM_SHARED:          pszShareMode = "SHARED         "; break;
+                case SM_TRUESHARED:      pszShareMode = "TRUESHARED     "; break;
+                case SM_PRIVATE_ALIASED: pszShareMode = "PRIVATE_ALIASED"; break;
+                case SM_SHARED_ALIASED:  pszShareMode = "SHARED_ALIASED "; break;
+                case SM_LARGE_PAGE:      pszShareMode = "LARGE_PAGE     "; break;
+                default:                 pszShareMode = "<INVALID>      "; break;
+            }
+
+            char chXcpt = ' ';
+            if (   uXcptAddr >= VmAddrCur
+                && uXcptAddr < (VmAddrCur + cbCur))
+                chXcpt = '*';
+
+            char aszProt[4] = "---";
+            if (VmInfo.protection & VM_PROT_READ)
+                aszProt[0] = 'r';
+            if (VmInfo.protection & VM_PROT_WRITE)
+                aszProt[1] = 'w';
+            if (VmInfo.protection & VM_PROT_EXECUTE)
+                aszProt[2] = 'x';
+
+            RTLogLoggerWeak(pLogger, NULL, "%*s %p..%p%c  %s [%s] %s %s\n",
+                            uDepth * 4, " ", (uintptr_t)VmAddrCur, (uintptr_t)VmAddrCur + cbCur - 1, chXcpt,
+                            pszShareMode, aszProt, rtR3DarwinVmUserTagStringify(VmInfo.user_tag), "");
+
+            if (VmInfo.is_submap)
+                uDepth++;
+            else
+            {
+                VmAddrCur += cbCur;
+            }
+        }
+
         /*
          * Try dump the load information.
          */
@@ -219,13 +388,72 @@ static void rtR3DarwinSigSegvBusHandler(int iSignum, siginfo_t *pSigInfo, void *
                         "%-*s[*] Path\n", sizeof(void *) * 4 + 2 - 1, "Address range"
                         );
 
-        /** @todo This is not working right. */
+#if 0
+        struct task_dyld_info DyldInfo;
+        mach_msg_type_number_t uCnt = TASK_DYLD_INFO_COUNT;
+        krc = task_info(hTask, TASK_DYLD_INFO, (task_info_t)&DyldInfo, &uCnt);
+        if (krc == KERN_SUCCESS)
+        {
+            struct dyld_all_image_infos *pImageInfos = (struct dyld_all_image_infos *)DyldInfo.all_image_info_addr;
+            for (uint32_t i = 0; i < pImageInfos->infoArrayCount; i++)
+            {
+                const struct dyld_image_info *pImg = &pImageInfos->infoArray[i];
+                RTLogLoggerWeak(pLogger, NULL, "%p..%p%c  %s\n",
+                                pImg->imageLoadAddress, 0, ' ', pImg->imageFilePath);
+            }
+        }
+        else
+            RTLogLoggerWeak(pLogger, NULL, "Failed to obtain DYLD information with %#x\n", krc);
+#else
         uint32_t const cImages = _dyld_image_count();
         for (uint32_t i = 0; i < cImages; i++)
         {
+            char chInd = ' ';
+
+            /*
+             * Go through the load commands of the mach-o file and find the text segment to apply
+             * the slide to in order to get at the final boundaries of the executable code of the shared
+             * library.
+             */
+#if ARCH_BITS == 64
+# define MY_MACHO_HEADER          mach_header_64
+# define MY_MACHO_LC_SEGMENT      LC_SEGMENT_64
+# define MY_MACHO_SEGMENT_COMMAND segment_command_64
+#elif ARCH_BITS == 32
+# define MY_MACHO_HEADER          mach_header_32
+# define MY_MACHO_LC_SEGMENT      LC_SEGMENT_32
+# define MY_MACHO_SEGMENT_COMMAND segment_command_32
+#else
+# error "Port me"
+#endif
+            intptr_t VmSlide = _dyld_get_image_vmaddr_slide(i);
+            const struct MY_MACHO_HEADER *pHdr = (const struct MY_MACHO_HEADER *)_dyld_get_image_header(i);
+            const struct load_command *pLoadCmd = (struct load_command *)(pHdr + 1);
+            size_t cbText = 0;
+            uintptr_t PtrText = 0;
+            for (uint32_t iCmd = 0; iCmd < pHdr->ncmds; iCmd++)
+            {
+                if (pLoadCmd->cmd == MY_MACHO_LC_SEGMENT)
+                {
+                    const struct MY_MACHO_SEGMENT_COMMAND *pSeg = (const struct MY_MACHO_SEGMENT_COMMAND *)pLoadCmd;
+                    if (!strcmp(pSeg->segname, "__TEXT"))
+                    {
+                        PtrText = pSeg->vmaddr + VmSlide;
+                        cbText  = pSeg->vmsize;
+                        break;
+                    }
+                }
+
+                pLoadCmd = (struct load_command *)((uint8_t *)pLoadCmd + pLoadCmd->cmdsize);
+            }
+
+            if (uXcptPC >= PtrText && uXcptPC < PtrText + cbText)
+                chInd = '*';
+
             RTLogLoggerWeak(pLogger, NULL, "%p..%p%c  %s\n",
-                            _dyld_get_image_vmaddr_slide(i), 0, ' ', _dyld_get_image_name(i));
+                            PtrText, PtrText + cbText, chInd, _dyld_get_image_name(i));
         }
+#endif
 
         /*
          * Dump the command line.
