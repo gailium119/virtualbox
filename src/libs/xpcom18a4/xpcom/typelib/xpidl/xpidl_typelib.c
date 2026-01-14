@@ -426,6 +426,9 @@ static int typelib_epilog(PXPIDLTYPELIBSTATE pThis, FILE *pFile, PCXPIDLINPUT pI
 
     /* Write any annotations */
     if (emit_typelib_annotations) {
+#ifdef VBOX
+        int n;
+#endif
         PRUint32 annotation_len, written_so_far;
         char *annotate_val, *timestr;
         time_t now;
@@ -456,15 +459,35 @@ static int typelib_epilog(PXPIDLTYPELIBSTATE pThis, FILE *pFile, PCXPIDLINPUT pI
         }
 
         annotate_val = (char *) malloc(annotation_len);
+#ifdef VBOX
+        /* note that sprintf can theoretically return a negative value, but
+         * only for encoding errors which cannot happen for '%s' format. */
+        n = sprintf(annotate_val, annotation_format,
+                    pInput->pszBasename, timestr);
+        if (n >= 0)
+            written_so_far = n;
+        else
+            written_so_far = 0;
+        AssertRelease(written_so_far < annotation_len);
+#else
         written_so_far = sprintf(annotate_val, annotation_format,
                                  pInput->pszBasename, timestr);
+#endif
         
         for (i = 0; i < HEADER(pThis)->num_interfaces; i++) {
             XPTInterfaceDirectoryEntry *ide;
             ide = &HEADER(pThis)->interface_directory[i];
             if (ide->interface_descriptor) {
+#ifdef VBOX
+                n = sprintf(annotate_val + written_so_far, " %s",
+                            ide->name);
+                if (n >= 0)
+                    written_so_far += n;
+                AssertRelease(written_so_far < annotation_len);
+#else
                 written_so_far += sprintf(annotate_val + written_so_far, " %s",
                                           ide->name);
+#endif
             }
         }
 
@@ -481,7 +504,7 @@ static int typelib_epilog(PXPIDLTYPELIBSTATE pThis, FILE *pFile, PCXPIDLINPUT pI
 
     if (!HEADER(pThis)->annotations) {
         /* XXX report out of memory error */
-        return false;
+        return VINF_SUCCESS;
     }
 
     /* Write the typelib */
