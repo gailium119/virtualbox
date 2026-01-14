@@ -6,7 +6,7 @@ Requires >= Python 3.4.
 """
 
 # -*- coding: utf-8 -*-
-# $Id: configure.py 112561 2026-01-14 13:56:01Z andreas.loeffler@oracle.com $
+# $Id: configure.py 112562 2026-01-14 14:34:02Z andreas.loeffler@oracle.com $
 # pylint: disable=bare-except
 # pylint: disable=consider-using-f-string
 # pylint: disable=global-statement
@@ -61,7 +61,7 @@ SPDX-License-Identifier: GPL-3.0-only
 # External Python modules or other dependencies are not allowed!
 #
 
-__revision__ = "$Revision: 112561 $"
+__revision__ = "$Revision: 112562 $"
 
 import argparse
 import ctypes
@@ -707,6 +707,8 @@ def compileAndExecute(sName, enmBuildTarget, enmBuildArch, asIncPaths, asLibPath
                         # Some build boxes don't like running X stuff and simply SIGSEGV, so just skip those errors for now.
                         if oProc.returncode == -11 \
                         or oProc.returncode == 139: # 128 + Signal number
+                            printVerbose(1, f'Treating return code {oProc.returncode} as warning instead of error');
+                            printVerbose(1,  'Running on headless build box (no X11, ...)?');
                             fnLog = printWarn; # Just warn, don't fail.
                         fnLog(f"Execution of test binary for {sName} failed with return code {oProc.returncode}:");
                         if enmBuildTarget == BuildTarget.WINDOWS:
@@ -1067,7 +1069,7 @@ class LibraryCheck(CheckBase):
     def __init__(self, sName, asIncFiles, asLibFiles, aeTargets = None, aeArchs = None, sCode = None,
                  asIncPaths = None, asLibPaths = None,
                  fnCallback = None, aeTargetsExcluded = None, fUseInTree = False, sSdkName = None,
-                 dictDefinesToSetfFailed = None):
+                 dictDefinesToSetIfFailed = None):
         """
         Constructor.
         """
@@ -1093,7 +1095,7 @@ class LibraryCheck(CheckBase):
         # Defines set set (e.g. { "VBOX_WITH_MYFEATURE : '' }) if the library check failed.
         # The key contains the define, the value the value to set.
         # A non-empty dictonary makes the library optional.
-        self.dictDefinesToSetIfFailed = dictDefinesToSetfFailed or {};
+        self.dictDefinesToSetIfFailed = dictDefinesToSetIfFailed or {};
         # Whether the library is disabled or not.
         self.fDisabled = False;
         # Base (root) path of the library. None if not (yet) found or not specified.
@@ -1164,6 +1166,12 @@ class LibraryCheck(CheckBase):
                                                   self.asIncPaths, self.asLibPaths, self.asHdrFiles, self.asLibFiles, \
                                                   sCode, asCompilerArgs = self.asCompilerArgs, asLinkerArgs = self.asLinkerArgs, asDefines = self.asDefines,
                                                   fMayFail = fMayFail);
+
+        # Compilation / execution failed by allowed to fail? Overwrite returned result.
+        if  not fRc \
+        and fMayFail:
+            fRc = True;
+
         if fRc and sStdOut:
             self.sVer = sStdOut;
         return fRc, sStdOut, sStdErr;
@@ -1518,10 +1526,14 @@ class LibraryCheck(CheckBase):
         """
         Run library detection.
 
-        Returns success status.
+        Returns status:
+            - None if not found and not required (optional or not needed)
+            - False if required but not found
+            - True if found
         """
         if self.fDisabled:
-            return True;
+            self.fHave = None;
+            return self.fHave;
 
         self.fHave = False;
         self.print('Performing library check ...');
@@ -1561,9 +1573,10 @@ class LibraryCheck(CheckBase):
                 for sKey, sVal in self.dictDefinesToSetIfFailed.items():
                     self.printWarn(f"    - {sKey} -> {sVal if sVal else '<Unset>'}", fDontCount = True);
                     g_oEnv.set(sKey, sVal);
-                return True;
+                self.fHave = None; # Set to optional.
             else:
                 self.printError('Library check failed, but is required (see errors above)');
+
         return self.fHave;
 
     def getStatusString(self):
@@ -1754,7 +1767,7 @@ class ToolCheck(CheckBase):
     Describes and checks for a build tool.
     """
     def __init__(self, sName, asCmd = None, fnCallback = None, aeTargets = None, aeArchs = None,
-                 aeTargetsExcluded = None, dictDefinesToSetfFailed = None):
+                 aeTargetsExcluded = None, dictDefinesToSetIfFailed = None):
         """
         Constructor.
         """
@@ -1767,7 +1780,7 @@ class ToolCheck(CheckBase):
         # Defines set set (e.g. { "VBOX_WITH_MYFEATURE : '' }) if the library check failed.
         # The key contains the define, the value the value to set.
         # A non-empty dictonary makes the library optional.
-        self.dictDefinesToSetfFailed = dictDefinesToSetfFailed or {};
+        self.dictDefinesToSetIfFailed = dictDefinesToSetIfFailed or {};
         # Whether the tool is disabled or not.
         self.fDisabled = False;
         # Absolute root path of the tool found.
@@ -1835,11 +1848,14 @@ class ToolCheck(CheckBase):
         """
         Performs the actual check of the tool.
 
-        Returns success status.
+        Returns status:
+            - None if not found and not required (optional or not needed)
+            - False if required but not found
+            - True if found
         """
         if self.fDisabled:
             self.fHave = None;
-            return True;
+            return self.fHave;
 
         self.fHave = False;
         self.print('Performing tool check ...');
@@ -1862,13 +1878,15 @@ class ToolCheck(CheckBase):
                     self.fHave = True if self.sCmdPath else False; # Note: Version is optional.
 
         if not self.fHave:
-            if self.dictDefinesToSetfFailed: # Implies being optional.
+            if self.dictDefinesToSetIfFailed: # Implies being optional.
                 self.printWarn('Tool check failed and is optional, disabling dependent features');
-                for sDef in self.dictDefinesToSetfFailed:
-                    g_oEnv.set(sDef, '');
-                    return True;
+                for sKey, sVal in self.dictDefinesToSetIfFailed.items():
+                    self.printWarn(f"    - {sKey} -> {sVal if sVal else '<Unset>'}", fDontCount = True);
+                    g_oEnv.set(sKey, sVal);
+                self.fHave = None; # Set to optional.
             else:
                 self.printError('Tool not found, but is required (see errors above)');
+
         return self.fHave;
 
     def getStatusString(self):
@@ -3191,10 +3209,10 @@ g_aoLibs = [
                  asIncPaths = [ os.path.join(g_sScriptPath, 'include') ]),
     LibraryCheck("dxmt", [ "version.h" ], [ "libdxmt" ], aeTargets = [ BuildTarget.LINUX, BuildTarget.SOLARIS ], fUseInTree = True,
                  sCode = '#include <version.h>\nint main() { return 0; }\n',
-                 dictDefinesToSetfFailed = { 'VBOX_WITH_DXMT' : '' }),
+                 dictDefinesToSetIfFailed = { 'VBOX_WITH_DXMT' : '' }),
     LibraryCheck("dxvk", [ "version.h" ], [ "libdxvk" ],  aeTargets = [ BuildTarget.LINUX ], fUseInTree = True,
                  sCode = '#include <version.h>\nint main() { printf(DXVK_VERSION); return 0; }\n',
-                 dictDefinesToSetfFailed = { 'VBOX_WITH_DXVK' : '' }),
+                 dictDefinesToSetIfFailed = { 'VBOX_WITH_DXVK' : '' }),
     LibraryCheck("libasound", [ "alsa/asoundlib.h", "alsa/version.h" ], [ "libasound" ], aeTargets = [ BuildTarget.LINUX ],
                  sCode = '#include <alsa/asoundlib.h>\n#include <alsa/version.h>\nint main() { snd_pcm_info_sizeof(); printf("%s", SND_LIB_VERSION_STR); return 0; }\n'),
     LibraryCheck("libcap", [ "sys/capability.h" ], [ "libcap" ], aeTargets = [ BuildTarget.LINUX ],
@@ -3210,7 +3228,7 @@ g_aoLibs = [
     # so we only do the bare minimum here (hence the empty lib definition) to return the installed version of libgsoap[ssl][++].
     LibraryCheck("libgsoapssl++", [ "stdsoap2.h" ], [ ], aeTargets = [ BuildTarget.LINUX ],
                  sCode = '#include <stdsoap2.h>\nint main() { printf("%ld", GSOAP_VERSION); return 0; }\n',
-                 dictDefinesToSetfFailed = { 'VBOX_WITH_WEBSERVICES' : '' }),
+                 dictDefinesToSetIfFailed = { 'VBOX_WITH_WEBSERVICES' : '' }),
     LibraryCheck("libjpeg-turbo", [ "turbojpeg.h" ], [ "libturbojpeg" ], aeTargets = [ BuildTarget.ANY ], fUseInTree = True,
                  sCode = '#include <turbojpeg.h>\nint main() { tjInitCompress(); printf("<found>"); return 0; }\n'),
     LibraryCheck("liblzf", [ "lzf.h" ], [ "liblzf" ], aeTargets = [ BuildTarget.ANY ], fUseInTree = True,
@@ -3236,7 +3254,7 @@ g_aoLibs = [
                  sCode = '#include <libtpms/tpm_library.h>\nint main() { printf("%d.%d.%d", TPM_LIBRARY_VER_MAJOR, TPM_LIBRARY_VER_MINOR, TPM_LIBRARY_VER_MICRO); return 0; }\n'),
     LibraryCheck("libvncserver", [ "rfb/rfb.h", "rfb/rfbclient.h" ], [ "libvncserver" ], aeTargets = [ BuildTarget.LINUX, BuildTarget.SOLARIS ],
                  sCode = '#include <rfb/rfb.h>\nint main() { printf("%s", LIBVNCSERVER_PACKAGE_VERSION); return 0; }\n',
-                 dictDefinesToSetfFailed = { 'VBOX_WITH_EXTPACK_VNC' : '' }),
+                 dictDefinesToSetIfFailed = { 'VBOX_WITH_EXTPACK_VNC' : '' }),
     LibraryCheck("libvorbis", [ "vorbis/vorbisenc.h" ], [ "libvorbis", "libvorbisenc" ], aeTargets = [ BuildTarget.ANY ], fUseInTree = True,
                  sCode = '#include <vorbis/vorbisenc.h>\nint main() { vorbis_info v; vorbis_info_init(&v); int vorbis_rc = vorbis_encode_init_vbr(&v, 2 /* channels */, 44100 /* hz */, (float).4 /* quality */); printf("<found>"); return 0; }\n',
                  sSdkName = "VBoxLibVorbis"),
@@ -3262,13 +3280,13 @@ g_aoLibs = [
     LibraryCheck("qt6", [ "QtCore/QtGlobal" ], [ ], aeTargets = [ BuildTarget.ANY ],
                  sCode = '#define IN_RING3\n#include <QtCore/QtGlobal>\nint main() { std::cout << QT_VERSION_STR << std::endl; }',
                  fnCallback = LibraryCheck.checkCallback_qt6,
-                 sSdkName = 'QT', dictDefinesToSetfFailed = { 'VBOX_WITH_QTGUI' : '' }),
+                 sSdkName = 'QT', dictDefinesToSetIfFailed = { 'VBOX_WITH_QTGUI' : '' }),
     LibraryCheck("libsdl2", [ "SDL2/SDL.h" ], [ "libSDL2" ], aeTargets = [ BuildTarget.LINUX, BuildTarget.SOLARIS ],
                  sCode = '#include <SDL2/SDL.h>\nint main() { printf("%d.%d.%d", SDL_MAJOR_VERSION, SDL_MINOR_VERSION, SDL_PATCHLEVEL); return 0; }\n',
-                 dictDefinesToSetfFailed = { 'VBOX_WITH_VBOXSDL' : '' }),
+                 dictDefinesToSetIfFailed = { 'VBOX_WITH_VBOXSDL' : '' }),
     LibraryCheck("libsdl2_ttf", [ "SDL2/SDL_ttf.h" ], [ "libSDL2_ttf" ],
                  sCode = '#include <SDL2/SDL_ttf.h>\nint main() { printf("%d.%d.%d", SDL_TTF_MAJOR_VERSION, SDL_TTF_MINOR_VERSION, SDL_TTF_PATCHLEVEL); return 0; }\n',
-                 dictDefinesToSetfFailed = { 'VBOX_WITH_SECURE_LABEL' : '' }),
+                 dictDefinesToSetIfFailed = { 'VBOX_WITH_SECURE_LABEL' : '' }),
     LibraryCheck("libx11", [ "X11/Xlib.h" ], [ "libX11" ], aeTargets = [ BuildTarget.LINUX, BuildTarget.SOLARIS ],
                  sCode = '#include <X11/Xlib.h>\nint main() { Display *d = XOpenDisplay(NULL); XCloseDisplay(d); printf("<found>"); return 0; }\n'),
     LibraryCheck("libxext", [ "X11/extensions/Xext.h" ], [ "libXext" ], aeTargets = [ BuildTarget.LINUX, BuildTarget.SOLARIS ],
@@ -3289,24 +3307,24 @@ g_aoTools = [
     ToolCheck("kbuild", asCmd = [ "kbuild" ], fnCallback = ToolCheck.checkCallback_kBuild ),
     ToolCheck("win-visualcpp", asCmd = [ ], fnCallback = ToolCheck.checkCallback_WinVisualCPP, aeTargets = [ BuildTarget.WINDOWS ] ),
     ToolCheck("glslang-tools", asCmd = [ "glslangValidator" ], aeTargets = [ BuildTarget.LINUX, BuildTarget.SOLARIS ],
-              dictDefinesToSetfFailed = { 'VBOX_WITH_DXVK' : '' }),
+              dictDefinesToSetIfFailed = { 'VBOX_WITH_DXVK' : '' }),
     ToolCheck("macossdk", asCmd = [ ], fnCallback = ToolCheck.checkCallback_MacOSSDK, aeTargets = [ BuildTarget.DARWIN ] ),
     ToolCheck("devtools", asCmd = [ ], fnCallback = ToolCheck.checkCallback_devtools ),
     ToolCheck("gsoap", asCmd = [ ], fnCallback = ToolCheck.checkCallback_GSOAP ),
     ToolCheck("gsoapsources", asCmd = [ ], fnCallback = ToolCheck.checkCallback_GSOAPSources ),
     ToolCheck("jdk", asCmd = [ ], fnCallback = ToolCheck.checkCallback_JDK,
-              dictDefinesToSetfFailed = { 'VBOX_WITH_WEBSERVICES' : '' }),
+              dictDefinesToSetIfFailed = { 'VBOX_WITH_WEBSERVICES' : '' }),
     ToolCheck("makeself", asCmd = [ ], fnCallback = ToolCheck.checkCallback_makeself, aeTargets = [ BuildTarget.LINUX ]),
     # On Solaris nasm is not officially supported.
     ToolCheck("nasm", asCmd = [ "nasm" ], fnCallback = ToolCheck.checkCallback_NASM, aeTargetsExcluded = [ BuildTarget.SOLARIS ]),
     ToolCheck("openwatcom", asCmd = [ "wcl", "wcl386", "wlink" ], fnCallback = ToolCheck.checkCallback_OpenWatcom,
-              dictDefinesToSetfFailed = { 'VBOX_WITH_OPEN_WATCOM' : '' }),
+              dictDefinesToSetIfFailed = { 'VBOX_WITH_OPEN_WATCOM' : '' }),
     ToolCheck("python_c_api", asCmd = [ ], fnCallback = ToolCheck.checkCallback_PythonC_API,
-              dictDefinesToSetfFailed = { 'VBOX_WITH_PYTHON' : '' }),
+              dictDefinesToSetIfFailed = { 'VBOX_WITH_PYTHON' : '' }),
     # Note: Currently only required for XPCOM.
     ToolCheck("python_modules", asCmd = [ ], fnCallback = ToolCheck.checkCallback_PythonModules,
               aeTargets = [ BuildTarget.DARWIN, BuildTarget.LINUX, BuildTarget.SOLARIS ],
-              dictDefinesToSetfFailed = { 'VBOX_WITH_PYTHON' : '' }),
+              dictDefinesToSetIfFailed = { 'VBOX_WITH_PYTHON' : '' }),
     ToolCheck("xcode", asCmd = [], fnCallback = ToolCheck.checkCallback_XCode, aeTargets = [ BuildTarget.DARWIN ]),
     ToolCheck("yasm", asCmd = [ 'yasm' ], fnCallback = ToolCheck.checkCallback_YASM),
     # Windows exclusive tools below (so that it can be invoked with --with-win-nsis-path, for instance).
@@ -3915,7 +3933,8 @@ def main():
         for oToolCur in aoToolsToCheck:
             if not oToolCur.setArgs(oArgs):
                 break;
-            if  not oToolCur.performCheck() \
+            fRc = oToolCur.performCheck();
+            if      fRc is False \
             and not g_fContOnErr:
                 break;
 
@@ -3928,7 +3947,8 @@ def main():
         for oLibCur in aoLibsToCheck:
             if not oLibCur.setArgs(oArgs):
                 break;
-            if  not oLibCur.performCheck() \
+            fRc = oLibCur.performCheck();
+            if      fRc is False \
             and not g_fContOnErr:
                 break;
     #
