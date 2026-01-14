@@ -6,7 +6,7 @@ Requires >= Python 3.4.
 """
 
 # -*- coding: utf-8 -*-
-# $Id: configure.py 112566 2026-01-14 15:30:49Z andreas.loeffler@oracle.com $
+# $Id: configure.py 112573 2026-01-14 17:22:53Z andreas.loeffler@oracle.com $
 # pylint: disable=bare-except
 # pylint: disable=consider-using-f-string
 # pylint: disable=global-statement
@@ -61,7 +61,7 @@ SPDX-License-Identifier: GPL-3.0-only
 # External Python modules or other dependencies are not allowed!
 #
 
-__revision__ = "$Revision: 112566 $"
+__revision__ = "$Revision: 112573 $"
 
 import argparse
 import ctypes
@@ -760,7 +760,7 @@ def getPackageLibs(sPackageName):
         if g_enmHostTarget in [ BuildTarget.LINUX, BuildTarget.SOLARIS, BuildTarget.DARWIN ]:
             # Use pkg-config on Linux and macOS.
             sCmd = f"pkg-config --libs {shlex.quote(sPackageName)}"
-            oProc = subprocess.run(sCmd, shell = True, check = True, stdout = subprocess.PIPE, stderr = subprocess.PIPE, text =True);
+            oProc = subprocess.run(sCmd, shell = True, check = True, stdout = subprocess.PIPE, stderr = subprocess.PIPE, universal_newlines = True);
             if oProc \
             and oProc.returncode == 0:
                 asArg = shlex.split(oProc.stdout.strip());
@@ -842,7 +842,7 @@ def getPackageVar(sPackageName, enmPkgMgrVar : PkgMgrVar):
             raise RuntimeError('Unsupported OS');
 
         if sCmd:
-            oProc = subprocess.run(sCmd, shell = True, check = False, stdout = subprocess.PIPE, stderr = subprocess.PIPE, text =True);
+            oProc = subprocess.run(sCmd, shell = True, check = False, stdout = subprocess.PIPE, stderr = subprocess.PIPE, universal_newlines = True);
             if oProc.returncode == 0 and oProc.stdout.strip():
                 sRet = oProc.stdout.strip();
                 # Output parsing.
@@ -853,7 +853,7 @@ def getPackageVar(sPackageName, enmPkgMgrVar : PkgMgrVar):
         # If pkg-config fails on Darwin, try asking brew instead.
         if g_enmHostTarget == BuildTarget.DARWIN:
             sCmd = f'brew {enmPkgMgrVar[PkgMgr.BREW]} {sPackageName}';
-            oProc = subprocess.run(sCmd, shell = True, check = False, stdout = subprocess.PIPE, stderr = subprocess.PIPE, text =True);
+            oProc = subprocess.run(sCmd, shell = True, check = False, stdout = subprocess.PIPE, stderr = subprocess.PIPE, universal_newlines = True);
             if oProc.returncode == 0 and oProc.stdout.strip():
                 sRet = oProc.stdout.strip();
                 return True, sRet;
@@ -2177,7 +2177,7 @@ class ToolCheck(CheckBase):
                                 '-requires', 'Microsoft.VisualStudio*',
                                 '-property', sCurProp,
                                 '-format', 'json' ];
-                        oProc = subprocess.run(asCmd, capture_output = True, check = False, text = True);
+                        oProc = subprocess.run(asCmd, capture_output = True, check = False, universal_newlines = True);
                         if oProc.returncode == 0 and oProc.stdout.strip():
                             import json
                             asList = json.loads(oProc.stdout);
@@ -2760,7 +2760,7 @@ int main()
         # Detect Xcode.
         #
         try:
-            oProc = subprocess.run(['xcode-select', '-p'], capture_output = True, check = False, text = True)
+            oProc = subprocess.run(['xcode-select', '-p'], capture_output = True, check = False, universal_newlines = True)
             if oProc.returncode == 0:
                 asPathsToCheck.extend([ oProc.stdout.strip() ]);
         except subprocess.SubprocessError:
