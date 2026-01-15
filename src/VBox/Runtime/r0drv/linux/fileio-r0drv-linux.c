@@ -1,4 +1,4 @@
-/* $Id: fileio-r0drv-linux.c 112585 2026-01-14 23:27:03Z knut.osmundsen@oracle.com $ */
+/* $Id: fileio-r0drv-linux.c 112593 2026-01-15 08:09:26Z knut.osmundsen@oracle.com $ */
 /** @file
  * IPRT - File I/O, R0 Driver, Linux.
  */
@@ -59,7 +59,7 @@
 #include "internal/magics.h"
 
 
-#if RTLNX_VER_MIN(5,15,0)  /** @todo support this for older kernels (see also dbgkrnlinfo-r0drv-linux.c and fileio-r0drv-linux.c) */
+#if RTLNX_VER_MIN(5,11,0)  /** @todo support this for older kernels (see also dbgkrnlinfo-r0drv-linux.c and fileio-r0drv-linux.c) */
 
 
 /*********************************************************************************************************************************
