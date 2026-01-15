@@ -1,4 +1,4 @@
-/* $Id: init-darwin.cpp 112592 2026-01-15 07:15:06Z alexander.eichner@oracle.com $ */
+/* $Id: init-darwin.cpp 112599 2026-01-15 10:57:56Z alexander.eichner@oracle.com $ */
 /** @file
  * IPRT - Init Ring-3, POSIX Specific Code.
  */
@@ -86,6 +86,9 @@
 #endif
 #ifndef VM_MEMORY_UNSHARED_PMAP
 # define VM_MEMORY_UNSHARED_PMAP                        35
+#endif
+#ifndef VM_MEMORY_CORESERVICES
+# define VM_MEMORY_CORESERVICES                         43
 #endif
 #ifndef VM_MEMORY_COREDATA
 # define VM_MEMORY_COREDATA                             45
@@ -561,7 +564,9 @@ static void rtR3DarwinSigSegvBusHandler(int iSignum, siginfo_t *pSigInfo, void *
                 case SM_TRUESHARED:      pszShareMode = "TRUESHARED     "; break;
                 case SM_PRIVATE_ALIASED: pszShareMode = "PRIVATE_ALIASED"; break;
                 case SM_SHARED_ALIASED:  pszShareMode = "SHARED_ALIASED "; break;
+#ifdef SM_LARGE_PAGE
                 case SM_LARGE_PAGE:      pszShareMode = "LARGE_PAGE     "; break;
+#endif
                 default:                 pszShareMode = "<INVALID>      "; break;
             }
 
@@ -631,9 +636,15 @@ static void rtR3DarwinSigSegvBusHandler(int iSignum, siginfo_t *pSigInfo, void *
 #  define MY_MACHO_LC_SEGMENT      LC_SEGMENT_64
 #  define MY_MACHO_SEGMENT_COMMAND segment_command_64
 # elif ARCH_BITS == 32
-#  define MY_MACHO_HEADER          mach_header_32
-#  define MY_MACHO_LC_SEGMENT      LC_SEGMENT_32
-#  define MY_MACHO_SEGMENT_COMMAND segment_command_32
+#  ifdef LC_SEGMENT_32
+#   define MY_MACHO_HEADER          mach_header_32
+#   define MY_MACHO_LC_SEGMENT      LC_SEGMENT_32
+#   define MY_MACHO_SEGMENT_COMMAND segment_command_32
+#  else
+#   define MY_MACHO_HEADER          mach_header
+#   define MY_MACHO_LC_SEGMENT      LC_SEGMENT
+#   define MY_MACHO_SEGMENT_COMMAND segment_command
+#  endif
 # else
 #  error "Port me"
 # endif
