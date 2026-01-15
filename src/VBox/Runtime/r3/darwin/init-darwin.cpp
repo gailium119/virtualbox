@@ -1,4 +1,4 @@
-/* $Id: init-darwin.cpp 112591 2026-01-15 07:13:42Z alexander.eichner@oracle.com $ */
+/* $Id: init-darwin.cpp 112592 2026-01-15 07:15:06Z alexander.eichner@oracle.com $ */
 /** @file
  * IPRT - Init Ring-3, POSIX Specific Code.
  */
@@ -578,7 +578,7 @@ static void rtR3DarwinSigSegvBusHandler(int iSignum, siginfo_t *pSigInfo, void *
             if (VmInfo.protection & VM_PROT_EXECUTE)
                 szProt[2] = 'x';
 
-            char szTmp[32]
+            char szTmp[32];
             RTLogLoggerWeak(pLogger, NULL, "%*s %p..%p%c  %s [%s] %s %s\n",
                             uDepth * 4, " ", (uintptr_t)VmAddrCur, (uintptr_t)VmAddrCur + cbCur - 1, chXcpt,
                             pszShareMode, szProt, rtR3DarwinVmUserTagStringify(VmInfo.user_tag, szTmp, sizeof(szTmp)), "");
