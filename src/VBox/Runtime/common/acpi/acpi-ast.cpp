@@ -1,4 +1,4 @@
-/* $Id: acpi-ast.cpp 112628 2026-01-18 09:10:34Z alexander.eichner@oracle.com $ */
+/* $Id: acpi-ast.cpp 112638 2026-01-19 12:47:38Z alexander.eichner@oracle.com $ */
 /** @file
  * IPRT - Advanced Configuration and Power Interface (ACPI) AST handling.
  */
@@ -1236,6 +1236,38 @@ DECLHIDDEN(int) rtAcpiAstDumpToAsl(PCRTACPIASTNODE pAstNd, RTVFSIOSTREAM hVfsIos
 
             break;
         }
+        case kAcpiAstNodeOp_Package:
+        {
+            AssertBreakStmt(   pAstNd->cArgs == 1
+                            && pAstNd->aArgs[0].enmType == kAcpiAstArgType_U8,
+                            rc = VERR_INTERNAL_ERROR);
+
+            rc = rtAcpiAstNodeFormat(uLvl, hVfsIosOut, "Package(%RU8)", pAstNd->aArgs[0].u.u8);
+            if (RT_SUCCESS(rc))
+                rc = rtAcpiAstNodeFormat(uLvl, hVfsIosOut, "{");
+            if (RT_SUCCESS(rc))
+            {
+                PCRTACPIASTNODE pIt;
+                RTListForEach(&pAstNd->LstScopeNodes, pIt, RTACPIASTNODE, NdAst)
+                {
+                    rc = rtAcpiAstDumpToAsl(pIt, hVfsIosOut, uLvl ? uLvl + 1 : 0);
+                    if (RT_FAILURE(rc))
+                        return rc;
+
+                    if (!RTListNodeIsLast(&pAstNd->LstScopeNodes, &pIt->NdAst))
+                    {
+                        rc = rtAcpiAstNodeFormat(uLvl ? uLvl + 1 : 0, hVfsIosOut, ",");
+                        if (RT_FAILURE(rc))
+                            return rc;
+                    }
+                }
+            }
+
+            if (RT_SUCCESS(rc))
+                rc = rtAcpiAstNodeFormat(uLvl, hVfsIosOut, "}");
+
+            break;
+        }
         default:
         {
             /* Generic case for most of the types. */
@@ -1255,7 +1287,8 @@ DECLHIDDEN(int) rtAcpiAstDumpToAsl(PCRTACPIASTNODE pAstNd, RTVFSIOSTREAM hVfsIos
                         switch (pAstNd->aArgs[i].enmType)
                         {
                             case kAcpiAstArgType_AstNode:
-                                rc = rtAcpiAstDumpToAsl(pAstNd->aArgs[i].u.pAstNd, hVfsIosOut, 0);
+                                if (pAstNd->aArgs[i].u.pAstNd)
+                                    rc = rtAcpiAstDumpToAsl(pAstNd->aArgs[i].u.pAstNd, hVfsIosOut, 0);
                                 break;
                             case kAcpiAstArgType_NameString:
                                 rc = rtAcpiAstNodeFormat(0, hVfsIosOut, "%s", pAstNd->aArgs[i].u.pszNameString);
@@ -1291,7 +1324,9 @@ DECLHIDDEN(int) rtAcpiAstDumpToAsl(PCRTACPIASTNODE pAstNd, RTVFSIOSTREAM hVfsIos
                         if (RT_FAILURE(rc))
                             break;
 
-                        if (i < pAstNd->cArgs - 1)
+                        if (   (i < pAstNd->cArgs - 1)
+                            && (   pAstNd->aArgs[i + 1].enmType != kAcpiAstArgType_AstNode
+                                || pAstNd->aArgs[i + 1].u.pAstNd))
                         {
                             rc = rtAcpiAstNodeFormat(0, hVfsIosOut, ", ");
                             if (RT_FAILURE(rc))

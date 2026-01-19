@@ -1,4 +1,4 @@
-/* $Id: acpi.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: acpi.cpp 112638 2026-01-19 12:47:38Z alexander.eichner@oracle.com $ */
 /** @file
  * IPRT - Advanced Configuration and Power Interface (ACPI) Table generation API.
  */
@@ -933,7 +933,7 @@ RTDECL(int) RTAcpiTblMethodStart(RTACPITBL hAcpiTbl, const char *pszName, uint8_
     rtAcpiTblAppendNameString(pThis, pszName);
 
     uint8_t bFlags = cArgs;
-    bFlags |= fFlags & RTACPI_METHOD_F_SERIALIZED ? RT_BIT(3) : 0;
+    bFlags |= (fFlags & RTACPI_METHOD_F_SERIALIZED) ? RT_BIT(3) : 0;
     bFlags |= uSyncLvl << 4;
 
     rtAcpiTblAppendByte(pThis, bFlags);

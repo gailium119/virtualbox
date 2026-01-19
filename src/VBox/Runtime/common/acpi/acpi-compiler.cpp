@@ -1,4 +1,4 @@
-/* $Id: acpi-compiler.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: acpi-compiler.cpp 112638 2026-01-19 12:47:38Z alexander.eichner@oracle.com $ */
 /** @file
  * IPRT - Advanced Configuration and Power Interface (ACPI) Table generation API.
  */
@@ -1138,9 +1138,7 @@ static DECLCALLBACK(int) rtAcpiTblAslParseMethod(PRTACPIASLCU pThis, PCRTACPIASL
             if (enmKeyword != RTACPIASLTERMINAL_INVALID)
             {
                 Assert(enmKeyword == RTACPIASLTERMINAL_KEYWORD_SERIALIZED || enmKeyword == RTACPIASLTERMINAL_KEYWORD_NOT_SERIALIZED);
-                pAstNd->aArgs[2].u.f =    enmKeyword == RTACPIASLTERMINAL_KEYWORD_SERIALIZED
-                                        ? RTACPI_METHOD_F_SERIALIZED
-                                        : RTACPI_METHOD_F_NOT_SERIALIZED;
+                pAstNd->aArgs[2].u.f = enmKeyword == RTACPIASLTERMINAL_KEYWORD_SERIALIZED;
             }
 
             if (rtAcpiAslLexerIsPunctuator(pThis, RTACPIASLTERMINAL_PUNCTUATOR_COMMA))

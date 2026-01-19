@@ -1,4 +1,4 @@
-/* $Id: acpi-decompiler.cpp 112630 2026-01-18 09:25:10Z alexander.eichner@oracle.com $ */
+/* $Id: acpi-decompiler.cpp 112638 2026-01-19 12:47:38Z alexander.eichner@oracle.com $ */
 /** @file
  * IPRT - Advanced Configuration and Power Interface (ACPI) Table generation API.
  */
@@ -224,8 +224,7 @@ DECLINLINE(int) rtAcpiTblAmlDecodeReadU8(PRTACPITBLAMLDECODE pThis, uint8_t *pb,
 }
 
 
-#if 0
-DECLINLINE(int) rtAcpiTblAmlDecodeSkipU8IfEqual(PRTACPITBLAMLDECODE pThis, uint8_t ch, bool *fSkipped, PRTERRINFO pErrInfo)
+DECLINLINE(int) rtAcpiTblAmlDecodeSkipU8IfEqual(PRTACPITBLAMLDECODE pThis, uint8_t ch, bool *pfSkipped, PRTERRINFO pErrInfo)
 {
     if (pThis->offTbl < pThis->cbTbl)
     { /* probable */ }
@@ -241,7 +240,6 @@ DECLINLINE(int) rtAcpiTblAmlDecodeSkipU8IfEqual(PRTACPITBLAMLDECODE pThis, uint8
         *pfSkipped = false;
     return VINF_SUCCESS;
 }
-#endif
 
 
 DECLINLINE(int) rtAcpiTblAmlDecodeReadU16(PRTACPITBLAMLDECODE pThis, uint16_t *pu16, PRTERRINFO pErrInfo)
@@ -569,9 +567,21 @@ DECLINLINE(int) rtAcpiTblAmlDecodePkgPop(PRTACPITBLAMLDECODE pThis, PRTERRINFO p
 }
 
 
-DECLINLINE(void) rtAcpiTblAmlDecodePkgAddNode(PRTACPITBLAMLDECODE pThis, PRTACPIASTNODE pAstNd)
+DECLINLINE(void) rtAcpiTblAmlDecodePkgAddNodeToCurrentScope(PRTACPITBLAMLDECODE pThis, PRTACPIASTNODE pAstNd)
 {
     RTListAppend(pThis->papLstScopeNodes[pThis->iLvl], &pAstNd->NdAst);
+}
+
+
+DECLINLINE(void) rtAcpiTblAmlDecodePkgAddNodeToScope(PRTLISTANCHOR pThis, PRTACPIASTNODE pAstNd)
+{
+    RTListAppend(pThis, &pAstNd->NdAst);
+}
+
+
+DECLINLINE(PRTLISTANCHOR) rtAcpiTblAmlDecodePkgGetCurrentScope(PRTACPITBLAMLDECODE pThis)
+{
+    return pThis->papLstScopeNodes[pThis->iLvl];
 }
 
 
@@ -725,6 +735,8 @@ static DECLCALLBACK(int) rtAcpiTblAmlDecodeNameObject(PRTACPITBLAMLDECODE pThis,
         PRTACPIASTNODE pAstNd = rtAcpiAstNodeAlloc(pThis->pNs, pAmlOpc->enmOp, RTACPI_AST_NODE_F_DEFAULT, cArgs);
         if (pAstNd)
         {
+            PRTLISTANCHOR pScope = rtAcpiTblAmlDecodePkgGetCurrentScope(pThis);
+
             pAstNd->pszIde = pszIde;
 
             if (   fFound
@@ -745,7 +757,7 @@ static DECLCALLBACK(int) rtAcpiTblAmlDecodeNameObject(PRTACPITBLAMLDECODE pThis,
             if (ppAstNd)
                 *ppAstNd = pAstNd;
             else
-                rtAcpiTblAmlDecodePkgAddNode(pThis, pAstNd);
+                rtAcpiTblAmlDecodePkgAddNodeToScope(pScope, pAstNd);
 
             return VINF_SUCCESS;
         }
@@ -771,7 +783,15 @@ static DECLCALLBACK(int) rtAcpiTblAmlDecodeString(PRTACPITBLAMLDECODE pThis, PCR
             return rc;
 
         if (bTmp >= 0x1 && bTmp <= 0x7f)
-            szStr[i++] = (char)bTmp;
+        {
+            if (bTmp == '\n')
+            {
+                szStr[i++] = '\\';
+                szStr[i++] = 'n';
+            }
+            else
+                szStr[i++] = (char)bTmp;
+        }
         else if (bTmp == 0x00)
         {
             szStr[i++] = '\0';
@@ -794,7 +814,7 @@ static DECLCALLBACK(int) rtAcpiTblAmlDecodeString(PRTACPITBLAMLDECODE pThis, PCR
             if (ppAstNd)
                 *ppAstNd = pAstNd;
             else
-                rtAcpiTblAmlDecodePkgAddNode(pThis, pAstNd);
+                rtAcpiTblAmlDecodePkgAddNodeToCurrentScope(pThis, pAstNd);
 
             return VINF_SUCCESS;
         }
@@ -850,43 +870,12 @@ static DECLCALLBACK(int) rtAcpiTblAmlDecodeBuffer(PRTACPITBLAMLDECODE pThis, PCR
         if (ppAstNd)
             *ppAstNd = pAstNd;
         else
-            rtAcpiTblAmlDecodePkgAddNode(pThis, pAstNd);
+            rtAcpiTblAmlDecodePkgAddNodeToCurrentScope(pThis, pAstNd);
 
         return VINF_SUCCESS;
     }
 
     return RTErrInfoSetF(pErrInfo, VERR_NO_MEMORY, "Out of memory trying to allocate AST node for buffer");
-}
-
-
-static DECLCALLBACK(int) rtAcpiTblAmlDecodePackage(PRTACPITBLAMLDECODE pThis, PCRTACPIAMLOPC pAmlOpc, uint8_t bOpc, PRTACPIASTNODE *ppAstNd, PRTERRINFO pErrInfo)
-{
-    Assert(bOpc == ACPI_AML_BYTE_CODE_OP_PACKAGE); RT_NOREF(bOpc);
-
-    size_t cbPkg = 0;
-    size_t cbPkgLength = 0;
-    int rc = rtAcpiTblAmlDecodePkgLength(pThis, &cbPkg, &cbPkgLength, pErrInfo);
-    if (RT_FAILURE(rc))
-        return rc;
-
-    cbPkg -= cbPkgLength;
-    uint8_t cElems = 0;
-    rc = rtAcpiTblAmlDecodeReadU8(pThis, &cElems, pErrInfo);
-    if (RT_FAILURE(rc))
-        return rc;
-
-    cbPkg -= sizeof(cElems);
-
-#if 0
-    rc = rtAcpiTblAmlDecodeFormat(pThis, hVfsIosOut, "Package (%RU8)", cElems);
-    if (RT_FAILURE(rc))
-        return rc;
-
-    return rtAcpiTblAmlDecodePkgPush(pThis, hVfsIosOut, cbPkg, pErrInfo);
-#else
-    RT_NOREF(pAmlOpc, ppAstNd);
-    return VINF_SUCCESS;
-#endif
 }
 
 
@@ -906,7 +895,7 @@ static DECLCALLBACK(int) rtAcpiTblAmlDecodeInteger(PRTACPITBLAMLDECODE pThis, PC
         if (ppAstNd)
             *ppAstNd = pAstNd;
         else
-            rtAcpiTblAmlDecodePkgAddNode(pThis, pAstNd);
+            rtAcpiTblAmlDecodePkgAddNodeToCurrentScope(pThis, pAstNd);
 
         return VINF_SUCCESS;
     }
@@ -972,12 +961,12 @@ static DECLCALLBACK(int) rtAcpiTblAmlDecodeMethod(PRTACPITBLAMLDECODE pThis, PCR
         pAstNd->aArgs[2].u.f = RT_BOOL(bMethod & RT_BIT(3));
 
         pAstNd->aArgs[3].enmType = kAcpiAstArgType_U8;
-        pAstNd->aArgs[2].u.u8 = bMethod >> 4;
+        pAstNd->aArgs[3].u.u8 = bMethod >> 4;
 
         if (ppAstNd)
             *ppAstNd = pAstNd;
         else
-            rtAcpiTblAmlDecodePkgAddNode(pThis, pAstNd);
+            rtAcpiTblAmlDecodePkgAddNodeToCurrentScope(pThis, pAstNd);
 
         return rtAcpiTblAmlDecodePkgPush(pThis, cbPkg - cbPkgConsumed, &pAstNd->LstScopeNodes, pErrInfo);
     }
@@ -1143,7 +1132,7 @@ static DECLCALLBACK(int) rtAcpiTblAmlDecodeField(PRTACPITBLAMLDECODE pThis, PCRT
         if (ppAstNd)
             *ppAstNd = pAstNd;
         else
-            rtAcpiTblAmlDecodePkgAddNode(pThis, pAstNd);
+            rtAcpiTblAmlDecodePkgAddNodeToCurrentScope(pThis, pAstNd);
     }
     else
     {
@@ -1180,6 +1169,8 @@ static DECLCALLBACK(int) rtAcpiTblAmlDecodeSimple(PRTACPITBLAMLDECODE pThis, PCR
     PRTACPIASTNODE pAstNd = rtAcpiAstNodeAlloc(pThis->pNs, pAmlOpc->enmOp, fAstNdFlags, pAmlOpc->cArgs);
     if (!pAstNd)
         return RTErrInfoSetF(pErrInfo, VERR_NO_MEMORY, "Out of memory trying to allocate AST node for opcode %#RX8", bOpc);
+
+    PRTLISTANCHOR pScope = rtAcpiTblAmlDecodePkgGetCurrentScope(pThis);
 
     /* Process any arguments */
     for (uint32_t i = 0; i < pAmlOpc->cArgs; i++)
@@ -1228,17 +1219,35 @@ static DECLCALLBACK(int) rtAcpiTblAmlDecodeSimple(PRTACPITBLAMLDECODE pThis, PCR
                 cbPkgConsumed += cbName;
                 break;
             }
-            case kAcpiAmlOpcType_SuperName:
             case kAcpiAmlOpcType_TermArg:
+            case kAcpiAmlOpcType_SuperName:
+            {
+                pAstNd->aArgs[i].enmType = kAcpiAstArgType_AstNode;
+
+                size_t offTblOrig = pThis->offTbl;
+                /** @todo SuperName has limited allowed arguments. */
+                rc = rtAcpiTblAmlDecodeTerminal(pThis, &pAstNd->aArgs[i].u.pAstNd, pErrInfo);
+                if (RT_FAILURE(rc)) return rc;
+
+                cbPkgConsumed += pThis->offTbl - offTblOrig;
+                break;
+            }
             case kAcpiAmlOpcType_Target:
             {
                 pAstNd->aArgs[i].enmType = kAcpiAstArgType_AstNode;
 
-                /** @todo SuperName|Target has limited allowed arguments. */
-                size_t offTblOrig = pThis->offTbl;
-
-                rc = rtAcpiTblAmlDecodeTerminal(pThis, &pAstNd->aArgs[i].u.pAstNd, pErrInfo);
+                bool fSkipped = false;
+                rc = rtAcpiTblAmlDecodeSkipU8IfEqual(pThis, 0x00, &fSkipped, pErrInfo);
                 if (RT_FAILURE(rc)) return rc;
+
+                size_t offTblOrig = pThis->offTbl;
+                /* The NullName will be identified by a NULL AST node. */
+                if (!fSkipped)
+                {
+                    /** @todo Target has limited allowed arguments. */
+                    rc = rtAcpiTblAmlDecodeTerminal(pThis, &pAstNd->aArgs[i].u.pAstNd, pErrInfo);
+                    if (RT_FAILURE(rc)) return rc;
+                }
 
                 cbPkgConsumed += pThis->offTbl - offTblOrig;
                 break;
@@ -1278,7 +1287,7 @@ static DECLCALLBACK(int) rtAcpiTblAmlDecodeSimple(PRTACPITBLAMLDECODE pThis, PCR
     if (ppAstNd)
         *ppAstNd = pAstNd;
     else
-        rtAcpiTblAmlDecodePkgAddNode(pThis, pAstNd);
+        rtAcpiTblAmlDecodePkgAddNodeToScope(pScope, pAstNd);
 
     if (pAmlOpc->fFlags & RTACPI_AML_OPC_F_HAS_PKG_LENGTH)
     {
@@ -1332,7 +1341,7 @@ static const RTACPIAMLOPC g_aAmlOpcodeDecode[] =
 
     /* 0x10 */ RTACPI_AML_OPC_SIMPLE_1("Scope",         kAcpiAstNodeOp_Scope,    RTACPI_AML_OPC_F_HAS_PKG_LENGTH | RTACPI_AML_OPC_F_NEW_SCOPE,  kAcpiAmlOpcType_NameString),
     /* 0x11 */ RTACPI_AML_OPC_HANDLER( "Buffer",        kAcpiAstNodeOp_Buffer,      rtAcpiTblAmlDecodeBuffer),
-    /* 0x12 */ RTACPI_AML_OPC_HANDLER( "Package",       kAcpiAstNodeOp_Package,     rtAcpiTblAmlDecodePackage),
+    /* 0x12 */ RTACPI_AML_OPC_SIMPLE_1("Package",       kAcpiAstNodeOp_Package,  RTACPI_AML_OPC_F_HAS_PKG_LENGTH | RTACPI_AML_OPC_F_NEW_SCOPE,  kAcpiAmlOpcType_Byte),
     /* 0x13 */ RTACPI_AML_OPC_INVALID,
     /* 0x14 */ RTACPI_AML_OPC_HANDLER( "Method",        kAcpiAstNodeOp_Method,      rtAcpiTblAmlDecodeMethod),
     /* 0x15 */ RTACPI_AML_OPC_SIMPLE_3("External",      kAcpiAstNodeOp_External, RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_NameString, kAcpiAmlOpcType_Byte, kAcpiAmlOpcType_Byte),

@@ -1,4 +1,4 @@
-/* $Id: 03-grammar.asl 112631 2026-01-19 08:47:56Z alexander.eichner@oracle.com $ */
+/* $Id: 03-grammar.asl 112638 2026-01-19 12:47:38Z alexander.eichner@oracle.com $ */
 /** @file
  * VirtualBox ACPI - Testcase.
  */
@@ -46,6 +46,8 @@ DefinitionBlock ("", "SSDT", 1, "VBOX  ", "VBOXTPMT", 2)
             IFID,       1,
         }
 
+        Name(PACK, Package (3) { Zero, One, 0x2})
+
         Device (DUT_)
         {
             Method (TEST, 7, NotSerialized, 0)
@@ -82,7 +84,7 @@ DefinitionBlock ("", "SSDT", 1, "VBOX  ", "VBOXTPMT", 2)
                         Continue
                     }
 
-                    If (LLess(Local4, 0x100))
+                    If (LLess(Local4, Add(0x100, Arg5)))
                     {
                         Break
                     }
