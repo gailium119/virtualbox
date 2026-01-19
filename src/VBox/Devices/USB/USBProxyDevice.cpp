@@ -1,4 +1,4 @@
-/* $Id: USBProxyDevice.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: USBProxyDevice.cpp 112645 2026-01-19 17:45:18Z alexander.eichner@oracle.com $ */
 /** @file
  * USBProxy - USB device proxy.
  */
@@ -894,6 +894,16 @@ static DECLCALLBACK(int) usbProxyConstruct(PPDMUSBINS pUsbIns, int iInstance, PC
     PCPDMUSBHLP     pHlp  = pUsbIns->pHlpR3;
 
     LogFlow(("usbProxyConstruct: pUsbIns=%p iInstance=%d\n", pUsbIns, iInstance));
+
+    /*
+     * This avoids a memory leak because PDMR3Usb.cpp:pdmR3UsbCreateDevice() duplicates the proxy device name.
+     * ASSUMES that the string was allocated with one of the RTStr* APIs.
+     */
+    if (pUsbIns->pszName)
+    {
+        RTStrFree(pUsbIns->pszName);
+        pUsbIns->pszName = NULL;
+    }
 
     /*
      * Initialize the instance data.
