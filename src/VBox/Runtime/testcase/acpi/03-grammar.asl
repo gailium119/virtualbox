@@ -1,4 +1,4 @@
-/* $Id: 03-grammar.asl 112638 2026-01-19 12:47:38Z alexander.eichner@oracle.com $ */
+/* $Id: 03-grammar.asl 112644 2026-01-19 15:09:34Z alexander.eichner@oracle.com $ */
 /** @file
  * VirtualBox ACPI - Testcase.
  */
@@ -44,6 +44,27 @@ DefinitionBlock ("", "SSDT", 1, "VBOX  ", "VBOXTPMT", 2)
         {
             Offset(0x30),
             IFID,       1,
+        }
+
+        IndexField (IDX0, DAT0, DwordAcc, NoLock, Preserve)
+        {
+            STAT, 32,
+            PRAT, 32,
+            RCAP, 32,
+            PVOL, 32,
+
+            UNIT, 32,
+            DCAP, 32,
+            LFCP, 32,
+            BTEC, 32,
+            DVOL, 32,
+            DWRN, 32,
+            DLOW, 32,
+            GRN1, 32,
+            GRN2, 32,
+
+            BSTA, 32,
+            APSR, 32,
         }
 
         Name(PACK, Package (3) { Zero, One, 0x2})

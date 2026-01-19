@@ -1,4 +1,4 @@
-/* $Id: acpi-ast.cpp 112638 2026-01-19 12:47:38Z alexander.eichner@oracle.com $ */
+/* $Id: acpi-ast.cpp 112644 2026-01-19 15:09:34Z alexander.eichner@oracle.com $ */
 /** @file
  * IPRT - Advanced Configuration and Power Interface (ACPI) AST handling.
  */
@@ -108,6 +108,7 @@ DECLHIDDEN(void) rtAcpiAstNodeFree(PRTACPIASTNODE pAstNd)
     switch (pAstNd->enmOp)
     {
         case kAcpiAstNodeOp_Field:
+        case kAcpiAstNodeOp_IndexField:
         {
             RTMemFree(pAstNd->Fields.paFields);
             pAstNd->Fields.paFields = NULL;
@@ -1199,20 +1200,43 @@ DECLHIDDEN(int) rtAcpiAstDumpToAsl(PCRTACPIASTNODE pAstNd, RTVFSIOSTREAM hVfsIos
             break;
         }
         case kAcpiAstNodeOp_Field:
+        case kAcpiAstNodeOp_IndexField:
         {
-            AssertBreakStmt(   pAstNd->cArgs == 4
-                            && pAstNd->aArgs[0].enmType == kAcpiAstArgType_NameString
-                            && pAstNd->aArgs[1].enmType == kAcpiAstArgType_FieldAcc
-                            && pAstNd->aArgs[2].enmType == kAcpiAstArgType_Bool
-                            && pAstNd->aArgs[3].enmType == kAcpiAstArgType_FieldUpdate,
-                            rc = VERR_INTERNAL_ERROR);
+            if (pAstNd->enmOp == kAcpiAstNodeOp_Field)
+            {
+                AssertBreakStmt(   pAstNd->cArgs == 4
+                                && pAstNd->aArgs[0].enmType == kAcpiAstArgType_NameString
+                                && pAstNd->aArgs[1].enmType == kAcpiAstArgType_FieldAcc
+                                && pAstNd->aArgs[2].enmType == kAcpiAstArgType_Bool
+                                && pAstNd->aArgs[3].enmType == kAcpiAstArgType_FieldUpdate,
+                                rc = VERR_INTERNAL_ERROR);
 
-            rc = rtAcpiAstNodeFormat(uLvl, hVfsIosOut,
-                                     "Field(%s, %s, %s, %s)",
-                                     pAstNd->aArgs[0].u.pszNameString,
-                                     g_apszFieldAcc[pAstNd->aArgs[1].u.enmFieldAcc],
-                                     pAstNd->aArgs[2].u.f ? "Lock" : "NoLock",
-                                     g_apszFieldUpdate[pAstNd->aArgs[3].u.enmFieldUpdate]);
+                rc = rtAcpiAstNodeFormat(uLvl, hVfsIosOut,
+                                         "Field(%s, %s, %s, %s)",
+                                         pAstNd->aArgs[0].u.pszNameString,
+                                         g_apszFieldAcc[pAstNd->aArgs[1].u.enmFieldAcc],
+                                         pAstNd->aArgs[2].u.f ? "Lock" : "NoLock",
+                                         g_apszFieldUpdate[pAstNd->aArgs[3].u.enmFieldUpdate]);
+            }
+            else
+            {
+                AssertBreakStmt(   pAstNd->cArgs == 5
+                                && pAstNd->aArgs[0].enmType == kAcpiAstArgType_NameString
+                                && pAstNd->aArgs[1].enmType == kAcpiAstArgType_NameString
+                                && pAstNd->aArgs[2].enmType == kAcpiAstArgType_FieldAcc
+                                && pAstNd->aArgs[3].enmType == kAcpiAstArgType_Bool
+                                && pAstNd->aArgs[4].enmType == kAcpiAstArgType_FieldUpdate,
+                                rc = VERR_INTERNAL_ERROR);
+
+                rc = rtAcpiAstNodeFormat(uLvl, hVfsIosOut,
+                                         "IndexField(%s, %s, %s, %s, %s)",
+                                         pAstNd->aArgs[0].u.pszNameString,
+                                         pAstNd->aArgs[1].u.pszNameString,
+                                         g_apszFieldAcc[pAstNd->aArgs[2].u.enmFieldAcc],
+                                         pAstNd->aArgs[3].u.f ? "Lock" : "NoLock",
+                                         g_apszFieldUpdate[pAstNd->aArgs[4].u.enmFieldUpdate]);
+            }
+
             if (RT_SUCCESS(rc))
                 rc = rtAcpiAstNodeFormat(uLvl, hVfsIosOut, "{");
             if (RT_SUCCESS(rc))

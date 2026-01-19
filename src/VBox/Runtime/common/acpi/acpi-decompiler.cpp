@@ -1,4 +1,4 @@
-/* $Id: acpi-decompiler.cpp 112638 2026-01-19 12:47:38Z alexander.eichner@oracle.com $ */
+/* $Id: acpi-decompiler.cpp 112644 2026-01-19 15:09:34Z alexander.eichner@oracle.com $ */
 /** @file
  * IPRT - Advanced Configuration and Power Interface (ACPI) Table generation API.
  */
@@ -988,7 +988,7 @@ static DECLCALLBACK(int) rtAcpiTblAmlDecodeMethod(PRTACPITBLAMLDECODE pThis, PCR
  */
 static DECLCALLBACK(int) rtAcpiTblAmlDecodeField(PRTACPITBLAMLDECODE pThis, PCRTACPIAMLOPC pAmlOpc, uint8_t bOpc, PRTACPIASTNODE *ppAstNd, PRTERRINFO pErrInfo)
 {
-    Assert(bOpc == ACPI_AML_BYTE_CODE_EXT_OP_FIELD); RT_NOREF(bOpc);
+    Assert(bOpc == ACPI_AML_BYTE_CODE_EXT_OP_FIELD || ACPI_AML_BYTE_CODE_EXT_OP_INDEX_FIELD); RT_NOREF(bOpc);
 
     size_t cbPkg = 0;
     size_t cbPkgLength = 0;
@@ -996,14 +996,57 @@ static DECLCALLBACK(int) rtAcpiTblAmlDecodeField(PRTACPITBLAMLDECODE pThis, PCRT
     if (RT_FAILURE(rc))
         return rc;
 
+    PRTACPIASTNODE pAstNd = rtAcpiAstNodeAlloc(pThis->pNs, pAmlOpc->enmOp, RTACPI_AST_NODE_F_DEFAULT,
+                                                  pAmlOpc->enmOp == kAcpiAstNodeOp_IndexField
+                                               ? 5
+                                               : 4 /*cArgs*/);
+    if (!pAstNd)
+        return RTErrInfoSetF(pErrInfo, VERR_NO_MEMORY, "Out of memory trying to allocate AST node for Field/IndexField");
+
     size_t cbPkgConsumed = cbPkgLength;
     char szName[512]; RT_ZERO(szName);
     size_t cchName = 0;
     rc = rtAcpiTblAmlDecodeNameString(pThis, &szName[0], sizeof(szName), &cchName, pErrInfo);
     if (RT_FAILURE(rc))
+    {
+        rtAcpiAstNodeFree(pAstNd);
         return rc;
+    }
 
     cbPkgConsumed += cchName;
+
+    uint8_t idxArg = 0;
+    pAstNd->aArgs[idxArg].enmType         = kAcpiAstArgType_NameString;
+    pAstNd->aArgs[idxArg].u.pszNameString = RTStrCacheEnter(pThis->hStrCache, szName);
+    if (!pAstNd->aArgs[idxArg].u.pszNameString)
+    {
+        rtAcpiAstNodeFree(pAstNd);
+        return RTErrInfoSetF(pErrInfo, VERR_NO_STR_MEMORY, "Out of memory trying to allocate space for string \"%s\"", szName);
+    }
+    idxArg++;
+
+    /* IndexField has a second name string. */
+    if (pAmlOpc->enmOp == kAcpiAstNodeOp_IndexField)
+    {
+        RT_ZERO(szName); cchName = 0;
+        rc = rtAcpiTblAmlDecodeNameString(pThis, &szName[0], sizeof(szName), &cchName, pErrInfo);
+        if (RT_FAILURE(rc))
+        {
+            rtAcpiAstNodeFree(pAstNd);
+            return rc;
+        }
+
+        pAstNd->aArgs[idxArg].enmType         = kAcpiAstArgType_NameString;
+        pAstNd->aArgs[idxArg].u.pszNameString = RTStrCacheEnter(pThis->hStrCache, szName);
+        if (!pAstNd->aArgs[idxArg].u.pszNameString)
+        {
+            rtAcpiAstNodeFree(pAstNd);
+            return RTErrInfoSetF(pErrInfo, VERR_NO_STR_MEMORY, "Out of memory trying to allocate space for string \"%s\"", szName);
+        }
+
+        cbPkgConsumed += cchName;
+        idxArg++;
+    }
 
     /* Decode the field flags. */
     RTACPIFIELDACC    enmAcc    = kAcpiFieldAcc_Invalid;
@@ -1020,18 +1063,12 @@ static DECLCALLBACK(int) rtAcpiTblAmlDecodeField(PRTACPITBLAMLDECODE pThis, PCRT
                              "Number of bytes consumed for the current package exceeds package length while decoding a FieldOp (%zu vs %zu)",
                              cbPkgConsumed, cbPkg);
 
-    PRTACPIASTNODE pAstNd = rtAcpiAstNodeAlloc(pThis->pNs, pAmlOpc->enmOp, RTACPI_AST_NODE_F_DEFAULT, 4 /*cArgs*/);
-    if (!pAstNd)
-        return RTErrInfoSetF(pErrInfo, VERR_NO_MEMORY, "Out of memory trying to allocate AST node for Field \"%s\"", szName);
-
-    pAstNd->aArgs[0].enmType          = kAcpiAstArgType_NameString;
-    pAstNd->aArgs[0].u.pszNameString  = RTStrCacheEnter(pThis->hStrCache, szName);
-    pAstNd->aArgs[1].enmType          = kAcpiAstArgType_FieldAcc;
-    pAstNd->aArgs[1].u.enmFieldAcc    = enmAcc;
-    pAstNd->aArgs[2].enmType          = kAcpiAstArgType_Bool;
-    pAstNd->aArgs[2].u.f              = fLock;
-    pAstNd->aArgs[3].enmType          = kAcpiAstArgType_FieldUpdate;
-    pAstNd->aArgs[3].u.enmFieldUpdate = enmUpdate;
+    pAstNd->aArgs[idxArg].enmType            = kAcpiAstArgType_FieldAcc;
+    pAstNd->aArgs[idxArg++].u.enmFieldAcc    = enmAcc;
+    pAstNd->aArgs[idxArg].enmType            = kAcpiAstArgType_Bool;
+    pAstNd->aArgs[idxArg++].u.f              = fLock;
+    pAstNd->aArgs[idxArg].enmType            = kAcpiAstArgType_FieldUpdate;
+    pAstNd->aArgs[idxArg++].u.enmFieldUpdate = enmUpdate;
 
     /* Decode the individual fields. */
     uint32_t          cFieldsMax = 8;
@@ -1743,7 +1780,7 @@ static const RTACPIAMLOPC g_aAmlExtOpcodeDecode[] =
     /* 0x83 */ RTACPI_AML_OPC_SIMPLE_4("Processor",         kAcpiAstNodeOp_Processor,       RTACPI_AML_OPC_F_HAS_PKG_LENGTH | RTACPI_AML_OPC_F_NEW_SCOPE, kAcpiAmlOpcType_NameString, kAcpiAmlOpcType_Byte, kAcpiAmlOpcType_DWord,   kAcpiAmlOpcType_Byte),
     /* 0x84 */ RTACPI_AML_OPC_INVALID,
     /* 0x85 */ RTACPI_AML_OPC_INVALID,
-    /* 0x86 */ RTACPI_AML_OPC_INVALID,
+    /* 0x86 */ RTACPI_AML_OPC_HANDLER( "IndexField",        kAcpiAstNodeOp_IndexField,      rtAcpiTblAmlDecodeField),
     /* 0x87 */ RTACPI_AML_OPC_INVALID,
     /* 0x88 */ RTACPI_AML_OPC_INVALID,
     /* 0x89 */ RTACPI_AML_OPC_INVALID,
