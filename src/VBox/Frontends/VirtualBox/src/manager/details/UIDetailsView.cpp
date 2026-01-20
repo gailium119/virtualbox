@@ -1,4 +1,4 @@
-/* $Id: UIDetailsView.cpp 112648 2026-01-20 14:58:59Z sergey.dubov@oracle.com $ */
+/* $Id: UIDetailsView.cpp 112649 2026-01-20 15:00:58Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIDetailsView class implementation.
  */
@@ -128,9 +128,15 @@ public:
         /* Sanity check: */
         AssertPtrReturn(view(), QString());
 
-        /* Return view tool-tip: */
-        Q_UNUSED(enmTextRole);
-        return view()->whatsThis();
+        /* Text for known roles: */
+        switch (enmTextRole)
+        {
+            case QAccessible::Name: return view()->whatsThis();
+            default: break;
+        }
+
+        /* Null string by default: */
+        return QString();
     }
 
 private:
