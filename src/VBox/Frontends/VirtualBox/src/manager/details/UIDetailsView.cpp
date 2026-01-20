@@ -1,4 +1,4 @@
-/* $Id: UIDetailsView.cpp 112647 2026-01-20 14:47:57Z sergey.dubov@oracle.com $ */
+/* $Id: UIDetailsView.cpp 112648 2026-01-20 14:58:59Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIDetailsView class implementation.
  */
@@ -65,15 +65,19 @@ public:
     /** Returns the number of children. */
     virtual int childCount() const RT_OVERRIDE
     {
-        /* Make sure view still alive: */
+        /* Sanity check: */
         AssertPtrReturn(view(), 0);
+        AssertPtrReturn(view()->model(), 0);
+        AssertPtrReturn(view()->model()->root(), 0);
 
         /* What amount of children root has? */
         const int cChildCount = view()->model()->root()->items().size();
-
-        /* Return amount of children root has (if there are many of children): */
+        /* Return amount of children root has (if there are many children): */
         if (cChildCount > 1)
             return cChildCount;
+
+        /* Sanity check: */
+        AssertPtrReturn(view()->model()->root()->items().first(), 0);
 
         /* Return the number of children lone root child has (otherwise): */
         return view()->model()->root()->items().first()->items().size();
@@ -82,43 +86,46 @@ public:
     /** Returns the child with the passed @a iIndex. */
     virtual QAccessibleInterface *child(int iIndex) const RT_OVERRIDE
     {
-        /* Make sure view still alive: */
-        AssertPtrReturn(view(), 0);
-        /* Make sure index is valid: */
+        /* Sanity check: */
         AssertReturn(iIndex >= 0 && iIndex < childCount(), 0);
+        AssertPtrReturn(view(), 0);
+        AssertPtrReturn(view()->model(), 0);
+        AssertPtrReturn(view()->model()->root(), 0);
 
         /* What amount of children root has? */
         const int cChildCount = view()->model()->root()->items().size();
-
-        /* Return the root child with the passed iIndex (if there are many of children): */
+        /* Return the root child with the passed iIndex (if there are many children): */
         if (cChildCount > 1)
-            return QAccessible::queryAccessibleInterface(view()->model()->root()->items().at(iIndex));
+            return QAccessible::queryAccessibleInterface(view()->model()->root()->items().value(iIndex));
+
+        /* Sanity check: */
+        AssertPtrReturn(view()->model()->root()->items().first(), 0);
 
         /* Return the lone root child's child with the passed iIndex (otherwise): */
-        return QAccessible::queryAccessibleInterface(view()->model()->root()->items().first()->items().at(iIndex));
+        return QAccessible::queryAccessibleInterface(view()->model()->root()->items().first()->items().value(iIndex));
     }
 
     /** Returns the index of passed @a pChild. */
     virtual int indexOfChild(const QAccessibleInterface *pChild) const RT_OVERRIDE
     {
-        /* Make sure view still alive: */
-        AssertPtrReturn(view(), -1);
-        /* Make sure child is valid: */
+        /* Sanity check: */
         AssertReturn(pChild, -1);
 
         /* Acquire item itself: */
         UIDetailsItem *pChildItem = qobject_cast<UIDetailsItem*>(pChild->object());
 
+        /* Sanity check: */
+        AssertPtrReturn(pChildItem, -1);
+        AssertPtrReturn(pChildItem->parentItem(), -1);
+
         /* Return the index of item in it's parent: */
-        return   pChildItem && pChildItem->parentItem()
-               ? pChildItem->parentItem()->items().indexOf(pChildItem)
-               : -1;
+        return pChildItem->parentItem()->items().indexOf(pChildItem);
     }
 
     /** Returns a text for the passed @a enmTextRole. */
     virtual QString text(QAccessible::Text enmTextRole) const RT_OVERRIDE
     {
-        /* Make sure view still alive: */
+        /* Sanity check: */
         AssertPtrReturn(view(), QString());
 
         /* Return view tool-tip: */
