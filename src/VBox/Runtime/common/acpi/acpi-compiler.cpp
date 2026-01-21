@@ -1,4 +1,4 @@
-/* $Id: acpi-compiler.cpp 112638 2026-01-19 12:47:38Z alexander.eichner@oracle.com $ */
+/* $Id: acpi-compiler.cpp 112654 2026-01-21 09:33:31Z alexander.eichner@oracle.com $ */
 /** @file
  * IPRT - Advanced Configuration and Power Interface (ACPI) Table generation API.
  */
@@ -2793,27 +2793,10 @@ static int rtAcpiTblAslParseIde(PRTACPIASLCU pThis, const char *pszIde, PRTACPIA
 
 static int rtAcpiTblAslParseTermArg(PRTACPIASLCU pThis, PRTACPIASTNODE *ppAstNd)
 {
-    int rc;
     PCRTSCRIPTLEXTOKEN pTok;
-
-    /* External declarations are treated differently so consume all here. */
-    for (;;)
-    {
-        rc = RTScriptLexQueryToken(pThis->hLexSource, &pTok);
-        if (RT_FAILURE(rc))
-            return RTErrInfoSetF(pThis->pErrInfo, rc, "Parser: Failed to query next token with %Rrc", rc);
-
-        if (   pTok->enmType == RTSCRIPTLEXTOKTYPE_KEYWORD
-            && pTok->Type.Keyword.pKeyword->u64Val == kAcpiAstNodeOp_External)
-        {
-            RTScriptLexConsumeToken(pThis->hLexSource);
-            rc = rtAcpiTblAslParseExternal(pThis);
-            if (RT_FAILURE(rc))
-                return rc;
-        }
-        else
-            break;
-    }
+    int rc = RTScriptLexQueryToken(pThis->hLexSource, &pTok);
+    if (RT_FAILURE(rc))
+        return RTErrInfoSetF(pThis->pErrInfo, rc, "Parser: Failed to query next token with %Rrc", rc);
 
     if (pTok->enmType == RTSCRIPTLEXTOKTYPE_ERROR)
         return RTErrInfoSet(pThis->pErrInfo, VERR_INVALID_PARAMETER, pTok->Type.Error.pErr->pszMsg);
@@ -2883,6 +2866,26 @@ static int rtAcpiTblAslParseInner(PRTACPIASLCU pThis, PRTLISTANCHOR pLstStmts)
 {
     for (;;)
     {
+        /* External declarations are treated differently so consume all here. */
+        for (;;)
+        {
+            PCRTSCRIPTLEXTOKEN pTok;
+            int rc = RTScriptLexQueryToken(pThis->hLexSource, &pTok);
+            if (RT_FAILURE(rc))
+                return RTErrInfoSetF(pThis->pErrInfo, rc, "Parser: Failed to query next token with %Rrc", rc);
+
+            if (   pTok->enmType == RTSCRIPTLEXTOKTYPE_KEYWORD
+                && pTok->Type.Keyword.pKeyword->u64Val == kAcpiAstNodeOp_External)
+            {
+                RTScriptLexConsumeToken(pThis->hLexSource);
+                rc = rtAcpiTblAslParseExternal(pThis);
+                if (RT_FAILURE(rc))
+                    return rc;
+            }
+            else
+                break;
+        }
+
         /* Need to break out of the loop if done processing this scope (consumption is done by the caller). */
         if (rtAcpiAslLexerIsPunctuator(pThis, RTACPIASLTERMINAL_PUNCTUATOR_CLOSE_CURLY_BRACKET))
             return VINF_SUCCESS;

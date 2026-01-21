@@ -1,4 +1,4 @@
-/* $Id: acpi-decompiler.cpp 112644 2026-01-19 15:09:34Z alexander.eichner@oracle.com $ */
+/* $Id: acpi-decompiler.cpp 112654 2026-01-21 09:33:31Z alexander.eichner@oracle.com $ */
 /** @file
  * IPRT - Advanced Configuration and Power Interface (ACPI) Table generation API.
  */
@@ -1973,12 +1973,14 @@ DECLHIDDEN(int) rtAcpiTblConvertFromAmlToAsl(RTVFSIOSTREAM hVfsIosOut, RTVFSIOST
                         if (RT_SUCCESS(rc))
                         {
                             RTACPITBLAMLDECODE AmlDecode;
-                            AmlDecode.pbTbl        = pbTbl;
-                            AmlDecode.cbTbl        = cbTbl;
-                            AmlDecode.offTbl       = 0;
-                            AmlDecode.iLvl         = 0;
-                            AmlDecode.cPkgStackMax = 0;
-                            AmlDecode.pacbPkgLeft  = NULL;
+                            AmlDecode.pbTbl            = pbTbl;
+                            AmlDecode.cbTbl            = cbTbl;
+                            AmlDecode.offTbl           = 0;
+                            AmlDecode.iLvl             = 0;
+                            AmlDecode.cPkgStackMax     = 0;
+                            AmlDecode.pacbPkgLeft      = NULL;
+                            AmlDecode.pacbPkg          = NULL;
+                            AmlDecode.papLstScopeNodes = NULL;
                             RTListInit(&AmlDecode.LstObjs);
                             RTListInit(&AmlDecode.LstStmts);
                             rc = RTStrCacheCreate(&AmlDecode.hStrCache, "AmlStrLit");
