@@ -1,4 +1,4 @@
-/* $Id: UIDetailsItem.cpp 112658 2026-01-21 12:25:06Z sergey.dubov@oracle.com $ */
+/* $Id: UIDetailsItem.cpp 112659 2026-01-21 12:35:57Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIDetailsItem class definition.
  */
@@ -66,8 +66,25 @@ public:
     /** Returns the role. */
     virtual QAccessible::Role role() const RT_OVERRIDE
     {
-        /* Return the role: */
-        return QAccessible::List;
+#ifdef VBOX_WS_MAC
+        // WORKAROUND: macOS doesn't respect QAccessible::Tree/TreeItem roles.
+
+        /* Sanity check: */
+        AssertPtrReturn(item(), QAccessible::NoRole);
+
+        /* Return List for group/set item, ListItem for element/preview item: */
+        switch (item()->type())
+        {
+            case UIDetailsItemType_Group:
+            case UIDetailsItemType_Set:
+                return QAccessible::List;
+            default:
+                break;
+        }
+        return QAccessible::ListItem;
+#else
+        return QAccessible::TreeItem;
+#endif
     }
 
     /** Returns the parent. */
