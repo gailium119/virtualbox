@@ -1,4 +1,4 @@
-/* $Id: acpi-decompiler.cpp 112656 2026-01-21 11:13:11Z alexander.eichner@oracle.com $ */
+/* $Id: acpi-decompiler.cpp 112661 2026-01-21 13:43:01Z alexander.eichner@oracle.com $ */
 /** @file
  * IPRT - Advanced Configuration and Power Interface (ACPI) Table generation API.
  */
@@ -231,8 +231,12 @@ DECLINLINE(int) rtAcpiTblAmlDecodeSkipU8IfEqual(PRTACPITBLAMLDECODE pThis, uint8
     else
         return RTErrInfoSetF(pErrInfo, VERR_EOF, "AML stream ended prematurely at offset '%#x' trying to read a byte", pThis->offTbl);
 
+    if (!pThis->pacbPkgLeft[pThis->iLvl])
+        return RTErrInfoSetF(pErrInfo, VERR_INVALID_STATE, "Data overflows current package limitation");
+
     if (pThis->pbTbl[pThis->offTbl] == ch)
     {
+        pThis->pacbPkgLeft[pThis->iLvl]--;
         pThis->offTbl++;
         *pfSkipped = true;
     }
@@ -1502,7 +1506,7 @@ static const RTACPIAMLOPC g_aAmlOpcodeDecode[] =
     /* 0x84 */ RTACPI_AML_OPC_INVALID,
     /* 0x85 */ RTACPI_AML_OPC_INVALID,
     /* 0x86 */ RTACPI_AML_OPC_SIMPLE_2("Notify",            kAcpiAstNodeOp_Notify,      RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_SuperName, kAcpiAmlOpcType_TermArg),
-    /* 0x87 */ RTACPI_AML_OPC_INVALID,
+    /* 0x87 */ RTACPI_AML_OPC_SIMPLE_1("SizeOf",            kAcpiAstNodeOp_SizeOf,      RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_SuperName),
     /* 0x88 */ RTACPI_AML_OPC_SIMPLE_3("Index",             kAcpiAstNodeOp_Index,       RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg,   kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_SuperName),
     /* 0x89 */ RTACPI_AML_OPC_INVALID,
     /* 0x8a */ RTACPI_AML_OPC_SIMPLE_3("CreateDWordField",  kAcpiAstNodeOp_CreateDWordField, RTACPI_AML_OPC_F_NONE,     kAcpiAmlOpcType_TermArg,   kAcpiAmlOpcType_TermArg, kAcpiAmlOpcType_NameString),
@@ -1958,56 +1962,56 @@ DECLHIDDEN(int) rtAcpiTblConvertFromAmlToAsl(RTVFSIOSTREAM hVfsIosOut, RTVFSIOST
             || Hdr.u32Signature == ACPI_TABLE_HDR_SIGNATURE_DSDT)
         {
             /** @todo Verify checksum */
-            ssize_t cch = RTVfsIoStrmPrintf(hVfsIosOut, "DefinitionBlock(\"\", \"%s\", %u, \"%.6s\", \"%.8s\", %u)\n{\n",
-                                            Hdr.u32Signature == ACPI_TABLE_HDR_SIGNATURE_SSDT ? "SSDT" : "DSDT",
-                                            1, &Hdr.abOemId[0], &Hdr.abOemTblId[0], Hdr.u32OemRevision);
-            if (cch > 0)
+            uint32_t const cbTbl = Hdr.cbTbl - sizeof(Hdr);
+            if (cbTbl) /* Do we have something to decode at all? */
             {
-                uint32_t const cbTbl = Hdr.cbTbl - sizeof(Hdr);
-                if (cbTbl) /* Do we have something to decode at all? */
+                uint8_t *pbTbl = (uint8_t *)RTMemAlloc(cbTbl);
+                if (pbTbl)
                 {
-                    uint8_t *pbTbl = (uint8_t *)RTMemAlloc(cbTbl);
-                    if (pbTbl)
+                    rc = RTVfsIoStrmRead(hVfsIosIn, pbTbl, cbTbl, true /*fBlocking*/, NULL /*pcbRead*/);
+                    if (RT_SUCCESS(rc))
                     {
-                        rc = RTVfsIoStrmRead(hVfsIosIn, pbTbl, cbTbl, true /*fBlocking*/, NULL /*pcbRead*/);
+                        RTACPITBLAMLDECODE AmlDecode;
+                        AmlDecode.pbTbl            = pbTbl;
+                        AmlDecode.cbTbl            = cbTbl;
+                        AmlDecode.offTbl           = 0;
+                        AmlDecode.iLvl             = 0;
+                        AmlDecode.cPkgStackMax     = 0;
+                        AmlDecode.pacbPkgLeft      = NULL;
+                        AmlDecode.pacbPkg          = NULL;
+                        AmlDecode.papLstScopeNodes = NULL;
+                        RTListInit(&AmlDecode.LstObjs);
+                        RTListInit(&AmlDecode.LstStmts);
+                        rc = RTStrCacheCreate(&AmlDecode.hStrCache, "AmlStrLit");
                         if (RT_SUCCESS(rc))
                         {
-                            RTACPITBLAMLDECODE AmlDecode;
-                            AmlDecode.pbTbl            = pbTbl;
-                            AmlDecode.cbTbl            = cbTbl;
-                            AmlDecode.offTbl           = 0;
-                            AmlDecode.iLvl             = 0;
-                            AmlDecode.cPkgStackMax     = 0;
-                            AmlDecode.pacbPkgLeft      = NULL;
-                            AmlDecode.pacbPkg          = NULL;
-                            AmlDecode.papLstScopeNodes = NULL;
-                            RTListInit(&AmlDecode.LstObjs);
-                            RTListInit(&AmlDecode.LstStmts);
-                            rc = RTStrCacheCreate(&AmlDecode.hStrCache, "AmlStrLit");
-                            if (RT_SUCCESS(rc))
+                            AmlDecode.pNs = rtAcpiNsCreate();
+                            if (AmlDecode.pNs)
                             {
-                                AmlDecode.pNs = rtAcpiNsCreate();
-                                if (AmlDecode.pNs)
+                                rc = rtAcpiTblAmlDecodePkgPush(&AmlDecode, AmlDecode.cbTbl, &AmlDecode.LstStmts, pErrInfo);
+                                while (   RT_SUCCESS(rc)
+                                       && AmlDecode.offTbl < cbTbl)
                                 {
-                                    rc = rtAcpiTblAmlDecodePkgPush(&AmlDecode, AmlDecode.cbTbl, &AmlDecode.LstStmts, pErrInfo);
-                                    while (   RT_SUCCESS(rc)
-                                           && AmlDecode.offTbl < cbTbl)
-                                    {
-                                        rc = rtAcpiTblAmlDecodeTerminal(&AmlDecode, NULL, pErrInfo);
-                                        if (RT_SUCCESS(rc))
-                                            rc = rtAcpiTblAmlDecodePkgPop(&AmlDecode, pErrInfo);
-                                    }
-                                    if (AmlDecode.pacbPkgLeft)
-                                        RTMemFree(AmlDecode.pacbPkgLeft);
-                                    if (AmlDecode.pacbPkg)
-                                        RTMemFree(AmlDecode.pacbPkg);
-                                    if (AmlDecode.papLstScopeNodes)
-                                        RTMemFree(AmlDecode.papLstScopeNodes);
-
-                                    /** @todo Transform the AST. */
-
-                                    /* Dump the AST. */
+                                    rc = rtAcpiTblAmlDecodeTerminal(&AmlDecode, NULL, pErrInfo);
                                     if (RT_SUCCESS(rc))
+                                        rc = rtAcpiTblAmlDecodePkgPop(&AmlDecode, pErrInfo);
+                                }
+                                if (AmlDecode.pacbPkgLeft)
+                                    RTMemFree(AmlDecode.pacbPkgLeft);
+                                if (AmlDecode.pacbPkg)
+                                    RTMemFree(AmlDecode.pacbPkg);
+                                if (AmlDecode.papLstScopeNodes)
+                                    RTMemFree(AmlDecode.papLstScopeNodes);
+
+                                /** @todo Transform the AST. */
+
+                                /* Dump the AST. */
+                                if (RT_SUCCESS(rc))
+                                {
+                                    ssize_t cch = RTVfsIoStrmPrintf(hVfsIosOut, "DefinitionBlock(\"\", \"%s\", %u, \"%.6s\", \"%.8s\", %u)\n{\n",
+                                                                    Hdr.u32Signature == ACPI_TABLE_HDR_SIGNATURE_SSDT ? "SSDT" : "DSDT",
+                                                                    1, &Hdr.abOemId[0], &Hdr.abOemTblId[0], Hdr.u32OemRevision);
+                                    if (cch > 0)
                                     {
                                         PRTACPIASTNODE pIt;
                                         RTListForEach(&AmlDecode.LstStmts, pIt, RTACPIASTNODE, NdAst)
@@ -2016,51 +2020,51 @@ DECLHIDDEN(int) rtAcpiTblConvertFromAmlToAsl(RTVFSIOSTREAM hVfsIosOut, RTVFSIOST
                                             if (RT_FAILURE(rc))
                                                 break;
                                         }
-                                    }
 
-                                    /* Free resources. */
-                                    {
-                                        PRTACPIASTNODE pIt, pItNext;
-                                        RTListForEachSafe(&AmlDecode.LstStmts, pIt, pItNext, RTACPIASTNODE, NdAst)
-                                        {
-                                            RTListNodeRemove(&pIt->NdAst);
-                                            rtAcpiAstNodeFree(pIt);
-                                        }
+                                        RTVfsIoStrmPrintf(hVfsIosOut, "}\n");
                                     }
-
-                                    {
-                                        PRTACPITBLAMLOBJ pIt, pItNext;
-                                        RTListForEachSafe(&AmlDecode.LstObjs, pIt, pItNext, RTACPITBLAMLOBJ, NdObjs)
-                                        {
-                                            RTListNodeRemove(&pIt->NdObjs);
-                                            RTMemFree(pIt);
-                                        }
-                                    }
-
-                                    rtAcpiNsDestroy(AmlDecode.pNs);
+                                    else
+                                        rc = RTErrInfoSetF(pErrInfo, cch == 0 ? VERR_NO_MEMORY : (int)cch, "Failed to emit DefinitionBlock()");
                                 }
-                                else
-                                    rc = RTErrInfoSetF(pErrInfo, VERR_NO_MEMORY, "OUt of memory creating the namespace structure");
 
-                                RTStrCacheDestroy(AmlDecode.hStrCache);
+                                /* Free resources. */
+                                {
+                                    PRTACPIASTNODE pIt, pItNext;
+                                    RTListForEachSafe(&AmlDecode.LstStmts, pIt, pItNext, RTACPIASTNODE, NdAst)
+                                    {
+                                        RTListNodeRemove(&pIt->NdAst);
+                                        rtAcpiAstNodeFree(pIt);
+                                    }
+                                }
+
+                                {
+                                    PRTACPITBLAMLOBJ pIt, pItNext;
+                                    RTListForEachSafe(&AmlDecode.LstObjs, pIt, pItNext, RTACPITBLAMLOBJ, NdObjs)
+                                    {
+                                        RTListNodeRemove(&pIt->NdObjs);
+                                        RTMemFree(pIt);
+                                    }
+                                }
+
+                                rtAcpiNsDestroy(AmlDecode.pNs);
                             }
                             else
-                                rc = RTErrInfoSetF(pErrInfo, rc, "Failed to create string cache for literals");
+                                rc = RTErrInfoSetF(pErrInfo, VERR_NO_MEMORY, "OUt of memory creating the namespace structure");
+
+                            RTStrCacheDestroy(AmlDecode.hStrCache);
                         }
                         else
-                            rc = RTErrInfoSetF(pErrInfo, rc, "Reading %u bytes of the ACPI table failed", Hdr.cbTbl);
-
-                        RTMemFree(pbTbl);
-                        pbTbl = NULL;
+                            rc = RTErrInfoSetF(pErrInfo, rc, "Failed to create string cache for literals");
                     }
                     else
-                        rc = RTErrInfoSetF(pErrInfo, VERR_NO_MEMORY, "Allocating memory for the ACPI table failed");
-                }
+                        rc = RTErrInfoSetF(pErrInfo, rc, "Reading %u bytes of the ACPI table failed", Hdr.cbTbl);
 
-                RTVfsIoStrmPrintf(hVfsIosOut, "}\n");
+                    RTMemFree(pbTbl);
+                    pbTbl = NULL;
+                }
+                else
+                    rc = RTErrInfoSetF(pErrInfo, VERR_NO_MEMORY, "Allocating memory for the ACPI table failed");
             }
-            else
-                rc = RTErrInfoSetF(pErrInfo, cch == 0 ? VERR_NO_MEMORY : (int)cch, "Failed to emit DefinitionBlock()");
         }
         else
             rc = RTErrInfoSetF(pErrInfo, VERR_NOT_SUPPORTED, "Only DSDT and SSDT ACPI tables are supported");

@@ -1,4 +1,4 @@
-/* $Id: 03-grammar.asl 112656 2026-01-21 11:13:11Z alexander.eichner@oracle.com $ */
+/* $Id: 03-grammar.asl 112661 2026-01-21 13:43:01Z alexander.eichner@oracle.com $ */
 /** @file
  * VirtualBox ACPI - Testcase.
  */
@@ -120,6 +120,12 @@ DefinitionBlock ("", "SSDT", 1, "VBOX  ", "VBOXTPMT", 2)
 
                     Return (Name(C0DE, Buffer (100) { 0x1, 0x2, 0xaa }))
                 }
+            }
+
+            Method(SLEN, 1, NotSerialized, 0)
+            {
+                Store(Arg0, Local0)
+                Return(Sizeof(Local0))
             }
         }
     }
