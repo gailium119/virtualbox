@@ -1,4 +1,4 @@
-/* $Id: UIDetailsItem.cpp 112666 2026-01-22 14:39:54Z sergey.dubov@oracle.com $ */
+/* $Id: UIDetailsItem.cpp 112669 2026-01-22 14:57:42Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIDetailsItem class definition.
  */
@@ -201,8 +201,22 @@ public:
     /** Returns the state. */
     virtual QAccessible::State state() const RT_OVERRIDE
     {
+        /* Sanity check: */
+        AssertPtrReturn(item(), QAccessible::State());
+        AssertPtrReturn(item()->model(), QAccessible::State());
+
+        /* Compose the state: */
+        QAccessible::State myState;
+        myState.focusable = true;
+        myState.selectable = true;
+        if (item()->model()->currentItem() == item())
+        {
+            myState.focused = true;
+            myState.selected = true;
+        }
+
         /* Return the state: */
-        return QAccessible::State();
+        return myState;
     }
 
     /** Returns a text for the passed @a enmTextRole. */
