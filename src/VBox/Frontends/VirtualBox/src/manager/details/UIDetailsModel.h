@@ -1,4 +1,4 @@
-/* $Id: UIDetailsModel.h 112667 2026-01-22 14:49:22Z sergey.dubov@oracle.com $ */
+/* $Id: UIDetailsModel.h 112668 2026-01-22 14:54:40Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIDetailsModel class declaration.
  */
@@ -47,6 +47,7 @@ class QGraphicsItem;
 class QGraphicsScene;
 class QGraphicsSceneContextMenuEvent;
 class QGraphicsView;
+class QKeyEvent;
 class UIVirtualMachineItem;
 class UIDetails;
 class UIDetailsContextMenu;
@@ -228,6 +229,8 @@ private:
         QPointer<UIDetailsItem>  m_pCurrentItem;
     /** @} */
 
+    /** Performs handling for allowed key @a pEvent. */
+    bool processKeyboardEvent(QKeyEvent *pEvent);
     /** Performs handling for allowed context menu @a pEvent. */
     bool processContextMenuEvent(QGraphicsSceneContextMenuEvent *pEvent);
 

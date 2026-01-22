@@ -1,4 +1,4 @@
-/* $Id: UIDetailsModel.cpp 112667 2026-01-22 14:49:22Z sergey.dubov@oracle.com $ */
+/* $Id: UIDetailsModel.cpp 112668 2026-01-22 14:54:40Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIDetailsModel class implementation.
  */
@@ -707,9 +707,21 @@ void UIDetailsModel::sltHandleExtraDataOptionsChange(DetailsElementType enmType)
 
 bool UIDetailsModel::eventFilter(QObject *pObject, QEvent *pEvent)
 {
-    /* Handle allowed context-menu events: */
-    if (pObject == scene() && pEvent->type() == QEvent::GraphicsSceneContextMenu)
+    /* Process only scene events: */
+    if (pObject != scene())
+        return QObject::eventFilter(pObject, pEvent);
+
+    /* Checking event-type: */
+    switch (pEvent->type())
+    {
+        /* Keyboard handler: */
+        case QEvent::KeyRelease:
+            return processKeyboardEvent(static_cast<QKeyEvent*>(pEvent));
+        /* Context-menu handler: */
+        case QEvent::GraphicsSceneContextMenu:
             return processContextMenuEvent(static_cast<QGraphicsSceneContextMenuEvent*>(pEvent));
+        default: break; /* Shut up MSC */
+    }
 
     /* Call to base-class: */
     return QObject::eventFilter(pObject, pEvent);
@@ -1008,6 +1020,44 @@ void UIDetailsModel::cleanup()
     /* Cleanup scene: */
     delete m_pScene;
     m_pScene = 0;
+}
+
+bool UIDetailsModel::processKeyboardEvent(QKeyEvent *pEvent)
+{
+    /* Compose navigation list: */
+    QList<UIDetailsItem*> navigationList;
+    foreach (UIDetailsItem *pSet, root()->items())
+        foreach (UIDetailsItem *pElement, pSet->items())
+            navigationList << pElement;
+
+    /* Look for an index of current item in navigation list: */
+    const int iIndex = navigationList.indexOf(currentItem());
+
+    /* Handle certain key releases: */
+    switch (pEvent->key())
+    {
+        /* Key DOWN? */
+        case Qt::Key_Down:
+        {
+            /* Move focus to next item: */
+            if (iIndex < navigationList.size() - 1)
+                setCurrentItem(navigationList.value(iIndex + 1));
+            return true;
+        }
+        /* Key UP? */
+        case Qt::Key_Up:
+        {
+            /* Move focus to previous item: */
+            if (iIndex > 0)
+                setCurrentItem(navigationList.value(iIndex - 1));
+            return true;
+        }
+        default:
+            break;
+    }
+
+    /* Pass event if unknown: */
+    return false;
 }
 
 bool UIDetailsModel::processContextMenuEvent(QGraphicsSceneContextMenuEvent *pEvent)
