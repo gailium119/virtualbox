@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# $Id: tdGuestOsUnattendedInst1.py 112665 2026-01-22 12:00:43Z valery.portnyagin@oracle.com $
+# $Id: tdGuestOsUnattendedInst1.py 112673 2026-01-23 09:18:10Z knut.osmundsen@oracle.com $
 
 """
 VirtualBox Validation Kit - Guest OS unattended installation tests.
@@ -37,7 +37,7 @@ terms and conditions of either the GPL or the CDDL or both.
 
 SPDX-License-Identifier: GPL-3.0-only OR CDDL-1.0
 """
-__version__ = "$Revision: 112665 $"
+__version__ = "$Revision: 112673 $"
 
 
 # Standard Python imports.
@@ -557,7 +557,8 @@ class tdGuestOsInstTest1(vbox.TestDriver):
             UnattendedVm(oSet, 'tst-w10-1809-64', 'Windows10_64',    '6.0/uaisos/en_windows_10_business_edition_version_1809_updated_sept_2018_x64_dvd_f0b7dc68.iso',   UnattendedVm.kfWinGaTimesync), # >=10GiB
             UnattendedVm(oSet, 'tst-w10-1903-32', 'Windows10',       '6.0/uaisos/en_windows_10_business_editions_version_1903_x86_dvd_ca4f0f49.iso',                    UnattendedVm.kfWinGaTimesync), # >=7GiB
             UnattendedVm(oSet, 'tst-w10-1903-64', 'Windows10_64',    '6.0/uaisos/en_windows_10_business_editions_version_1903_x64_dvd_37200948.iso',                    UnattendedVm.kfWinGaTimesync), # >=10GiB
-#           UnattendedVm(oSet, 'tst-w11-1905-64', 'Windows11_64',    '7.1/uaisos/Win11_25H2_English_x64.iso',                                                           UnattendedVm.kfWinGaTimesync), # >=10GiB
+            #UnattendedVm(oSet, 'tst-w11-1905-64', 'Windows11_64',    '7.1/uaisos/Win11_25H2_English_x64.iso',                                                           UnattendedVm.kfWinGaTimesync), # >=10GiB ## @todo r=bird: Add UnattendedVm.kfMinTwoCpus or similar; get & use the msdn iso (e.g. en-us_windows_11_business_editions_version_25h2_updated_jan_2026_x64_dvd_09c1e011.iso) so we know what we're testing.
+
             #
             # Ubuntu
             #
@@ -602,6 +603,7 @@ class tdGuestOsInstTest1(vbox.TestDriver):
                          UnattendedVm.kfNoGAs),
             UnattendedVm(oSet, 'tst-ubuntu-24.04-64', 'Ubuntu_64', '7.1/uaisos/ubuntu-24.04-desktop-amd64.iso',    # >=6GiB ?
                          UnattendedVm.kfNoGAs | UnattendedVm.kfLinuxIoApic),
+
             #
             # Debian
             #
