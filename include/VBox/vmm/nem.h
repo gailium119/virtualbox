@@ -76,6 +76,10 @@ VMMR3_INT_DECL(int)  NEMR3Halt(PVM pVM, PVMCPU pVCpu);
 #if defined(VBOX_VMM_TARGET_X86) && defined(RT_OS_WINDOWS)
 VMMR3_INT_DECL(int) NEMR3WinGetPartitionHandle(PVM pVM, PRTHCUINTPTR pHCPtrHandle);
 #endif
+#if defined(VBOX_VMM_TARGET_X86) && defined(RT_OS_LINUX)
+VMMR3_INT_DECL(int) NEMR3LinuxGetKvmVmFd(PVM pVM, int *piFdKvm);
+VMMR3_INT_DECL(int) NEMR3LinuxGetKvmVCpuFd(PVMCPU pVCpu, int *piFdKvmVcpu);
+#endif
 
 /**
  * Checks if dirty page tracking for MMIO2 ranges is supported.

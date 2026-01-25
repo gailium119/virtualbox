@@ -1,4 +1,4 @@
-/* $Id: NEMR3Native-linux-x86.cpp 112678 2026-01-25 16:15:59Z alexander.eichner@oracle.com $ */
+/* $Id: NEMR3Native-linux-x86.cpp 112680 2026-01-25 16:41:39Z alexander.eichner@oracle.com $ */
 /** @file
  * NEM - Native execution manager, native ring-3 Linux backend.
  */
@@ -1890,6 +1890,24 @@ VMMR3_INT_DECL(VBOXSTRICTRC) NEMR3RunGC(PVM pVM, PVMCPU pVCpu)
     LogFlow(("NEM/%u: %04x:%08RX64 efl=%#08RX64 => %Rrc\n", pVCpu->idCpu, pVCpu->cpum.GstCtx.cs.Sel, pVCpu->cpum.GstCtx.rip,
              pVCpu->cpum.GstCtx.rflags.u, VBOXSTRICTRC_VAL(rcStrict) ));
     return rcStrict;
+}
+
+
+VMMR3_INT_DECL(int) NEMR3LinuxGetKvmVmFd(PVM pVM, int *piFdKvm)
+{
+    AssertPtrReturn(pVM, VERR_INVALID_PARAMETER);
+    AssertPtrReturn(piFdKvm, VERR_INVALID_PARAMETER);
+    *piFdKvm = pVM->nem.s.fdVm;
+    return VINF_SUCCESS;
+}
+
+
+VMMR3_INT_DECL(int) NEMR3LinuxGetKvmVCpuFd(PVMCPU pVCpu, int *piFdKvmVcpu)
+{
+    AssertPtrReturn(pVCpu, VERR_INVALID_PARAMETER);
+    AssertPtrReturn(piFdKvmVcpu, VERR_INVALID_PARAMETER);
+    *piFdKvmVcpu = pVCpu->nem.s.fdVCpu;
+    return VINF_SUCCESS;
 }
 
 
