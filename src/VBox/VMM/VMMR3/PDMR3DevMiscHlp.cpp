@@ -1,4 +1,4 @@
-/* $Id: PDMR3DevMiscHlp.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: PDMR3DevMiscHlp.cpp 112682 2026-01-25 17:10:52Z alexander.eichner@oracle.com $ */
 /** @file
  * PDM - Pluggable Device and Driver Manager, Misc. Device Helpers.
  */
@@ -140,17 +140,17 @@ const PDMPICHLP g_pdmR3DevPicHlp =
 /** @interface_method_impl{PDMIOAPICHLP,pfnApicBusDeliver} */
 static DECLCALLBACK(int) pdmR3IoApicHlp_ApicBusDeliver(PPDMDEVINS pDevIns, uint8_t u8Dest, uint8_t u8DestMode,
                                                        uint8_t u8DeliveryMode, uint8_t uVector, uint8_t u8Polarity,
-                                                       uint8_t u8TriggerMode, uint32_t uTagSrc)
+                                                       uint8_t u8TriggerMode, uint8_t uIoApicPin, uint32_t uTagSrc)
 {
     PDMDEV_ASSERT_DEVINS(pDevIns);
-    LogFlow(("pdmR3IoApicHlp_ApicBusDeliver: caller='%s'/%d: u8Dest=%RX8 u8DestMode=%RX8 u8DeliveryMode=%RX8 uVector=%RX8 u8Polarity=%RX8 u8TriggerMode=%RX8 uTagSrc=%#x\n",
-             pDevIns->pReg->szName, pDevIns->iInstance, u8Dest, u8DestMode, u8DeliveryMode, uVector, u8Polarity, u8TriggerMode, uTagSrc));
+    LogFlow(("pdmR3IoApicHlp_ApicBusDeliver: caller='%s'/%d: u8Dest=%RX8 u8DestMode=%RX8 u8DeliveryMode=%RX8 uVector=%RX8 u8Polarity=%RX8 u8TriggerMode=%RX8 uIoApicPin=%RU8 uTagSrc=%#x\n",
+             pDevIns->pReg->szName, pDevIns->iInstance, u8Dest, u8DestMode, u8DeliveryMode, uVector, u8Polarity, u8TriggerMode, uIoApicPin, uTagSrc));
 #ifdef VBOX_VMM_TARGET_X86
     PVM pVM = pDevIns->Internal.s.pVMR3;
-    return PDMApicBusDeliver(pVM, u8Dest, u8DestMode, u8DeliveryMode, uVector, u8Polarity, u8TriggerMode, uTagSrc);
+    return PDMApicBusDeliver(pVM, u8Dest, u8DestMode, u8DeliveryMode, uVector, u8Polarity, u8TriggerMode, uIoApicPin, uTagSrc);
 #else
     AssertReleaseFailed();
-    RT_NOREF(pDevIns, u8Dest, u8DestMode, u8DeliveryMode, uVector, u8Polarity, u8TriggerMode, uTagSrc);
+    RT_NOREF(pDevIns, u8Dest, u8DestMode, u8DeliveryMode, uVector, u8Polarity, u8TriggerMode, uIoApicPin, uTagSrc);
     return VERR_NOT_IMPLEMENTED;
 #endif
 }

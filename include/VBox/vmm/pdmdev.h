@@ -743,8 +743,8 @@ typedef PCPDMDEVREGRC                           PCPDMDEVREG;
 #if defined(VBOX_VMM_TARGET_X86) || defined(VBOX_VMM_TARGET_AGNOSTIC)
 /** The PDM APIC device registration structure. */
 extern const PDMDEVREG g_DeviceAPIC;
-# if defined(RT_OS_WINDOWS)
-/** The PDM APIC device registration structure for the Hyper-V NEM. */
+# if defined(RT_OS_WINDOWS) || defined(RT_OS_LINUX)
+/** The PDM APIC device registration structure for the Hyper-V/KVM NEM. */
 extern const PDMDEVREG g_DeviceAPICNem;
 # endif
 #elif defined(VBOX_VMM_TARGET_ARMV8)
@@ -1892,12 +1892,13 @@ typedef struct PDMIOAPICHLP
      * @param   uVector         See APIC implementation.
      * @param   u8Polarity      See APIC implementation.
      * @param   u8TriggerMode   See APIC implementation.
+     * @param   uIoApicPin      See APIC implementation.
      * @param   uTagSrc         The IRQ tag and source (for tracing).
      *
      * @sa      PDMApicBusDeliver()
      */
     DECLCALLBACKMEMBER(int, pfnApicBusDeliver,(PPDMDEVINS pDevIns, uint8_t u8Dest, uint8_t u8DestMode, uint8_t u8DeliveryMode,
-                                               uint8_t uVector, uint8_t u8Polarity, uint8_t u8TriggerMode, uint32_t uTagSrc));
+                                               uint8_t uVector, uint8_t u8Polarity, uint8_t u8TriggerMode, uint8_t uIoApicPin, uint32_t uTagSrc));
 
     /**
      * Acquires the PDM lock.

@@ -1,4 +1,4 @@
-/* $Id: PDMAllApic-x86.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: PDMAllApic-x86.cpp 112682 2026-01-25 17:10:52Z alexander.eichner@oracle.com $ */
 /** @file
  * PDM - APIC (Advanced Programmable Interrupt Controller) Interface.
  */
@@ -271,14 +271,17 @@ VMM_INT_DECL(int) PDMApicGetInterrupt(PVMCPUCC pVCpu, uint8_t *pu8Vector, uint32
  * @param   uVector         The interrupt vector.
  * @param   uPolarity       The interrupt line polarity.
  * @param   uTriggerMode    The trigger mode.
+ * @param   uIoApicPin      Set to the pin which generated the interrupt message if originating from the IO-APIC.
+ *                          UINT8_MAX if not originating from a pin, i.e. an interrupt message originating from
+ *                          a device.
  * @param   uSrcTag         The interrupt source tag (debugging).
  */
 VMM_INT_DECL(int) PDMApicBusDeliver(PVMCC pVM, uint8_t uDest, uint8_t uDestMode, uint8_t uDeliveryMode, uint8_t uVector,
-                                    uint8_t uPolarity, uint8_t uTriggerMode, uint32_t uSrcTag)
+                                    uint8_t uPolarity, uint8_t uTriggerMode, uint8_t uIoApicPin, uint32_t uSrcTag)
 {
     AssertReturn(PDM_TO_APICBACKEND(pVM)->pfnBusDeliver, VERR_INVALID_POINTER);
     return PDM_TO_APICBACKEND(pVM)->pfnBusDeliver(pVM, uDest, uDestMode, uDeliveryMode, uVector, uPolarity, uTriggerMode,
-                                                  uSrcTag);
+                                                  uIoApicPin, uSrcTag);
 }
 
 

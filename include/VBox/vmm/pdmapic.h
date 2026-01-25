@@ -317,10 +317,13 @@ typedef struct PDMAPICBACKENDR3
      * @param   uVector         The interrupt vector.
      * @param   uPolarity       The interrupt line polarity.
      * @param   uTriggerMode    The trigger mode.
+     * @param   uIoApicPin      Set to the pin which generated the interrupt message if originating from the IO-APIC.
+     *                          UINT8_MAX if not originating from a pin, i.e. an interrupt message originating from
+     *                          a device.
      * @param   uSrcTag         The interrupt source tag (debugging).
      */
     DECLR3CALLBACKMEMBER(int, pfnBusDeliver, (PVMCC pVM, uint8_t uDest, uint8_t uDestMode, uint8_t uDeliveryMode, uint8_t uVector,
-                                              uint8_t uPolarity, uint8_t uTriggerMode, uint32_t uSrcTag));
+                                              uint8_t uPolarity, uint8_t uTriggerMode, uint8_t uIoApicPin, uint32_t uSrcTag));
 
     /**
      * Sets the End-Of-Interrupt (EOI) register.
@@ -579,10 +582,13 @@ typedef struct PDMAPICBACKENDR0
      * @param   uVector         The interrupt vector.
      * @param   uPolarity       The interrupt line polarity.
      * @param   uTriggerMode    The trigger mode.
+     * @param   uIoApicPin      Set to the pin which generated the interrupt message if originating from the IO-APIC.
+     *                          UINT8_MAX if not originating from a pin, i.e. an interrupt message originating from
+     *                          a device.
      * @param   uSrcTag         The interrupt source tag (debugging).
      */
     DECLR0CALLBACKMEMBER(int, pfnBusDeliver, (PVMCC pVM, uint8_t uDest, uint8_t uDestMode, uint8_t uDeliveryMode, uint8_t uVector,
-                                              uint8_t uPolarity, uint8_t uTriggerMode, uint32_t uSrcTag));
+                                              uint8_t uPolarity, uint8_t uTriggerMode, uint8_t uIoApicPin, uint32_t uSrcTag));
 
     /**
      * Sets the End-Of-Interrupt (EOI) register.
@@ -842,10 +848,13 @@ typedef struct PDMAPICBACKENDRC
      * @param   uVector         The interrupt vector.
      * @param   uPolarity       The interrupt line polarity.
      * @param   uTriggerMode    The trigger mode.
+     * @param   uIoApicPin      Set to the pin which generated the interrupt message if originating from the IO-APIC.
+     *                          UINT8_MAX if not originating from a pin, i.e. an interrupt message originating from
+     *                          a device.
      * @param   uSrcTag         The interrupt source tag (debugging).
      */
     DECLRCCALLBACKMEMBER(int, pfnBusDeliver, (PVMCC pVM, uint8_t uDest, uint8_t uDestMode, uint8_t uDeliveryMode, uint8_t uVector,
-                                              uint8_t uPolarity, uint8_t uTriggerMode, uint32_t uSrcTag));
+                                              uint8_t uPolarity, uint8_t uTriggerMode, uint8_t uIoApicPin, uint32_t uSrcTag));
 
     /**
      * Sets the End-Of-Interrupt (EOI) register.
@@ -936,7 +945,7 @@ VMM_INT_DECL(VBOXSTRICTRC)  PDMApicGetBaseMsr(PVMCPUCC pVCpu, uint64_t *pu64Valu
 VMM_INT_DECL(int)           PDMApicSetBaseMsr(PVMCPUCC pVCpu, uint64_t u64BaseMsr);
 VMM_INT_DECL(int)           PDMApicGetInterrupt(PVMCPUCC pVCpu, uint8_t *pu8Vector, uint32_t *puSrcTag);
 VMM_INT_DECL(int)           PDMApicBusDeliver(PVMCC pVM, uint8_t uDest, uint8_t uDestMode, uint8_t uDeliveryMode, uint8_t uVector,
-                                              uint8_t uPolarity, uint8_t uTriggerMode, uint32_t uTagSrc);
+                                              uint8_t uPolarity, uint8_t uTriggerMode, uint8_t uIoApicPin, uint32_t uTagSrc);
 #ifdef IN_RING0
 VMM_INT_DECL(int)           PDMR0ApicGetApicPageForCpu(PCVMCPUCC pVCpu, PRTHCPHYS pHCPhys, PRTR0PTR pR0Ptr, PRTR3PTR pR3Ptr);
 #endif

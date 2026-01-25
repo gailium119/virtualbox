@@ -1,4 +1,4 @@
-/* $Id: APICR3Nem-win-x86.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: APICR3Nem-win-x86.cpp 112682 2026-01-25 17:10:52Z alexander.eichner@oracle.com $ */
 /** @file
  * APIC - Advanced Programmable Interrupt Controller - NEM Hyper-V backend.
  */
@@ -899,9 +899,9 @@ static DECLCALLBACK(void) apicR3HvUpdatePendingInterrupts(PVMCPUCC pVCpu)
  * @interface_method_impl{PDMAPICBACKEND,pfnBusDeliver}
  */
 static DECLCALLBACK(int) apicR3HvBusDeliver(PVMCC pVM, uint8_t uDest, uint8_t uDestMode, uint8_t uDeliveryMode, uint8_t uVector,
-                                            uint8_t uPolarity, uint8_t uTriggerMode, uint32_t uSrcTag)
+                                            uint8_t uPolarity, uint8_t uTriggerMode, uint8_t uIoApicPin, uint32_t uSrcTag)
 {
-    RT_NOREF(uPolarity, uSrcTag);
+    RT_NOREF(uPolarity, uIoApicPin, uSrcTag);
 
     /*
      * If the APIC isn't enabled, do nothing and pretend success.

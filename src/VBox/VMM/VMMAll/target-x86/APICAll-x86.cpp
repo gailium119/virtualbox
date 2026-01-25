@@ -1,4 +1,4 @@
-/* $Id: APICAll-x86.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: APICAll-x86.cpp 112682 2026-01-25 17:10:52Z alexander.eichner@oracle.com $ */
 /** @file
  * APIC - Advanced Programmable Interrupt Controller - All Contexts.
  */
@@ -2180,9 +2180,9 @@ static DECLCALLBACK(int) apicGetTimerFreq(PVMCC pVM, uint64_t *pu64Value)
  * @interface_method_impl{PDMAPICBACKEND,pfnBusDeliver}
  */
 static DECLCALLBACK(int) apicBusDeliver(PVMCC pVM, uint8_t uDest, uint8_t uDestMode, uint8_t uDeliveryMode, uint8_t uVector,
-                                        uint8_t uPolarity, uint8_t uTriggerMode, uint32_t uSrcTag)
+                                        uint8_t uPolarity, uint8_t uTriggerMode, uint8_t uIoApicPin, uint32_t uSrcTag)
 {
-    NOREF(uPolarity);
+    RT_NOREF(uPolarity, uIoApicPin);
 
     /*
      * If the APIC isn't enabled, do nothing and pretend success.

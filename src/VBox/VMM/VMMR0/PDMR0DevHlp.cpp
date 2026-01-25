@@ -1,4 +1,4 @@
-/* $Id: PDMR0DevHlp.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: PDMR0DevHlp.cpp 112682 2026-01-25 17:10:52Z alexander.eichner@oracle.com $ */
 /** @file
  * PDM - Pluggable Device and Driver Manager, R0 Device Helper parts.
  */
@@ -1706,13 +1706,13 @@ extern DECLEXPORT(const PDMPICHLP) g_pdmR0PicHlp =
 /** @interface_method_impl{PDMIOAPICHLP,pfnApicBusDeliver} */
 static DECLCALLBACK(int) pdmR0IoApicHlp_ApicBusDeliver(PPDMDEVINS pDevIns, uint8_t u8Dest, uint8_t u8DestMode,
                                                        uint8_t u8DeliveryMode, uint8_t uVector, uint8_t u8Polarity,
-                                                       uint8_t u8TriggerMode, uint32_t uTagSrc)
+                                                       uint8_t u8TriggerMode, uint8_t uIoApicPin, uint32_t uTagSrc)
 {
     PDMDEV_ASSERT_DEVINS(pDevIns);
     PGVM pGVM = pDevIns->Internal.s.pGVM;
-    LogFlow(("pdmR0IoApicHlp_ApicBusDeliver: caller=%p/%d: u8Dest=%RX8 u8DestMode=%RX8 u8DeliveryMode=%RX8 uVector=%RX8 u8Polarity=%RX8 u8TriggerMode=%RX8 uTagSrc=%#x\n",
-             pDevIns, pDevIns->iInstance, u8Dest, u8DestMode, u8DeliveryMode, uVector, u8Polarity, u8TriggerMode, uTagSrc));
-    return PDMApicBusDeliver(pGVM, u8Dest, u8DestMode, u8DeliveryMode, uVector, u8Polarity, u8TriggerMode, uTagSrc);
+    LogFlow(("pdmR0IoApicHlp_ApicBusDeliver: caller=%p/%d: u8Dest=%RX8 u8DestMode=%RX8 u8DeliveryMode=%RX8 uVector=%RX8 u8Polarity=%RX8 u8TriggerMode=%RX8 uIoApicPin=%RU8 uTagSrc=%#x\n",
+             pDevIns, pDevIns->iInstance, u8Dest, u8DestMode, u8DeliveryMode, uVector, u8Polarity, u8TriggerMode, uIoApicPin, uTagSrc));
+    return PDMApicBusDeliver(pGVM, u8Dest, u8DestMode, u8DeliveryMode, uVector, u8Polarity, u8TriggerMode, uIoApicPin, uTagSrc);
 }
 
 
