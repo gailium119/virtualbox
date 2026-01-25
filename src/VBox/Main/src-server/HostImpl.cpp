@@ -1,4 +1,4 @@
-/* $Id: HostImpl.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: HostImpl.cpp 112681 2026-01-25 16:48:09Z alexander.eichner@oracle.com $ */
 /** @file
  * VirtualBox COM class implementation: Host
  */
@@ -82,6 +82,10 @@
 # include <errno.h>
 # include <net/if.h>
 # include <net/if_arp.h>
+# ifdef VBOX_WITH_NATIVE_NEM
+#  include <unistd.h>
+#  include <fcntl.h>
+# endif
 #endif /* RT_OS_LINUX */
 
 #ifdef RT_OS_SOLARIS
