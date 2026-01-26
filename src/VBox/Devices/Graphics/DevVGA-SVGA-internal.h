@@ -1,4 +1,4 @@
-/* $Id: DevVGA-SVGA-internal.h 112675 2026-01-23 17:45:53Z andreas.loeffler@oracle.com $ */
+/* $Id: DevVGA-SVGA-internal.h 112692 2026-01-26 11:23:41Z knut.osmundsen@oracle.com $ */
 /** @file
  * VMWare SVGA device - internal header for DevVGA-SVGA* source files.
  */
@@ -269,6 +269,10 @@ void vmsvgaR3ResetSvgaState(PVGASTATE pThis, PVGASTATECC pThisCC);
 
 void vmsvgaR3TerminateSvgaState(PVGASTATE pThis, PVGASTATECC pThisCC);
 
+void vmsvgaR3InstallColorCursor(PVGASTATE pThis, PVGASTATECC pThisCC, SVGAGBColorCursorHeader const *pCursorHdr,
+                                uint8_t const *pbData, uint32_t cbData, uint32_t idMOb);
+void vmsvgaR3InstallAlphaCursor(PVGASTATE pThis, PVGASTATECC pThisCC, SVGAGBAlphaCursorHeader const *pCursorHdr,
+                                uint8_t const *pbData, uint32_t cbData, uint32_t idMOb);
 int vmsvgaR3ChangeMode(PVGASTATE pThis, PVGASTATECC pThisCC);
 int vmsvgaR3UpdateScreen(PVGASTATECC pThisCC, VMSVGASCREENOBJECT *pScreen, int x, int y, int w, int h);
 
@@ -285,7 +289,7 @@ void vmsvgaR3CmdRectCopy(PVGASTATE pThis, PVGASTATECC pThisCC, SVGAFifoCmdRectCo
 void vmsvgaR3CmdRectRopCopy(PVGASTATE pThis, PVGASTATECC pThisCC, SVGAFifoCmdRectRopCopy const *pCmd);
 void vmsvgaR3CmdDisplayCursor(PVGASTATE pThis, PVGASTATECC pThisCC, SVGAFifoCmdDisplayCursor const *pCmd);
 void vmsvgaR3CmdMoveCursor(PVGASTATE pThis, PVGASTATECC pThisCC, SVGAFifoCmdMoveCursor const *pCmd);
-void vmsvgaR3CmdDefineCursor(PVGASTATE pThis, PVGASTATECC pThisCC, SVGAFifoCmdDefineCursor const *pCmd);
+void vmsvgaR3CmdDefineCursor(PVGASTATE pThis, PVGASTATECC pThisCC, SVGAFifoCmdDefineCursor const *pCmd, uint32_t cbData);
 void vmsvgaR3CmdDefineAlphaCursor(PVGASTATE pThis, PVGASTATECC pThisCC, SVGAFifoCmdDefineAlphaCursor const *pCmd);
 void vmsvgaR3CmdEscape(PVGASTATE pThis, PVGASTATECC pThisCC, SVGAFifoCmdEscape const *pCmd);
 void vmsvgaR3CmdDefineScreen(PVGASTATE pThis, PVGASTATECC pThisCC, SVGAFifoCmdDefineScreen const *pCmd);
@@ -305,6 +309,5 @@ int vmsvgaR3Process3dCmd(PVGASTATE pThis, PVGASTATECC pThisCC, uint32_t idDXCont
 #if defined(LOG_ENABLED) || defined(VBOX_STRICT) || defined(VMSVGA_CMD_STATS)
 const char *vmsvgaR3FifoCmdToString(uint32_t u32Cmd);
 #endif
-
 
 #endif /* !VBOX_INCLUDED_SRC_Graphics_DevVGA_SVGA_internal_h */

@@ -1,4 +1,4 @@
-/* $Id: DevVGA-SVGA.h 112675 2026-01-23 17:45:53Z andreas.loeffler@oracle.com $ */
+/* $Id: DevVGA-SVGA.h 112692 2026-01-26 11:23:41Z knut.osmundsen@oracle.com $ */
 /** @file
  * VMware SVGA device
  */
@@ -185,9 +185,9 @@ struct {
 #define VMSVGA_MAX_Y                    _1M
 
 /** Maximum dimensions (X/Y, in pixel) a cursor can have. */
-#define VMSVGA_CURSOR_MAX_DIMENSION     512
+#define VMSVGA_CURSOR_MAX_DIMENSION     2048
 /** Maximum size (in bytes) a cursor can have. */
-#define VMSVGA_CURSOR_MAX_BYTES         VMSVGA_CURSOR_MAX_DIMENSION * VMSVGA_CURSOR_MAX_DIMENSION * 4 /* RGBA */
+#define VMSVGA_CURSOR_MAX_BYTES         (VMSVGA_CURSOR_MAX_DIMENSION * VMSVGA_CURSOR_MAX_DIMENSION * 4 /* RGBA */)
 
 /* u32ActionFlags */
 #define VMSVGA_ACTION_CHANGEMODE_BIT    0

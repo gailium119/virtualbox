@@ -1,4 +1,4 @@
-/* $Id: DevVGA-SVGA-cmd.cpp 112687 2026-01-26 08:36:22Z andreas.loeffler@oracle.com $ */
+/* $Id: DevVGA-SVGA-cmd.cpp 112692 2026-01-26 11:23:41Z knut.osmundsen@oracle.com $ */
 /** @file
  * VMware SVGA device - implementation of VMSVGA commands.
  */
@@ -1455,11 +1455,14 @@ static void vmsvgaR3RectCopy(PVGASTATECC pThisCC, VMSVGASCREENOBJECT const *pScr
  * @param   cy                  Height.
  * @param   pbData              Heap copy of the cursor data.  Consumed.
  * @param   cbData              The size of the data.
+ * @param   idMOb               The ID of the memory object assiciated with the
+ *                              cursor.  Pass SVGA_ID_INVALID if not relevant.
  */
 static void vmsvgaR3InstallNewCursor(PVGASTATECC pThisCC, PVMSVGAR3STATE pSVGAState, bool fAlpha,
-                                     uint32_t xHot, uint32_t yHot, uint32_t cx, uint32_t cy, uint8_t *pbData, uint32_t cbData)
+                                     uint32_t xHot, uint32_t yHot, uint32_t cx, uint32_t cy,
+                                     uint8_t *pbData, uint32_t cbData, uint32_t idMOb)
 {
-    LogRel2(("vmsvgaR3InstallNewCursor: cx=%d cy=%d xHot=%d yHot=%d fAlpha=%d cbData=%#x\n", cx, cy, xHot, yHot, fAlpha, cbData));
+    LogRel2(("vmsvgaR3InstallNewCursor: cx=%d cy=%d xHot=%d yHot=%d fAlpha=%d cbData=%#x idMOb=%#x\n", cx, cy, xHot, yHot, fAlpha, cbData, idMOb));
 #ifdef LOG_ENABLED
     if (LogIs2Enabled())
     {
@@ -1516,69 +1519,84 @@ static void vmsvgaR3InstallNewCursor(PVGASTATECC pThisCC, PVMSVGAR3STATE pSVGASt
     pSVGAState->Cursor.height   = cy;
     pSVGAState->Cursor.cbData   = cbData;
     pSVGAState->Cursor.pData    = pbData;
+    pSVGAState->Cursor.mobId    = idMOb;
 }
 
 
 /**
  * Installs a new alpha cursor.
  *
- * @param   pThis               The VGA state.
- * @param   pThisCC             The VGA/VMSVGA state for ring-3.
- * @param   pCursorHdr          Cursor header to use for installing the cursor.
+ * @param   pThis       The VGA state.
+ * @param   pThisCC     The VGA/VMSVGA state for ring-3.
+ * @param   pCursorHdr  Cursor header to use for installing the cursor.
+ * @param   pbData      Pointer to the cursor data.
+ * @param   cbData      Size of the cursor data (caller should've checked but we
+ *                      may use this to check again).
+ * @param   idMOb       The ID of the memory object assiciated with the
+ *                      cursor.  Pass SVGA_ID_INVALID if not relevant.
  */
-void vmsvgaR3InstallAlphaCursor(PVGASTATE pThis, PVGASTATECC pThisCC, SVGAGBAlphaCursorHeader const *pCursorHdr)
+void vmsvgaR3InstallAlphaCursor(PVGASTATE pThis, PVGASTATECC pThisCC, SVGAGBAlphaCursorHeader const *pCursorHdr,
+                                uint8_t const *pbData, uint32_t cbData, uint32_t idMOb)
 {
     RT_NOREF(pThis);
     PVMSVGAR3STATE const pSvgaR3State = pThisCC->svga.pSvgaR3State;
 
     /* Check against a reasonable upper limit to prevent integer overflows in the sanity checks below. */
-    ASSERT_GUEST_RETURN_VOID(pCursorHdr->height < VMSVGA_CURSOR_MAX_DIMENSION && pCursorHdr->width < VMSVGA_CURSOR_MAX_DIMENSION);
+    ASSERT_GUEST_RETURN_VOID(pCursorHdr->height <= VMSVGA_CURSOR_MAX_DIMENSION && pCursorHdr->width <= VMSVGA_CURSOR_MAX_DIMENSION);
     RT_UNTRUSTED_VALIDATED_FENCE();
 
     /* The mouse pointer interface always expects an AND mask followed by the color data (XOR mask). */
     uint32_t cbAndMask     = (pCursorHdr->width + 7) / 8 * pCursorHdr->height;          /* size of the AND mask */
-    cbAndMask              = ((cbAndMask + 3) & ~3);                                    /* + gap for alignment */
+    cbAndMask              = RT_ALIGN_32(cbAndMask, sizeof(uint32_t));                  /* + gap for alignment */
     uint32_t cbXorMask     = pCursorHdr->width * sizeof(uint32_t) * pCursorHdr->height; /* + size of the XOR mask (32-bit BRGA format) */
+    ASSERT_GUEST_RETURN_VOID(cbXorMask <= cbData);
     uint32_t cbCursorShape = cbAndMask + cbXorMask;
 
-    uint8_t *pCursorCopy = (uint8_t *)RTMemAlloc(cbCursorShape);
-    AssertPtrReturnVoid(pCursorCopy);
+    uint8_t *pbCursorCopy  = (uint8_t *)RTMemAlloc(cbCursorShape);
+    AssertPtrReturnVoid(pbCursorCopy);
 
     /* Transparency is defined by the alpha bytes, so make the whole bitmap visible. */
-    memset(pCursorCopy, 0xff, cbAndMask);
+    memset(pbCursorCopy, 0xff, cbAndMask);
     /* Colour data */
-    memcpy(pCursorCopy + cbAndMask, pCursorHdr + 1, cbXorMask);
+    memcpy(pbCursorCopy + cbAndMask, pbData, cbXorMask);
 
     vmsvgaR3InstallNewCursor(pThisCC, pSvgaR3State, true /*fAlpha*/, pCursorHdr->hotspotX, pCursorHdr->hotspotY,
-                             pCursorHdr->width, pCursorHdr->height, pCursorCopy, cbCursorShape);
+                             pCursorHdr->width, pCursorHdr->height, pbCursorCopy, cbCursorShape, idMOb);
 }
 
 
 /**
  * Installs a new color cursor.
  *
- * @param   pThis               The VGA state.
- * @param   pThisCC             The VGA/VMSVGA state for ring-3.
- * @param   pCursorHdr          Cursor header to use for installing the cursor.
+ * @param   pThis       The VGA state.
+ * @param   pThisCC     The VGA/VMSVGA state for ring-3.
+ * @param   pHdr        Cursor header to use for installing the cursor.
+ * @param   pbData      Pointer to the cursor data.
+ * @param   cbData      Size of the cursor data (caller should've checked but we
+ *                      may use this to check again).
+ * @param   idMOb       The ID of the memory object assiciated with the
+ *                      cursor.  Pass SVGA_ID_INVALID if not relevant.
  */
-void vmsvgaR3InstallColorCursor(PVGASTATE pThis, PVGASTATECC pThisCC, SVGAGBColorCursorHeader const *pCursorHdr)
+void vmsvgaR3InstallColorCursor(PVGASTATE pThis, PVGASTATECC pThisCC, SVGAGBColorCursorHeader const *pHdr,
+                                uint8_t const *pbData, uint32_t cbData, uint32_t idMOb)
 {
     PVMSVGAR3STATE const pSvgaR3State = pThisCC->svga.pSvgaR3State;
 
-    ASSERT_GUEST_RETURN_VOID(pCursorHdr->height < VMSVGA_CURSOR_MAX_DIMENSION && pCursorHdr->width < VMSVGA_CURSOR_MAX_DIMENSION);
-    ASSERT_GUEST_RETURN_VOID(pCursorHdr->andMaskDepth <= 32);
-    ASSERT_GUEST_RETURN_VOID(pCursorHdr->xorMaskDepth <= 32);
+    ASSERT_GUEST_RETURN_VOID(pHdr->height <= VMSVGA_CURSOR_MAX_DIMENSION && pHdr->width <= VMSVGA_CURSOR_MAX_DIMENSION);
+    ASSERT_GUEST_RETURN_VOID(pHdr->andMaskDepth <= 32);
+    ASSERT_GUEST_RETURN_VOID(pHdr->xorMaskDepth <= 32);
     RT_UNTRUSTED_VALIDATED_FENCE();
 
-    uint32_t const cbSrcAndLine = RT_ALIGN_32(pCursorHdr->width * (pCursorHdr->andMaskDepth + (pCursorHdr->andMaskDepth == 15)), 32) / 8;
-    uint32_t const cbSrcAndMask = cbSrcAndLine * pCursorHdr->height;
-    uint32_t const cbSrcXorLine = RT_ALIGN_32(pCursorHdr->width * (pCursorHdr->xorMaskDepth + (pCursorHdr->xorMaskDepth == 15)), 32) / 8;
+    uint32_t const cbSrcAndLine = RT_ALIGN_32(pHdr->width * (pHdr->andMaskDepth + (pHdr->andMaskDepth == 15)), 32) / 8;
+    uint32_t const cbSrcAndMask = cbSrcAndLine * pHdr->height;
+    uint32_t const cbSrcXorLine = RT_ALIGN_32(pHdr->width * (pHdr->xorMaskDepth + (pHdr->xorMaskDepth == 15)), 32) / 8;
+    ASSERT_GUEST_RETURN_VOID(cbSrcAndMask + cbSrcXorLine * pHdr->height <= cbData);
 
-    uint8_t const *pbSrcAndMask = (uint8_t const *)(pCursorHdr + 1);
-    uint8_t const *pbSrcXorMask = (uint8_t const *)(pCursorHdr + 1) + cbSrcAndMask;
+    uint8_t const *pbSrcAndMask = pbData;
+    uint8_t const *pbSrcXorMask = pbData + cbSrcAndMask;
 
-    uint32_t const cx = pCursorHdr->width;
-    uint32_t const cy = pCursorHdr->height;
+    uint32_t const cx = pHdr->width;
+    uint32_t const cy = pHdr->height;
 
     /*
      * Convert the input to 1-bit AND mask and a 32-bit BRGA XOR mask.
@@ -1596,7 +1614,7 @@ void vmsvgaR3InstallColorCursor(PVGASTATE pThis, PVGASTATECC pThisCC, SVGAGBColo
     /* Convert the AND mask. */
     uint8_t       *pbDst     = pbCopy;
     uint8_t const *pbSrc     = pbSrcAndMask;
-    switch (pCursorHdr->andMaskDepth)
+    switch (pHdr->andMaskDepth)
     {
         case 1:
             if (cbSrcAndLine == cbDstAndLine)
@@ -1724,7 +1742,7 @@ void vmsvgaR3InstallColorCursor(PVGASTATE pThis, PVGASTATECC pThisCC, SVGAGBColo
     /* Convert the XOR mask. */
     uint32_t *pu32Dst = (uint32_t *)(pbCopy + RT_ALIGN_32(cbDstAndMask, 4));
     pbSrc  = pbSrcXorMask;
-    switch (pCursorHdr->xorMaskDepth)
+    switch (pHdr->xorMaskDepth)
     {
         case 1:
             for (uint32_t y = 0; y < cy; y++)
@@ -1804,8 +1822,8 @@ void vmsvgaR3InstallColorCursor(PVGASTATE pThis, PVGASTATECC pThisCC, SVGAGBColo
     /*
      * Pass it to the frontend/whatever.
      */
-    vmsvgaR3InstallNewCursor(pThisCC, pSvgaR3State, false /*fAlpha*/, pCursorHdr->hotspotX, pCursorHdr->hotspotY,
-                             cx, cy, pbCopy, cbCopy);
+    vmsvgaR3InstallNewCursor(pThisCC, pSvgaR3State, false /*fAlpha*/, pHdr->hotspotX, pHdr->hotspotY,
+                             cx, cy, pbCopy, cbCopy, idMOb);
 }
 
 
@@ -8064,7 +8082,7 @@ void vmsvgaR3CmdMoveCursor(PVGASTATE pThis, PVGASTATECC pThisCC, SVGAFifoCmdMove
 
 
 /* SVGA_CMD_DEFINE_CURSOR */
-void vmsvgaR3CmdDefineCursor(PVGASTATE pThis, PVGASTATECC pThisCC, SVGAFifoCmdDefineCursor const *pCmd)
+void vmsvgaR3CmdDefineCursor(PVGASTATE pThis, PVGASTATECC pThisCC, SVGAFifoCmdDefineCursor const *pCmd, uint32_t cbData)
 {
     PVMSVGAR3STATE const pSvgaR3State = pThisCC->svga.pSvgaR3State;
 
@@ -8072,9 +8090,12 @@ void vmsvgaR3CmdDefineCursor(PVGASTATE pThis, PVGASTATECC pThisCC, SVGAFifoCmdDe
     Log(("SVGA_CMD_DEFINE_CURSOR id=%d size (%dx%d) hotspot (%d,%d) andMaskDepth=%d xorMaskDepth=%d\n",
          pCmd->id, pCmd->width, pCmd->height, pCmd->hotspotX, pCmd->hotspotY, pCmd->andMaskDepth, pCmd->xorMaskDepth));
 
-    /* We simply can cast SVGAFifoCmdDefineCursor to SVGAGBColorCursorHeader here, skipping the reserved ID at the beginning.
-     * This ASSUMES that the structs don't diverge from each other. */
-    vmsvgaR3InstallColorCursor(pThis, pThisCC, (SVGAGBColorCursorHeader *)&pCmd->hotspotX);
+    /* We can simply cast SVGAFifoCmdDefineCursor to SVGAGBColorCursorHeader here,
+       skipping the reserved ID at the beginning. */
+    AssertCompile(sizeof(*pCmd) - sizeof(pCmd->id) == sizeof(SVGAGBColorCursorHeader));
+    AssertCompileMemberOffset(SVGAFifoCmdDefineCursor, hotspotX, sizeof(pCmd->id));
+    vmsvgaR3InstallColorCursor(pThis, pThisCC, (SVGAGBColorCursorHeader const *)&pCmd->hotspotX,
+                               (uint8_t const *)(pCmd + 1), cbData, SVGA_ID_INVALID);
 }
 
 
@@ -8086,9 +8107,13 @@ void vmsvgaR3CmdDefineAlphaCursor(PVGASTATE pThis, PVGASTATECC pThisCC, SVGAFifo
     STAM_REL_COUNTER_INC(&pSvgaR3State->StatR3CmdDefineAlphaCursor);
     Log(("VMSVGA cmd: SVGA_CMD_DEFINE_ALPHA_CURSOR id=%d size (%dx%d) hotspot (%d,%d)\n", pCmd->id, pCmd->width, pCmd->height, pCmd->hotspotX, pCmd->hotspotY));
 
-    /* We simply can cast SVGAFifoCmdDefineAlphaCursor to SVGAGBAlphaCursorHeader here, skipping the reserved ID at the beginning.
-     * This ASSUMES that the structs don't diverge from each other. */
-    vmsvgaR3InstallAlphaCursor(pThis, pThisCC, (SVGAGBAlphaCursorHeader *)&pCmd->hotspotX);
+    /* We can simply cast SVGAFifoCmdDefineAlphaCursor to SVGAGBAlphaCursorHeader
+       here, skipping the reserved ID at the beginning. */
+    AssertCompile(sizeof(*pCmd) - sizeof(pCmd->id) == sizeof(SVGAGBAlphaCursorHeader));
+    AssertCompileMemberOffset(SVGAFifoCmdDefineAlphaCursor, hotspotX, sizeof(pCmd->id));
+    vmsvgaR3InstallAlphaCursor(pThis, pThisCC, (SVGAGBAlphaCursorHeader const *)&pCmd->hotspotX,
+                               (uint8_t const *)(pCmd + 1), pCmd->width * pCmd->height * sizeof(uint32_t) /* 32-bit BRGA format */,
+                               SVGA_ID_INVALID);
 }
 
 

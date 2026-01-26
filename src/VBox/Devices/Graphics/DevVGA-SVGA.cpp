@@ -1,4 +1,4 @@
-/* $Id: DevVGA-SVGA.cpp 112687 2026-01-26 08:36:22Z andreas.loeffler@oracle.com $ */
+/* $Id: DevVGA-SVGA.cpp 112692 2026-01-26 11:23:41Z knut.osmundsen@oracle.com $ */
 /** @file
  * VMware SVGA device.
  *
@@ -201,31 +201,6 @@
  * @param   a_offFifoMin    A valid SVGA_FIFO_MIN value.
  */
 #define VMSVGA_IS_VALID_FIFO_REG(a_iIndex, a_offFifoMin) ( ((a_iIndex) + 1) * sizeof(uint32_t) <= (a_offFifoMin) )
-
-
-/*********************************************************************************************************************************
-*   Structures and Typedefs                                                                                                      *
-*********************************************************************************************************************************/
-
-
-/*********************************************************************************************************************************
-*   Prototypes                                                                                                                   *
-*********************************************************************************************************************************/
-void vmsvgaR3InstallColorCursor(PVGASTATE pThis, PVGASTATECC pThisCC, SVGAGBColorCursorHeader const *pCursorHdr);
-void vmsvgaR3InstallAlphaCursor(PVGASTATE pThis, PVGASTATECC pThisCC, SVGAGBAlphaCursorHeader const *pCursorHdr);
-
-
-/*********************************************************************************************************************************
-*   Internal Functions                                                                                                           *
-*********************************************************************************************************************************/
-#ifdef IN_RING3
-# if defined(VMSVGA_USE_FIFO_ACCESS_HANDLER) || defined(DEBUG_FIFO_ACCESS)
-static FNPGMPHYSHANDLER vmsvgaR3FifoAccessHandler;
-# endif
-# ifdef DEBUG_GMR_ACCESS
-static FNPGMPHYSHANDLER vmsvgaR3GmrAccessHandler;
-# endif
-#endif
 
 
 /*********************************************************************************************************************************
@@ -452,6 +427,12 @@ static int vmsvgaR3LoadExecFifo(PCPDMDEVHLPR3 pHlp, PVGASTATE pThis, PVGASTATECC
 static int vmsvgaR3SaveExecFifo(PCPDMDEVHLPR3 pHlp, PVGASTATECC pThisCC, PSSMHANDLE pSSM);
 static void vmsvgaR3CmdBufSubmit(PPDMDEVINS pDevIns, PVGASTATE pThis, PVGASTATECC pThisCC, RTGCPHYS GCPhysCB, SVGACBContext CBCtx);
 static void vmsvgaR3PowerOnDevice(PPDMDEVINS pDevIns, PVGASTATE pThis, PVGASTATECC pThisCC, bool fLoadState);
+# if defined(VMSVGA_USE_FIFO_ACCESS_HANDLER) || defined(DEBUG_FIFO_ACCESS)
+static FNPGMPHYSHANDLER vmsvgaR3FifoAccessHandler;
+# endif
+# ifdef DEBUG_GMR_ACCESS
+static FNPGMPHYSHANDLER vmsvgaR3GmrAccessHandler;
+# endif
 #endif /* IN_RING3 */
 
 
@@ -1574,10 +1555,13 @@ static int vmsvgaReadPort(PPDMDEVINS pDevIns, PVGASTATE pThis, uint32_t idxReg, 
             *pu32 = pThis->svga.u32GuestDriverVer3;
             break;
 
+        /*
+         * SVGA_REG_CURSOR_ registers require SVGA_CAP2_CURSOR_MOB.
+         */
         case SVGA_REG_CURSOR_MOBID:
 #ifndef IN_RING3
             rc = VINF_IOM_R3_IOPORT_READ;
-#else /* IN_RING3 */
+#else
             *pu32 = pThisCC->svga.pSvgaR3State->Cursor.mobId;
 #endif
             break;
@@ -1592,7 +1576,7 @@ static int vmsvgaReadPort(PPDMDEVINS pDevIns, PVGASTATE pThis, uint32_t idxReg, 
 
         case SVGA_REG_FIFO_CAPS:
         {
-            if (pThis->fVmSvga3) /** @todo r=andy Merge this with caps in vmsvgaR3GetCaps(). */
+            if (pThis->fVmSvga3) /** @todo r=andy: Merge this with caps in vmsvgaR3GetCaps(). */
                 *pu32 =   SVGA_FIFO_CAP_FENCE
                         | SVGA_FIFO_CAP_PITCHLOCK
                         | SVGA_FIFO_CAP_CURSOR_BYPASS_3
@@ -2450,59 +2434,97 @@ static VBOXSTRICTRC vmsvgaWritePort(PPDMDEVINS pDevIns, PVGASTATE pThis, PVGASTA
 
         case SVGA_REG_CURSOR_MOBID:
         {
-#ifndef IN_RING3
-            rc = VINF_IOM_R3_IOPORT_WRITE;
-            break;
-#else /* IN_RING3 */
+#ifdef IN_RING3
             STAM_REL_COUNTER_INC(&pThis->svga.StatRegCursorMobIdWr);
             PVMSVGAMOB pMob = vmsvgaR3MobGet(pSVGAState, u32);
             if (pMob)
             {
-                uint32_t const cbMaxMobSize = pThis->vram_size;
+                uint32_t const cbMaxMob = pThis->vram_size;
                 uint32_t const cbMob = vmsvgaR3MobSize(pMob);
-                if (cbMob <= cbMaxMobSize)
+                if (   cbMob <= cbMaxMob
+                    && cbMob >= sizeof(SVGAGBCursorHeader))
                 {
-                    void *pvBuf = RTMemAlloc(cbMob);
-                    AssertPtrBreak(pvBuf);
-
-                    rc = vmsvgaR3MobRead(pSVGAState, pMob, 0 /* Offset */, pvBuf, cbMob);
-                    if (RT_SUCCESS(rc))
+                    /** @todo r=bird: cbMaxMob is too high for an malloc limit. Might want to
+                     *        limit the allocation to twice the max cursor size or something like
+                     *        that instead of the VRAM size... */
+                    SVGAGBCursorHeader *pHdr = (SVGAGBCursorHeader *)RTMemTmpAllocZ(cbMob);
+                    if (pHdr)
                     {
-                        pThisCC->svga.pSvgaR3State->Cursor.mobId = u32;
-
-                        SVGAGBCursorHeader *pHdr = (SVGAGBCursorHeader *)pvBuf;
-                        if (pHdr)
+                        rc = vmsvgaR3MobRead(pSVGAState, pMob, 0 /*off*/, pHdr, cbMob);
+                        if (RT_SUCCESS(rc))
                         {
                             if (   pHdr->sizeInBytes
-                                && pHdr->sizeInBytes <= cbMaxMobSize - sizeof(SVGAGBCursorHeader))
+                                && pHdr->sizeInBytes <= cbMob - sizeof(SVGAGBCursorHeader))
                             {
                                 switch (pHdr->type)
                                 {
                                     case SVGA_ALPHA_CURSOR:
-                                        vmsvgaR3InstallAlphaCursor(pThis, pThisCC, &pHdr->header.alphaHeader);
+                                    {
+                                        ASSERT_GUEST_MSG_BREAK(pHdr->header.alphaHeader.height <= VMSVGA_CURSOR_MAX_DIMENSION,
+                                                               ("%ux%u\n", pHdr->header.alphaHeader.height, pHdr->header.alphaHeader.width));
+                                        ASSERT_GUEST_MSG_BREAK(pHdr->header.alphaHeader.width  <= VMSVGA_CURSOR_MAX_DIMENSION,
+                                                               ("%ux%u\n", pHdr->header.alphaHeader.height, pHdr->header.alphaHeader.width));
+                                        ASSERT_GUEST_MSG_BREAK(     pHdr->header.alphaHeader.height
+                                                                  * pHdr->header.alphaHeader.width
+                                                                  * sizeof(uint32_t)
+                                                               <= pHdr->sizeInBytes,
+                                                               ("%ux%u, max %#x bytes\n", pHdr->header.alphaHeader.height,
+                                                                pHdr->header.alphaHeader.width, pHdr->sizeInBytes));
+                                        RT_UNTRUSTED_VALIDATED_FENCE();
+
+                                        vmsvgaR3InstallAlphaCursor(pThis, pThisCC, &pHdr->header.alphaHeader,
+                                                                   (uint8_t const *)(pHdr + 1), pHdr->sizeInBytes, u32);
                                         break;
+                                    }
+
                                     case SVGA_COLOR_CURSOR:
-                                        vmsvgaR3InstallColorCursor(pThis, pThisCC, &pHdr->header.colorHeader);
+                                    {
+                                        ASSERT_GUEST_BREAK(pHdr->header.colorHeader.height <= VMSVGA_CURSOR_MAX_DIMENSION);
+                                        ASSERT_GUEST_BREAK(pHdr->header.colorHeader.width  <= VMSVGA_CURSOR_MAX_DIMENSION);
+                                        ASSERT_GUEST_BREAK(pHdr->header.colorHeader.andMaskDepth <= 32);
+                                        ASSERT_GUEST_BREAK(pHdr->header.colorHeader.xorMaskDepth <= 32);
+                                        RT_UNTRUSTED_VALIDATED_FENCE();
+
+                                        uint32_t const cbAndLine = RT_ALIGN_32(  pHdr->header.colorHeader.width
+                                                                               * (  pHdr->header.colorHeader.andMaskDepth
+                                                                                  + (pHdr->header.colorHeader.andMaskDepth == 15)),
+                                                                               32) / 8;
+                                        uint32_t const cbAndMask = cbAndLine * pHdr->header.colorHeader.height;
+                                        uint32_t const cbXorLine = RT_ALIGN_32(  pHdr->header.colorHeader.width
+                                                                               * (  pHdr->header.colorHeader.xorMaskDepth
+                                                                                  + (pHdr->header.colorHeader.xorMaskDepth == 15)),
+                                                                               32) / 8;
+                                        uint32_t const cbXorMask = cbXorLine * pHdr->header.colorHeader.height;
+                                        ASSERT_GUEST_BREAK(cbAndMask + cbXorMask <= pHdr->sizeInBytes);
+
+                                        vmsvgaR3InstallColorCursor(pThis, pThisCC, &pHdr->header.colorHeader,
+                                                                   (uint8_t const *)(pHdr + 1), pHdr->sizeInBytes, u32);
                                         break;
+                                    }
+
                                     default:
                                         LogRelMax(16, ("VMSVGA: Invalid MOB cursor type %#x, ignoring\n", pHdr->type));
                                         break;
                                 }
                             }
                             else
-                                LogRelMax(16, ("VMSVGA: Invalid MOB cursor size %#x, ignoring\n", pHdr->sizeInBytes));
+                                LogRelMax(16, ("VMSVGA: CURSOR_MOBID: Invalid payload size %#x (cbMob=%#x)! Ignoring request\n",
+                                               pHdr->sizeInBytes, cbMob));
                         }
+                        RTMemTmpFree(pHdr);
                     }
-
-                    RTMemFree(pvBuf);
+                    else
+                        LogRelMax(16, ("VMSVGA: CURSOR_MOBID: Unable to allocate %#x bytes bounce buffer!\n", cbMob));
                 }
                 else
-                    LogRelMax(16, ("VMSVGA: Invalid CURSOR_MOBID size %#x, ignoring\n", cbMob));
+                    LogRelMax(16, ("VMSVGA: CURSOR_MOBID: Invalid MOB size %#x. Ignoring request.\n", cbMob));
             }
             else
-                LogRelMax(16, ("VMSVGA: Invalid CURSOR_MOBID %#x written, ignoring\n", u32));
+                LogRelMax(16, ("VMSVGA: CURSOR_MOBID: Invalid ID %#x. Ignoring request.\n", u32));
+#else  /* !IN_RING3 */
+            rc = VINF_IOM_R3_IOPORT_WRITE;
+#endif /* !IN_RING3 */
             break;
-#endif
         }
         case SVGA_REG_FB_START:
         case SVGA_REG_MEM_START:
@@ -4132,7 +4154,8 @@ static SVGACBStatus vmsvgaR3CmdBufProcessCommands(PPDMDEVINS pDevIns, PVGASTATE 
                 VMSVGA_INC_CMD_SIZE_BREAK(sizeof(*pCmd));
 
                 /* Figure out the size of the bitmap data. */
-                ASSERT_GUEST_STMT_BREAK(pCmd->height < 2048 && pCmd->width < 2048, CBstatus = SVGA_CB_STATUS_COMMAND_ERROR);
+                ASSERT_GUEST_STMT_BREAK(pCmd->height <= VMSVGA_CURSOR_MAX_DIMENSION  && pCmd->width <= VMSVGA_CURSOR_MAX_DIMENSION,
+                                        CBstatus = SVGA_CB_STATUS_COMMAND_ERROR);
                 ASSERT_GUEST_STMT_BREAK(pCmd->andMaskDepth <= 32, CBstatus = SVGA_CB_STATUS_COMMAND_ERROR);
                 ASSERT_GUEST_STMT_BREAK(pCmd->xorMaskDepth <= 32, CBstatus = SVGA_CB_STATUS_COMMAND_ERROR);
                 RT_UNTRUSTED_VALIDATED_FENCE();
@@ -4143,7 +4166,7 @@ static SVGACBStatus vmsvgaR3CmdBufProcessCommands(PPDMDEVINS pDevIns, PVGASTATE 
                 uint32_t const cbXorMask = cbXorLine * pCmd->height;
 
                 VMSVGA_INC_CMD_SIZE_BREAK(cbAndMask + cbXorMask);
-                vmsvgaR3CmdDefineCursor(pThis, pThisCC, pCmd);
+                vmsvgaR3CmdDefineCursor(pThis, pThisCC, pCmd, cbAndMask + cbXorMask);
                 break;
             }
 
@@ -4154,7 +4177,8 @@ static SVGACBStatus vmsvgaR3CmdBufProcessCommands(PPDMDEVINS pDevIns, PVGASTATE 
                 VMSVGA_INC_CMD_SIZE_BREAK(sizeof(*pCmd));
 
                 /* Figure out the size of the bitmap data. */
-                ASSERT_GUEST_STMT_BREAK(pCmd->height < 2048 && pCmd->width < 2048, CBstatus = SVGA_CB_STATUS_COMMAND_ERROR);
+                ASSERT_GUEST_STMT_BREAK(pCmd->height <= VMSVGA_CURSOR_MAX_DIMENSION  && pCmd->width < VMSVGA_CURSOR_MAX_DIMENSION,
+                                        CBstatus = SVGA_CB_STATUS_COMMAND_ERROR);
 
                 VMSVGA_INC_CMD_SIZE_BREAK(pCmd->width * pCmd->height * sizeof(uint32_t)); /* 32-bit BRGA format */
                 vmsvgaR3CmdDefineAlphaCursor(pThis, pThisCC, pCmd);
@@ -5455,7 +5479,7 @@ static DECLCALLBACK(int) vmsvgaR3FifoLoop(PPDMDEVINS pDevIns, PPDMTHREAD pThread
                 VMSVGAFIFO_GET_CMD_BUFFER_BREAK(pCmd, SVGAFifoCmdDefineCursor, sizeof(*pCmd));
 
                 /* Figure out the size of the bitmap data. */
-                ASSERT_GUEST_BREAK(pCmd->height < 2048 && pCmd->width < 2048);
+                ASSERT_GUEST_BREAK(pCmd->height <= VMSVGA_CURSOR_MAX_DIMENSION && pCmd->width <= VMSVGA_CURSOR_MAX_DIMENSION);
                 ASSERT_GUEST_BREAK(pCmd->andMaskDepth <= 32);
                 ASSERT_GUEST_BREAK(pCmd->xorMaskDepth <= 32);
                 RT_UNTRUSTED_VALIDATED_FENCE();
@@ -5467,7 +5491,7 @@ static DECLCALLBACK(int) vmsvgaR3FifoLoop(PPDMDEVINS pDevIns, PPDMTHREAD pThread
 
                 uint32_t const cbCmd = sizeof(SVGAFifoCmdDefineCursor) + cbAndMask + cbXorMask;
                 VMSVGAFIFO_GET_MORE_CMD_BUFFER_BREAK(pCmd, SVGAFifoCmdDefineCursor, cbCmd);
-                vmsvgaR3CmdDefineCursor(pThis, pThisCC, pCmd);
+                vmsvgaR3CmdDefineCursor(pThis, pThisCC, pCmd, cbAndMask + cbXorMask);
                 break;
             }
 
@@ -5478,7 +5502,7 @@ static DECLCALLBACK(int) vmsvgaR3FifoLoop(PPDMDEVINS pDevIns, PPDMTHREAD pThread
                 VMSVGAFIFO_GET_CMD_BUFFER_BREAK(pCmd, SVGAFifoCmdDefineAlphaCursor, sizeof(*pCmd));
 
                 /* Figure out the size of the bitmap data. */
-                ASSERT_GUEST_BREAK(pCmd->height < 2048 && pCmd->width < 2048);
+                ASSERT_GUEST_BREAK(pCmd->height <= VMSVGA_CURSOR_MAX_DIMENSION && pCmd->width <= VMSVGA_CURSOR_MAX_DIMENSION);
 
                 uint32_t const cbCmd = sizeof(SVGAFifoCmdDefineAlphaCursor) + pCmd->width * pCmd->height * sizeof(uint32_t) /* 32-bit BRGA format */;
                 VMSVGAFIFO_GET_MORE_CMD_BUFFER_BREAK(pCmd, SVGAFifoCmdDefineAlphaCursor, cbCmd);
@@ -7019,7 +7043,7 @@ static void vmsvgaR3StateTerm(PVGASTATE pThis, PVGASTATECC pThisCC)
  */
 static int vmsvgaR3StateInit(PPDMDEVINS pDevIns, PVGASTATE pThis, PVMSVGAR3STATE pSVGAState)
 {
-    int rc = VINF_SUCCESS;
+    int rc;
 
     pSVGAState->pDevIns = pDevIns;
 
@@ -7205,7 +7229,9 @@ static void vmsvgaR3GetCaps(PVGASTATE pThis, PVGASTATECC pThisCC, uint32_t *pu32
         }
         if (pThisCC->svga.pSvgaR3State->pFuncsDX)
         {
-           *pu32DeviceCaps |= SVGA_CAP_DX;                /* DX commands, and command buffers in a mob. */
+           *pu32DeviceCaps |= SVGA_CAP_DX                 /* DX commands, and command buffers in a mob. */
+                           |  SVGA_CAP_CAP2_REGISTER      /* Extended capabilities. */
+                           ;
 
            if (*pu32DeviceCaps & SVGA_CAP_CAP2_REGISTER)
                *pu32DeviceCaps2 |= SVGA_CAP2_GROW_OTABLE  /* "Allow the GrowOTable/DXGrowCOTable commands" */
