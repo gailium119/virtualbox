@@ -1,4 +1,4 @@
-/* $Id: TMR3.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: TMR3.cpp 112688 2026-01-26 10:44:27Z alexander.eichner@oracle.com $ */
 /** @file
  * TM - Time Manager.
  */
@@ -224,21 +224,21 @@ VMM_INT_DECL(int) TMR3Init(PVM pVM)
     /*
      * Init the structure.
      */
-#if defined(VBOX_VMM_TARGET_ARMV8) && defined(RT_OS_WINDOWS)
-    /*
-     * Workaround for Hyper-V on Windows/ARM:
-     *     On Windows/ARM EMTs of APs are waiting in Hyper-V because
-     *     there is no way currently to get notified of PSCI calls to turn them
-     *     on.
-     *     However because they are suspended they can't handle timers, so
-     *     this needs to be done by the boot processor.
-     *     We hope that Microsoft lifts this restriction in the future, allowing us
-     *     to use our already existing wait infrastructure for EMTs.
-     */
-    pVM->tm.s.idTimerCpu = 0;
-#else
-    pVM->tm.s.idTimerCpu = pVM->cCpus - 1; /* The last CPU. */
+#if defined(VBOX_WITH_NATIVE_NEM)
+    if (NEMR3NeedSpecialWaitMethod(pVM))
+    {
+         /*
+          * Workaround for when NEM is used and requires the VMHALTMETHOD_NEM method
+          * which lets the host hypervisor manage the EMT waiting states.
+          * This usually means that any AP is suspended until it is brought online so it
+          * can't handle any timers.
+          * The BSP is always executing so timers need to be handled there.
+          */
+        pVM->tm.s.idTimerCpu = 0;
+    }
+    else
 #endif
+        pVM->tm.s.idTimerCpu = pVM->cCpus - 1; /* The last CPU. */
 
     int rc = PDMR3CritSectInit(pVM, &pVM->tm.s.VirtualSyncLock, RT_SRC_POS, "TM VirtualSync Lock");
     AssertLogRelRCReturn(rc, rc);

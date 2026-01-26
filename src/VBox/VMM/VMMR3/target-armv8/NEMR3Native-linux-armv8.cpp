@@ -1,4 +1,4 @@
-/* $Id: NEMR3Native-linux-armv8.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: NEMR3Native-linux-armv8.cpp 112688 2026-01-26 10:44:27Z alexander.eichner@oracle.com $ */
 /** @file
  * NEM - Native execution manager, native ring-3 Linux backend arm64 version.
  */
@@ -1111,6 +1111,16 @@ VMMR3_INT_DECL(bool) NEMR3CanExecuteGuest(PVM pVM, PVMCPU pVCpu)
 DECLHIDDEN(bool) nemR3NativeSetSingleInstruction(PVM pVM, PVMCPU pVCpu, bool fEnable)
 {
     NOREF(pVM); NOREF(pVCpu); NOREF(fEnable);
+    return false;
+}
+
+
+DECLHIDDEN(bool) nemR3NativeNeedSpecialWaitMethod(PVM pVM)
+{
+    RT_NOREF(pVM);
+    /* We get PSCI events for managing the vCPU states. */
+    /** @todo r=aeichner Check how interrupt forwarding works with APs when it is currently halted
+     *                   and we use the in-kernel GIC. */
     return false;
 }
 

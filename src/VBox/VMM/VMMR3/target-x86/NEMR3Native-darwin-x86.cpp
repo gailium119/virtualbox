@@ -1,4 +1,4 @@
-/* $Id: NEMR3Native-darwin-x86.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: NEMR3Native-darwin-x86.cpp 112688 2026-01-26 10:44:27Z alexander.eichner@oracle.com $ */
 /** @file
  * NEM - Native execution manager, native ring-3 macOS backend using Hypervisor.framework.
  *
@@ -4187,6 +4187,13 @@ VMMR3_INT_DECL(bool) NEMR3CanExecuteGuest(PVM pVM, PVMCPU pVCpu)
 {
     NOREF(pVM);
     return PGMPhysIsA20Enabled(pVCpu);
+}
+
+
+DECLHIDDEN(bool) nemR3NativeNeedSpecialWaitMethod(PVM pVM)
+{
+    RT_NOREF(pVM);
+    return false;
 }
 
 

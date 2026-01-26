@@ -1,4 +1,4 @@
-/* $Id: NEMR3Native-linux-x86.cpp 112684 2026-01-25 17:32:58Z alexander.eichner@oracle.com $ */
+/* $Id: NEMR3Native-linux-x86.cpp 112688 2026-01-26 10:44:27Z alexander.eichner@oracle.com $ */
 /** @file
  * NEM - Native execution manager, native ring-3 Linux backend.
  */
@@ -1062,6 +1062,44 @@ VMMR3_INT_DECL(bool) NEMR3CanExecuteGuest(PVM pVM, PVMCPU pVCpu)
     RT_NOREF(pVM);
     Assert(VM_IS_NEM_ENABLED(pVM));
     return PGMPhysIsA20Enabled(pVCpu);
+}
+
+
+DECLHIDDEN(bool) nemR3NativeNeedSpecialWaitMethod(PVM pVM)
+{
+    /*
+     * If the in-kernel APIC is enabled the waiting must be managed by KVM as there
+     * are no exits to bring up any APs or get informed about IPIs directed to a CPU
+     * which is currently in a halt state.
+     * Also in the uni processor case interrupts are still passed to the in-kernel APIC
+     * which has no way of informing the waiting EMT that it should run again.
+     */
+    if (pVM->nem.s.fKvmApic)
+        return true;
+
+    return false;
+}
+
+
+VMMR3_INT_DECL(int) NEMR3Halt(PVM pVM, PVMCPU pVCpu)
+{
+    Assert(EMGetState(pVCpu) == EMSTATE_WAIT_SIPI);
+
+    /*
+     * Force the vCPU to get out of the SIPI state and into the normal runloop
+     * as KVM doesn't cause VM exits for IPIs so we wouldn't notice when
+     * when the guest brings APs online.
+     * Instead we force the EMT to run the vCPU through KVM which manages the state.
+     */
+    RT_NOREF(pVM);
+    EMSetState(pVCpu, EMSTATE_HALTED);
+
+    /* Need to set the MP state, so it can receive a SIPI. */
+    struct kvm_mp_state MpState = { KVM_MP_STATE_INIT_RECEIVED };
+    int rcLnx = ioctl(pVCpu->nem.s.fdVCpu, KVM_SET_MP_STATE, &MpState);
+    AssertLogRelMsgReturn(rcLnx == 0, ("rcLnx=%d errno=%d\n", rcLnx, errno), VERR_NEM_IPE_4);
+
+    return VINF_EM_RESCHEDULE;
 }
 
 

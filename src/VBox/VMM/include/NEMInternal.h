@@ -1,4 +1,4 @@
-/* $Id: NEMInternal.h 112679 2026-01-25 16:38:00Z alexander.eichner@oracle.com $ */
+/* $Id: NEMInternal.h 112688 2026-01-26 10:44:27Z alexander.eichner@oracle.com $ */
 /** @file
  * NEM - Internal header file.
  */
@@ -855,6 +855,16 @@ DECLHIDDEN(bool)    nemR3NativeNotifyDebugEventChanged(PVM pVM, bool fUseDebugLo
  * @param   fUseDebugLoop   The current value determined by NEMR3NotifyDebugEventChangedPerCpu().
  */
 DECLHIDDEN(bool)    nemR3NativeNotifyDebugEventChangedPerCpu(PVM pVM, PVMCPU pVCpu, bool fUseDebugLoop);
+
+
+/**
+ * Called by NEMR3NeedSpecialWaitMethod() to let the native backend decide whether VMHALTMETHOD_NEM
+ * should be used for managing the EMT halt states.
+ *
+ * @returns true if  must be used, otherwise @c false.
+ * @param   pVM     The cross context VM structure.
+ */
+DECLHIDDEN(bool)    nemR3NativeNeedSpecialWaitMethod(PVM pVM);
 
 #endif /* IN_RING3 */
 

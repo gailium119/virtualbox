@@ -1,4 +1,4 @@
-/* $Id: NEMR3Native-win-x86.cpp 112646 2026-01-20 08:50:16Z knut.osmundsen@oracle.com $ */
+/* $Id: NEMR3Native-win-x86.cpp 112688 2026-01-26 10:44:27Z alexander.eichner@oracle.com $ */
 /** @file
  * NEM - Native execution manager, native ring-3 Windows backend.
  *
@@ -5289,6 +5289,17 @@ VMMR3_INT_DECL(bool) NEMR3CanExecuteGuest(PVM pVM, PVMCPU pVCpu)
     RT_NOREF(pVM, pVCpu);
     return true;
 #endif
+}
+
+
+DECLHIDDEN(bool) nemR3NativeNeedSpecialWaitMethod(PVM pVM)
+{
+    RT_NOREF(pVM);
+    /** @todo r=aeichner How are APs handled currently which are in a halted state
+     *                   but get an interrupt through the local APIC if the Hyper-V
+     *                   emulation is used?
+     */
+    return false;
 }
 
 

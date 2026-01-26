@@ -1,4 +1,4 @@
-/* $Id: VMR3Emt.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: VMR3Emt.cpp 112688 2026-01-26 10:44:27Z alexander.eichner@oracle.com $ */
 /** @file
  * VM - Virtual Machine, The Emulation Thread.
  */
@@ -336,7 +336,7 @@ static const char *vmR3GetHaltMethodName(VMHALTMETHOD enmMethod)
         case VMHALTMETHOD_1:            return "method1";
         //case VMHALTMETHOD_2:            return "method2";
         case VMHALTMETHOD_GLOBAL_1:     return "global1";
-#if defined(VBOX_VMM_TARGET_ARMV8) && defined(RT_OS_WINDOWS) && defined(RT_ARCH_ARM64)
+#ifdef VBOX_WITH_NATIVE_NEM
         case VMHALTMETHOD_NEM:          return "nem";
 #endif
         default:                        return "unknown";
@@ -1072,7 +1072,7 @@ static DECLCALLBACK(void) vmR3DefaultNotifyCpuFF(PUVMCPU pUVCpu, uint32_t fFlags
 }
 
 
-#if defined(VBOX_VMM_TARGET_ARMV8) && defined(RT_OS_WINDOWS) && defined(VBOX_WITH_NATIVE_NEM)
+#ifdef VBOX_WITH_NATIVE_NEM
 
 /**
  * Method NEM - The host (NEM) does the halting.
@@ -1129,7 +1129,7 @@ static const struct VMHALTMETHODDESC
     { VMHALTMETHOD_OLD,       false, NULL,                NULL,   vmR3HaltOldDoHalt,   vmR3DefaultWait,     vmR3DefaultNotifyCpuFF,     NULL },
     { VMHALTMETHOD_1,         false, vmR3HaltMethod1Init, NULL,   vmR3HaltMethod1Halt, vmR3DefaultWait,     vmR3DefaultNotifyCpuFF,     NULL },
     { VMHALTMETHOD_GLOBAL_1,   true, vmR3HaltGlobal1Init, NULL,   vmR3HaltGlobal1Halt, vmR3HaltGlobal1Wait, vmR3HaltGlobal1NotifyCpuFF, NULL },
-#if defined(VBOX_VMM_TARGET_ARMV8) && defined(RT_OS_WINDOWS) && defined(VBOX_WITH_NATIVE_NEM)
+#ifdef VBOX_WITH_NATIVE_NEM
     { VMHALTMETHOD_NEM,       false, NULL,                NULL,   vmR3HaltNemHalt,     vmR3DefaultWait,     vmR3NemNotifyCpuFF,         NULL },
 #endif
 };
@@ -1443,13 +1443,13 @@ int vmR3SetHaltMethodU(PUVM pUVM, VMHALTMETHOD enmHaltMethod)
             //enmHaltMethod = VMHALTMETHOD_1;
             //enmHaltMethod = VMHALTMETHOD_OLD;
 
-#if defined(VBOX_VMM_TARGET_ARMV8) && defined(RT_OS_WINDOWS) && defined(RT_ARCH_ARM64)
+#ifdef VBOX_WITH_NATIVE_NEM
         /*
-         * HACK ALERT! We can't use the global halt method on Windows/ARM
-         * with Hyper-V as APs can't be brought online by the guest due to
-         * missing PSCI VM exits currently.
+         * HACK ALERT! We can't use the global halt method on some hosts for certain
+         * VM configurations when NEM is used as the host hypervisor doesn't provide the
+         * necessary intercepts for managing the wait states ourselves.
          */
-        if (VM_IS_NEM_ENABLED(pVM))
+        if (NEMR3NeedSpecialWaitMethod(pVM))
             enmHaltMethod = VMHALTMETHOD_NEM;
 #endif
     }
@@ -1464,8 +1464,8 @@ int vmR3SetHaltMethodU(PUVM pUVM, VMHALTMETHOD enmHaltMethod)
     {
         LogRel(("VMEmt: Halt method %s (%d) not available in driverless mode, using %s (%d) instead\n",
                 vmR3GetHaltMethodName(enmHaltMethod), enmHaltMethod, vmR3GetHaltMethodName(VMHALTMETHOD_1), VMHALTMETHOD_1));
-#if defined(VBOX_VMM_TARGET_ARMV8) && defined(RT_OS_WINDOWS) && defined(RT_ARCH_ARM64)
-        if (VM_IS_NEM_ENABLED(pVM))
+#ifdef VBOX_WITH_NATIVE_NEM
+        if (NEMR3NeedSpecialWaitMethod(pVM))
             enmHaltMethod = VMHALTMETHOD_NEM; /* See above. */
         else
 #endif

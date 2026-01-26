@@ -1,4 +1,4 @@
-/* $Id: NEMR3.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: NEMR3.cpp 112688 2026-01-26 10:44:27Z alexander.eichner@oracle.com $ */
 /** @file
  * NEM - Native execution manager.
  */
@@ -470,6 +470,24 @@ VMMR3_INT_DECL(bool) NEMR3NeedSpecialTscMode(PVM pVM)
 #ifdef VBOX_WITH_NATIVE_NEM
     if (VM_IS_NEM_ENABLED(pVM))
         return true;
+#else
+    RT_NOREF(pVM);
+#endif
+    return false;
+}
+
+
+/**
+ * Indicates to VM that VMHALTMETHOD_NEM should be used for managing the EMT halt states.
+ *
+ * @returns true if  must be used, otherwise @c false.
+ * @param   pVM     The cross context VM structure.
+ */
+VMMR3_INT_DECL(bool) NEMR3NeedSpecialWaitMethod(PVM pVM)
+{
+#ifdef VBOX_WITH_NATIVE_NEM
+    if (VM_IS_NEM_ENABLED(pVM))
+        return nemR3NativeNeedSpecialWaitMethod(pVM);
 #else
     RT_NOREF(pVM);
 #endif

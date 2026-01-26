@@ -1,4 +1,4 @@
-/* $Id: NEMR3Native-win-armv8.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: NEMR3Native-win-armv8.cpp 112688 2026-01-26 10:44:27Z alexander.eichner@oracle.com $ */
 /** @file
  * NEM - Native execution manager, native ring-3 Windows backend.
  *
@@ -2889,6 +2889,18 @@ DECLHIDDEN(bool) nemR3NativeSetSingleInstruction(PVM pVM, PVMCPU pVCpu, bool fEn
 {
     NOREF(pVM); NOREF(pVCpu); NOREF(fEnable);
     return false;
+}
+
+
+DECLHIDDEN(bool) nemR3NativeNeedSpecialWaitMethod(PVM pVM)
+{
+    RT_NOREF(pVM);
+    /*
+     * HACK ALERT! We can't use the global halt method on Windows/ARM
+     * with Hyper-V as APs can't be brought online by the guest due to
+     * missing PSCI VM exits currently.
+     */
+    return true;
 }
 
 
