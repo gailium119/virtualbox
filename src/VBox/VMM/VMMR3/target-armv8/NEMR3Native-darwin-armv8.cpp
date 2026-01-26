@@ -1,4 +1,4 @@
-/* $Id: NEMR3Native-darwin-armv8.cpp 112689 2026-01-26 10:53:19Z alexander.eichner@oracle.com $ */
+/* $Id: NEMR3Native-darwin-armv8.cpp 112691 2026-01-26 11:03:45Z alexander.eichner@oracle.com $ */
 /** @file
  * NEM - Native execution manager, native ring-3 macOS backend using Hypervisor.framework, ARMv8 variant.
  *
@@ -2883,7 +2883,7 @@ VMMR3_INT_DECL(int) NEMR3Halt(PVM pVM, PVMCPU pVCpu)
 {
     Assert(EMGetState(pVCpu) == EMSTATE_WAIT_SIPI);
     /* Should never get here. */
-    AssertFailed(); RT_NOREF(pVCpu);
+    AssertFailed(); RT_NOREF(pVM, pVCpu);
     return VERR_NEM_IPE_3;
 }
 
