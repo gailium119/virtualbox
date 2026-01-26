@@ -1,4 +1,4 @@
-/* $Id: NEMR3Native-darwin-x86.cpp 112688 2026-01-26 10:44:27Z alexander.eichner@oracle.com $ */
+/* $Id: NEMR3Native-darwin-x86.cpp 112689 2026-01-26 10:53:19Z alexander.eichner@oracle.com $ */
 /** @file
  * NEM - Native execution manager, native ring-3 macOS backend using Hypervisor.framework.
  *
@@ -4194,6 +4194,15 @@ DECLHIDDEN(bool) nemR3NativeNeedSpecialWaitMethod(PVM pVM)
 {
     RT_NOREF(pVM);
     return false;
+}
+
+
+VMMR3_INT_DECL(int) NEMR3Halt(PVM pVM, PVMCPU pVCpu)
+{
+    Assert(EMGetState(pVCpu) == EMSTATE_WAIT_SIPI);
+    /* Should never get here. */
+    AssertFailed(); RT_NOREF(pVCpu);
+    return VERR_NEM_IPE_3;
 }
 
 
