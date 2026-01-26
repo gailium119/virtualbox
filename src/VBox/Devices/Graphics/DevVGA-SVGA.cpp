@@ -1,4 +1,4 @@
-/* $Id: DevVGA-SVGA.cpp 112692 2026-01-26 11:23:41Z knut.osmundsen@oracle.com $ */
+/* $Id: DevVGA-SVGA.cpp 112695 2026-01-26 12:24:26Z knut.osmundsen@oracle.com $ */
 /** @file
  * VMware SVGA device.
  *
@@ -2436,6 +2436,10 @@ static VBOXSTRICTRC vmsvgaWritePort(PPDMDEVINS pDevIns, PVGASTATE pThis, PVGASTA
         {
 #ifdef IN_RING3
             STAM_REL_COUNTER_INC(&pThis->svga.StatRegCursorMobIdWr);
+
+            /*
+             * Translate and validate the memory object ID.
+             */
             PVMSVGAMOB pMob = vmsvgaR3MobGet(pSVGAState, u32);
             if (pMob)
             {
@@ -2444,77 +2448,95 @@ static VBOXSTRICTRC vmsvgaWritePort(PPDMDEVINS pDevIns, PVGASTATE pThis, PVGASTA
                 if (   cbMob <= cbMaxMob
                     && cbMob >= sizeof(SVGAGBCursorHeader))
                 {
-                    /** @todo r=bird: cbMaxMob is too high for an malloc limit. Might want to
-                     *        limit the allocation to twice the max cursor size or something like
-                     *        that instead of the VRAM size... */
-                    SVGAGBCursorHeader *pHdr = (SVGAGBCursorHeader *)RTMemTmpAllocZ(cbMob);
-                    if (pHdr)
+                    /*
+                     * Read the header first.
+                     */
+                    SVGAGBCursorHeader Hdr = { SVGA_COLOR_CURSOR };
+                    rc = vmsvgaR3MobRead(pSVGAState, pMob, 0 /*off*/, &Hdr, sizeof(Hdr));
+                    if (RT_SUCCESS(rc))
                     {
-                        rc = vmsvgaR3MobRead(pSVGAState, pMob, 0 /*off*/, pHdr, cbMob);
-                        if (RT_SUCCESS(rc))
+                        /*
+                         * Validate the header and calculate the raw cursor data size.
+                         */
+                        if (Hdr.sizeInBytes <= cbMob - sizeof(Hdr))
                         {
-                            if (   pHdr->sizeInBytes
-                                && pHdr->sizeInBytes <= cbMob - sizeof(SVGAGBCursorHeader))
+                            uint32_t cbData;
+                            if (Hdr.type == SVGA_ALPHA_CURSOR)
                             {
-                                switch (pHdr->type)
-                                {
-                                    case SVGA_ALPHA_CURSOR:
-                                    {
-                                        ASSERT_GUEST_MSG_BREAK(pHdr->header.alphaHeader.height <= VMSVGA_CURSOR_MAX_DIMENSION,
-                                                               ("%ux%u\n", pHdr->header.alphaHeader.height, pHdr->header.alphaHeader.width));
-                                        ASSERT_GUEST_MSG_BREAK(pHdr->header.alphaHeader.width  <= VMSVGA_CURSOR_MAX_DIMENSION,
-                                                               ("%ux%u\n", pHdr->header.alphaHeader.height, pHdr->header.alphaHeader.width));
-                                        ASSERT_GUEST_MSG_BREAK(     pHdr->header.alphaHeader.height
-                                                                  * pHdr->header.alphaHeader.width
-                                                                  * sizeof(uint32_t)
-                                                               <= pHdr->sizeInBytes,
-                                                               ("%ux%u, max %#x bytes\n", pHdr->header.alphaHeader.height,
-                                                                pHdr->header.alphaHeader.width, pHdr->sizeInBytes));
-                                        RT_UNTRUSTED_VALIDATED_FENCE();
+                                ASSERT_GUEST_MSG_BREAK(Hdr.header.alphaHeader.height <= VMSVGA_CURSOR_MAX_DIMENSION,
+                                                       ("%ux%u\n", Hdr.header.alphaHeader.height, Hdr.header.alphaHeader.width));
+                                ASSERT_GUEST_MSG_BREAK(Hdr.header.alphaHeader.width  <= VMSVGA_CURSOR_MAX_DIMENSION,
+                                                       ("%ux%u\n", Hdr.header.alphaHeader.height, Hdr.header.alphaHeader.width));
+                                cbData = Hdr.header.alphaHeader.height * Hdr.header.alphaHeader.width * sizeof(uint32_t);
+                                ASSERT_GUEST_MSG_BREAK(cbData <= Hdr.sizeInBytes,
+                                                       ("%ux%u -> %#x bytes vs  max %#x bytes\n", Hdr.header.alphaHeader.height,
+                                                        Hdr.header.alphaHeader.width, cbData, Hdr.sizeInBytes));
+                            }
+                            else if (Hdr.type == SVGA_COLOR_CURSOR)
+                            {
+                                ASSERT_GUEST_MSG_BREAK(Hdr.header.colorHeader.height <= VMSVGA_CURSOR_MAX_DIMENSION,
+                                                       ("%ux%u\n", Hdr.header.colorHeader.height, Hdr.header.colorHeader.width));
+                                ASSERT_GUEST_MSG_BREAK(Hdr.header.colorHeader.width  <= VMSVGA_CURSOR_MAX_DIMENSION,
+                                                       ("%ux%u\n", Hdr.header.colorHeader.height, Hdr.header.colorHeader.width));
+                                ASSERT_GUEST_MSG_BREAK(Hdr.header.colorHeader.andMaskDepth <= 32,
+                                                       ("%u\n", Hdr.header.colorHeader.andMaskDepth));
+                                ASSERT_GUEST_MSG_BREAK(Hdr.header.colorHeader.xorMaskDepth <= 32,
+                                                       ("%u\n", Hdr.header.colorHeader.xorMaskDepth));
+                                RT_UNTRUSTED_VALIDATED_FENCE();
 
-                                        vmsvgaR3InstallAlphaCursor(pThis, pThisCC, &pHdr->header.alphaHeader,
-                                                                   (uint8_t const *)(pHdr + 1), pHdr->sizeInBytes, u32);
-                                        break;
-                                    }
-
-                                    case SVGA_COLOR_CURSOR:
-                                    {
-                                        ASSERT_GUEST_BREAK(pHdr->header.colorHeader.height <= VMSVGA_CURSOR_MAX_DIMENSION);
-                                        ASSERT_GUEST_BREAK(pHdr->header.colorHeader.width  <= VMSVGA_CURSOR_MAX_DIMENSION);
-                                        ASSERT_GUEST_BREAK(pHdr->header.colorHeader.andMaskDepth <= 32);
-                                        ASSERT_GUEST_BREAK(pHdr->header.colorHeader.xorMaskDepth <= 32);
-                                        RT_UNTRUSTED_VALIDATED_FENCE();
-
-                                        uint32_t const cbAndLine = RT_ALIGN_32(  pHdr->header.colorHeader.width
-                                                                               * (  pHdr->header.colorHeader.andMaskDepth
-                                                                                  + (pHdr->header.colorHeader.andMaskDepth == 15)),
-                                                                               32) / 8;
-                                        uint32_t const cbAndMask = cbAndLine * pHdr->header.colorHeader.height;
-                                        uint32_t const cbXorLine = RT_ALIGN_32(  pHdr->header.colorHeader.width
-                                                                               * (  pHdr->header.colorHeader.xorMaskDepth
-                                                                                  + (pHdr->header.colorHeader.xorMaskDepth == 15)),
-                                                                               32) / 8;
-                                        uint32_t const cbXorMask = cbXorLine * pHdr->header.colorHeader.height;
-                                        ASSERT_GUEST_BREAK(cbAndMask + cbXorMask <= pHdr->sizeInBytes);
-
-                                        vmsvgaR3InstallColorCursor(pThis, pThisCC, &pHdr->header.colorHeader,
-                                                                   (uint8_t const *)(pHdr + 1), pHdr->sizeInBytes, u32);
-                                        break;
-                                    }
-
-                                    default:
-                                        LogRelMax(16, ("VMSVGA: Invalid MOB cursor type %#x, ignoring\n", pHdr->type));
-                                        break;
-                                }
+                                uint32_t const cbAndLine = RT_ALIGN_32(  Hdr.header.colorHeader.width
+                                                                       * (  Hdr.header.colorHeader.andMaskDepth
+                                                                          + (Hdr.header.colorHeader.andMaskDepth == 15)),
+                                                                       32) / 8;
+                                uint32_t const cbAndMask = cbAndLine * Hdr.header.colorHeader.height;
+                                uint32_t const cbXorLine = RT_ALIGN_32(  Hdr.header.colorHeader.width
+                                                                       * (  Hdr.header.colorHeader.xorMaskDepth
+                                                                          + (Hdr.header.colorHeader.xorMaskDepth == 15)),
+                                                                       32) / 8;
+                                uint32_t const cbXorMask = cbXorLine * Hdr.header.colorHeader.height;
+                                cbData = cbAndMask + cbXorMask;
+                                ASSERT_GUEST_MSG_BREAK(cbData <= Hdr.sizeInBytes,
+                                                       ("%ux%u and=%u xor=%u -> %#x bytes vs  max %#x bytes\n",
+                                                        Hdr.header.colorHeader.height, Hdr.header.colorHeader.width,
+                                                        Hdr.header.colorHeader.andMaskDepth,  Hdr.header.colorHeader.xorMaskDepth,
+                                                        cbData, Hdr.sizeInBytes));
                             }
                             else
-                                LogRelMax(16, ("VMSVGA: CURSOR_MOBID: Invalid payload size %#x (cbMob=%#x)! Ignoring request\n",
-                                               pHdr->sizeInBytes, cbMob));
+                            {
+                                LogRelMax(16, ("VMSVGA: CURSOR_MOBID: Invalid cursor type %#x. Ignoring request\n", Hdr.type));
+                                break;
+                            }
+                            Assert(cbData <= VMSVGA_CURSOR_MAX_BYTES);
+                            RT_UNTRUSTED_VALIDATED_FENCE();
+
+                            /*
+                             * Allocate bounce buffer for the cursor data, read it and caller
+                             * worker function to install the cursor.
+                             */
+                            uint8_t *pbData = (uint8_t *)RTMemTmpAllocZ(cbData);
+                            if (pbData)
+                            {
+                                rc = vmsvgaR3MobRead(pSVGAState, pMob, sizeof(Hdr) /*off*/, pbData, cbData);
+                                if (RT_SUCCESS(rc))
+                                {
+                                    if (Hdr.type == SVGA_ALPHA_CURSOR)
+                                        vmsvgaR3InstallAlphaCursor(pThis, pThisCC, &Hdr.header.alphaHeader, pbData, cbData, u32);
+                                    else if (Hdr.type == SVGA_COLOR_CURSOR)
+                                        vmsvgaR3InstallColorCursor(pThis, pThisCC, &Hdr.header.colorHeader, pbData, cbData, u32);
+                                    else
+                                        AssertFailed();
+                                }
+                                /* else: header read error */
+                                RTMemTmpFree(pbData);
+                            }
+                            else
+                                LogRelMax(16, ("VMSVGA: CURSOR_MOBID: Unable to allocate %#x bytes bounce buffer!\n", cbMob));
                         }
-                        RTMemTmpFree(pHdr);
+                        else
+                            LogRelMax(16, ("VMSVGA: CURSOR_MOBID: Invalid payload size %#x (cbMob=%#x)! Ignoring request\n",
+                                           Hdr.sizeInBytes, cbMob));
                     }
-                    else
-                        LogRelMax(16, ("VMSVGA: CURSOR_MOBID: Unable to allocate %#x bytes bounce buffer!\n", cbMob));
+                    /* else: header read error */
                 }
                 else
                     LogRelMax(16, ("VMSVGA: CURSOR_MOBID: Invalid MOB size %#x. Ignoring request.\n", cbMob));
