@@ -1,4 +1,4 @@
-; $Id: __U4D.asm 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $
+; $Id: __U4D.asm 112715 2026-01-27 15:33:53Z michal.necasek@oracle.com $
 ;; @file
 ; Compiler support routines.
 ;
@@ -68,7 +68,7 @@ if VBOX_BIOS_CPU ge 80386
                 ror     eax, 16
                 xor     edx, edx
 
-                shr     ecx, 16
+                shl     ecx, 16
                 mov     cx, bx
 
                 div     ecx                 ; eax:edx / ecx -> eax=quotient, edx=remainder.
