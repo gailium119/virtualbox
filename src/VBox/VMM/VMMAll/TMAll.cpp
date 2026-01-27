@@ -1,4 +1,4 @@
-/* $Id: TMAll.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: TMAll.cpp 112706 2026-01-27 08:59:49Z alexander.eichner@oracle.com $ */
 /** @file
  * TM - Timeout Manager, all contexts.
  */
@@ -36,7 +36,8 @@
 #include <VBox/vmm/tm.h>
 #include <VBox/vmm/mm.h>
 #include <VBox/vmm/dbgftrace.h>
-#ifdef IN_RING3
+#if defined(VBOX_WITH_NATIVE_NEM) && defined(IN_RING3)
+# include <VBox/vmm/nem.h>
 #endif
 #include <VBox/vmm/pdmdev.h> /* (for TMTIMER_GET_CRITSECT implementation) */
 #include "TMInternal.h"
@@ -208,7 +209,9 @@ VMMDECL(void) TMNotifyEndOfExecution(PVMCC pVM, PVMCPUCC pVCpu, uint64_t uTsc)
     uint64_t       cTicks = uTsc - pVCpu->tm.s.uTscStartExecuting - SUPGetTscDeltaByCpuSetIndex(pVCpu->iHostCpuSet);
     uint64_t const uCpuHz = SUPGetCpuHzFromGipBySetIndex(g_pSUPGlobalInfoPage, pVCpu->iHostCpuSet);
 # endif
-# ifndef VBOX_VMM_TARGET_ARMV8 /* This is perfectly valid on ARM if the guest is halting in the hypervisor. */
+# if defined(VBOX_WITH_NATIVE_NEM) && defined(IN_RING3) /* If NEM manages the halting the vCPU can halt much longer. */
+    AssertStmt(NEMR3NeedSpecialWaitMethod(pVM) || (cTicks <= uCpuHz << 2), cTicks = uCpuHz << 2); /* max 4 sec */
+# else
     AssertStmt(cTicks <= uCpuHz << 2, cTicks = uCpuHz << 2); /* max 4 sec */
 # endif
 
