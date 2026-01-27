@@ -1,4 +1,4 @@
-# $Id: Makefile.kmk 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $
+# $Id: Makefile.kmk 112721 2026-01-27 21:28:41Z knut.osmundsen@oracle.com $
 ## @file
 # Sub-Makefile for the IPRT.
 #
@@ -4128,6 +4128,11 @@ RuntimeR0Drv_SOURCES.darwin.amd64 = \
 RuntimeR0Drv_SOURCES.darwin.x86 = \
 	common/string/memchr.asm \
 	common/string/mempcpy.asm
+
+RuntimeR0Drv_SOURCES.darwin.arm64 = \
+	common/asm/ASMMemFirstNonZero-generic.cpp \
+	common/string/memchr.cpp \
+	common/string/mempcpy.cpp
 
 RuntimeR0Drv_SOURCES.os2 = \
 	common/path/RTPathFilenameUtf16.cpp \
