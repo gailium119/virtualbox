@@ -1,4 +1,4 @@
-/* $Id: UIExtraDataDefs.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIExtraDataDefs.h 112712 2026-01-27 11:13:50Z serkan.bayraktar@oracle.com $ */
 /** @file
  * VBox Qt GUI - Extra-data related definitions.
  */
@@ -1176,10 +1176,10 @@ enum VMActivityOverviewColumn
     VMActivityOverviewColumn_CPUVMMLoad,
     VMActivityOverviewColumn_RAMUsedAndTotal,
     VMActivityOverviewColumn_RAMUsedPercentage,
-    VMActivityOverviewColumn_NetworkUpRate,
-    VMActivityOverviewColumn_NetworkDownRate,
-    VMActivityOverviewColumn_NetworkUpTotal,
-    VMActivityOverviewColumn_NetworkDownTotal,
+    VMActivityOverviewColumn_NetworkTransmitRate,
+    VMActivityOverviewColumn_NetworkReceiveRate,
+    VMActivityOverviewColumn_NetworkTransmitTotal,
+    VMActivityOverviewColumn_NetworkReceiveTotal,
     VMActivityOverviewColumn_DiskIOReadRate,
     VMActivityOverviewColumn_DiskIOWriteRate,
     VMActivityOverviewColumn_DiskIOReadTotal,

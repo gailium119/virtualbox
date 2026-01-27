@@ -1,4 +1,4 @@
-/* $Id: UIVMActivityOverviewModelView.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIVMActivityOverviewModelView.cpp 112712 2026-01-27 11:13:50Z serkan.bayraktar@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIVMActivityOverviewModelView class implementation.
  */
@@ -130,8 +130,8 @@ private:
     CGuest            m_comGuest;
 
     quint64  m_uFreeRAM;
-    quint64  m_uNetworkDownTotal;
-    quint64  m_uNetworkUpTotal;
+    quint64  m_uNetworkReceiveTotal;
+    quint64  m_uNetworkTransmitTotal;
     quint64  m_uVMExitTotal;
     quint64  m_uDiskWriteTotal;
     quint64  m_uDiskReadTotal;
@@ -264,8 +264,8 @@ UIVMActivityOverviewRowLocal::UIVMActivityOverviewRowLocal(QITableView *pTableVi
     : UIVMActivityOverviewRow(pTableView, uMachineId, strMachineName)
     , m_enmMachineState(enmMachineState)
     , m_uFreeRAM(0)
-    , m_uNetworkDownTotal(0)
-    , m_uNetworkUpTotal(0)
+    , m_uNetworkReceiveTotal(0)
+    , m_uNetworkTransmitTotal(0)
     , m_uVMExitTotal(0)
     , m_uDiskWriteTotal(0)
     , m_uDiskReadTotal(0)
@@ -359,16 +359,16 @@ void UIVMActivityOverviewRowLocal::updateCells()
     updateCellText(VMActivityOverviewColumn_RAMUsedPercentage, strRAMPercentage);
 
     /* Network rate: */
-    quint64 uPrevDownTotal = m_uNetworkDownTotal;
-    quint64 uPrevUpTotal = m_uNetworkUpTotal;
-    UIMonitorCommon::getNetworkLoad(m_comDebugger, m_uNetworkDownTotal, m_uNetworkUpTotal);
-    quint64 uNetworkDownRate = m_uNetworkDownTotal - uPrevDownTotal;
-    quint64 uNetworkUpRate = m_uNetworkUpTotal - uPrevUpTotal;
+    quint64 uPrevDownTotal = m_uNetworkReceiveTotal;
+    quint64 uPrevUpTotal = m_uNetworkTransmitTotal;
+    UIMonitorCommon::getNetworkLoad(m_comDebugger, m_uNetworkReceiveTotal, m_uNetworkTransmitTotal);
+    quint64 uNetworkReceiveRate = m_uNetworkReceiveTotal - uPrevDownTotal;
+    quint64 uNetworkTransmitRate = m_uNetworkTransmitTotal - uPrevUpTotal;
 
-    updateCellText(VMActivityOverviewColumn_NetworkUpRate, QString("%1").arg(UITranslator::formatSize(uNetworkUpRate, iDecimalCount)));
-    updateCellText(VMActivityOverviewColumn_NetworkDownRate,QString("%1").arg(UITranslator::formatSize(uNetworkDownRate, iDecimalCount)));
-    updateCellText(VMActivityOverviewColumn_NetworkUpTotal, QString("%1").arg(UITranslator::formatSize(m_uNetworkUpTotal, iDecimalCount)));
-    updateCellText(VMActivityOverviewColumn_NetworkDownTotal, QString("%1").arg(UITranslator::formatSize(m_uNetworkDownTotal, iDecimalCount)));
+    updateCellText(VMActivityOverviewColumn_NetworkTransmitRate, QString("%1").arg(UITranslator::formatSize(uNetworkTransmitRate, iDecimalCount)));
+    updateCellText(VMActivityOverviewColumn_NetworkReceiveRate,QString("%1").arg(UITranslator::formatSize(uNetworkReceiveRate, iDecimalCount)));
+    updateCellText(VMActivityOverviewColumn_NetworkTransmitTotal, QString("%1").arg(UITranslator::formatSize(m_uNetworkTransmitTotal, iDecimalCount)));
+    updateCellText(VMActivityOverviewColumn_NetworkReceiveTotal, QString("%1").arg(UITranslator::formatSize(m_uNetworkReceiveTotal, iDecimalCount)));
 
     /* IO rate: */
     quint64 uPrevWriteTotal = m_uDiskWriteTotal;
@@ -539,10 +539,10 @@ void UIVMActivityOverviewRowCloud::sltMetricDataReceived(KMetricType enmMetricTy
                         QString("%1%").arg(QString::number(data[0].toFloat(), 'f', iDecimalCount)));
     }
     else if (enmMetricType == KMetricType_NetworksBytesOut)
-        updateCellText(VMActivityOverviewColumn_NetworkUpRate,
+        updateCellText(VMActivityOverviewColumn_NetworkTransmitRate,
                        UITranslator::formatSize((quint64)data[0].toFloat(), iDecimalCount));
     else if (enmMetricType == KMetricType_NetworksBytesIn)
-        updateCellText(VMActivityOverviewColumn_NetworkDownRate,
+        updateCellText(VMActivityOverviewColumn_NetworkReceiveRate,
                        UITranslator::formatSize((quint64)data[0].toFloat(), iDecimalCount));
     else if (enmMetricType == KMetricType_DiskBytesRead)
         updateCellText(VMActivityOverviewColumn_DiskIOReadRate,

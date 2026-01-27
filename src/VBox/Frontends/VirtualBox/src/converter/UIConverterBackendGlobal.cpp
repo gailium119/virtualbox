@@ -1,4 +1,4 @@
-/* $Id: UIConverterBackendGlobal.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIConverterBackendGlobal.cpp 112712 2026-01-27 11:13:50Z serkan.bayraktar@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIConverterBackendGlobal implementation.
  */
@@ -2859,10 +2859,10 @@ template<> SHARED_LIBRARY_STUFF QString UIConverter::toInternalString(const VMAc
         case VMActivityOverviewColumn_CPUVMMLoad:        strResult = "CPUVMMLoad"; break;
         case VMActivityOverviewColumn_RAMUsedAndTotal:   strResult = "RAMUsedAndTotal"; break;
         case VMActivityOverviewColumn_RAMUsedPercentage: strResult = "RAMUsedPercentage"; break;
-        case VMActivityOverviewColumn_NetworkUpRate:     strResult = "NetworkUpRate"; break;
-        case VMActivityOverviewColumn_NetworkDownRate:   strResult = "NetworkDownRate"; break;
-        case VMActivityOverviewColumn_NetworkUpTotal:    strResult = "NetworkUpTotal"; break;
-        case VMActivityOverviewColumn_NetworkDownTotal:  strResult = "NetworkDownTotal"; break;
+        case VMActivityOverviewColumn_NetworkTransmitRate:     strResult = "NetworkTransmitRate"; break;
+        case VMActivityOverviewColumn_NetworkReceiveRate:   strResult = "NetworkReceiveRate"; break;
+        case VMActivityOverviewColumn_NetworkTransmitTotal:    strResult = "NetworkTransmitTotal"; break;
+        case VMActivityOverviewColumn_NetworkReceiveTotal:  strResult = "NetworkReceiveTotal"; break;
         case VMActivityOverviewColumn_DiskIOReadRate:    strResult = "DiskIOReadRate"; break;
         case VMActivityOverviewColumn_DiskIOWriteRate:   strResult = "DiskIOWriteRate"; break;
         case VMActivityOverviewColumn_DiskIOReadTotal:   strResult = "DiskIOReadTotal"; break;
@@ -2890,14 +2890,14 @@ template<> SHARED_LIBRARY_STUFF VMActivityOverviewColumn UIConverter::fromIntern
         return VMActivityOverviewColumn_RAMUsedAndTotal;
     if (strVMActivityOverviewColumn.compare("RAMUsedPercentage", Qt::CaseInsensitive) == 0)
         return VMActivityOverviewColumn_RAMUsedPercentage;
-    if (strVMActivityOverviewColumn.compare("NetworkUpRate", Qt::CaseInsensitive) == 0)
-        return VMActivityOverviewColumn_NetworkUpRate;
-    if (strVMActivityOverviewColumn.compare("NetworkDownRate", Qt::CaseInsensitive) == 0)
-        return VMActivityOverviewColumn_NetworkDownRate;
-    if (strVMActivityOverviewColumn.compare("NetworkUpTotal", Qt::CaseInsensitive) == 0)
-        return VMActivityOverviewColumn_NetworkUpTotal;
-    if (strVMActivityOverviewColumn.compare("NetworkDownTotal", Qt::CaseInsensitive) == 0)
-        return VMActivityOverviewColumn_NetworkDownTotal;
+    if (strVMActivityOverviewColumn.compare("NetworkTransmitRate", Qt::CaseInsensitive) == 0)
+        return VMActivityOverviewColumn_NetworkTransmitRate;
+    if (strVMActivityOverviewColumn.compare("NetworkReceiveRate", Qt::CaseInsensitive) == 0)
+        return VMActivityOverviewColumn_NetworkReceiveRate;
+    if (strVMActivityOverviewColumn.compare("NetworkTransmitTotal", Qt::CaseInsensitive) == 0)
+        return VMActivityOverviewColumn_NetworkTransmitTotal;
+    if (strVMActivityOverviewColumn.compare("NetworkReceiveTotal", Qt::CaseInsensitive) == 0)
+        return VMActivityOverviewColumn_NetworkReceiveTotal;
     if (strVMActivityOverviewColumn.compare("DiskIOReadRate", Qt::CaseInsensitive) == 0)
         return VMActivityOverviewColumn_DiskIOReadRate;
     if (strVMActivityOverviewColumn.compare("DiskIOWriteRate", Qt::CaseInsensitive) == 0)
