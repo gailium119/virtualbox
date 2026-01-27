@@ -1,4 +1,4 @@
-/* $Id: DevVGA-SVGA.cpp 112707 2026-01-27 09:00:46Z andreas.loeffler@oracle.com $ */
+/* $Id: DevVGA-SVGA.cpp 112713 2026-01-27 11:55:00Z vitali.pelenjow@oracle.com $ */
 /** @file
  * VMware SVGA device.
  *
@@ -4203,7 +4203,7 @@ static SVGACBStatus vmsvgaR3CmdBufProcessCommands(PPDMDEVINS pDevIns, PVGASTATE 
                 VMSVGA_INC_CMD_SIZE_BREAK(sizeof(*pCmd));
 
                 /* Figure out the size of the bitmap data. */
-                ASSERT_GUEST_STMT_BREAK(pCmd->height <= VMSVGA_CURSOR_MAX_DIMENSION  && pCmd->width < VMSVGA_CURSOR_MAX_DIMENSION,
+                ASSERT_GUEST_STMT_BREAK(pCmd->height <= VMSVGA_CURSOR_MAX_DIMENSION  && pCmd->width <= VMSVGA_CURSOR_MAX_DIMENSION,
                                         CBstatus = SVGA_CB_STATUS_COMMAND_ERROR);
 
                 VMSVGA_INC_CMD_SIZE_BREAK(pCmd->width * pCmd->height * sizeof(uint32_t)); /* 32-bit BRGA format */
@@ -6216,11 +6216,11 @@ static DECLCALLBACK(void) vmsvgaR3Info(PPDMDEVINS pDevIns, PCDBGFINFOHLP pHlp, c
     pHlp->pfnPrintf(pHlp, "Viewport position:  %ux%u\n", pThis->svga.viewport.x, pThis->svga.viewport.y);
     pHlp->pfnPrintf(pHlp, "Viewport size:      %ux%u\n", pThis->svga.viewport.cx, pThis->svga.viewport.cy);
 
-    pHlp->pfnPrintf(pHlp, "Cursor active:      %RTbool (via %s)\n", pSVGAState->Cursor.fActive, pSVGAState->Cursor.mobId == UINT32_MAX ? "CMD" : "MOB");
+    pHlp->pfnPrintf(pHlp, "Cursor active:      %RTbool (via %s)\n", pSVGAState->Cursor.fActive, pSVGAState->Cursor.mobId == SVGA_ID_INVALID ? "CMD" : "MOB");
     pHlp->pfnPrintf(pHlp, "Cursor hotspot:     %ux%u\n", pSVGAState->Cursor.xHotspot, pSVGAState->Cursor.yHotspot);
     pHlp->pfnPrintf(pHlp, "Cursor size:        %ux%u\n", pSVGAState->Cursor.width, pSVGAState->Cursor.height);
     pHlp->pfnPrintf(pHlp, "Cursor byte size:   %u (%#x)\n", pSVGAState->Cursor.cbData, pSVGAState->Cursor.cbData);
-    if (pSVGAState->Cursor.mobId != UINT32_MAX)
+    if (pSVGAState->Cursor.mobId != SVGA_ID_INVALID)
         pHlp->pfnPrintf(pHlp, "Cursor MOB ID:      %u (%#x)\n", pSVGAState->Cursor.mobId, pSVGAState->Cursor.mobId);
     if (pFIFO)
     {
