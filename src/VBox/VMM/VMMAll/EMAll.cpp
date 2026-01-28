@@ -1,4 +1,4 @@
-/* $Id: EMAll.cpp 112731 2026-01-28 20:02:07Z alexander.eichner@oracle.com $ */
+/* $Id: EMAll.cpp 112732 2026-01-28 20:22:02Z alexander.eichner@oracle.com $ */
 /** @file
  * EM - Execution Monitor(/Manager) - All contexts
  */
@@ -65,6 +65,7 @@ VMM_INT_DECL(EMSTATE) EMGetState(PVMCPU pVCpu)
 }
 
 
+#ifdef IN_RING3
 /**
  * Get the previous execution manager status.
  *
@@ -93,6 +94,7 @@ VMM_INT_DECL(void)    EMSetState(PVMCPU pVCpu, EMSTATE enmNewState)
            || (pVCpu->em.s.enmState == EMSTATE_WAIT_SIPI && enmNewState == EMSTATE_HALTED));
     pVCpu->em.s.enmState = enmNewState;
 }
+#endif
 
 
 /**

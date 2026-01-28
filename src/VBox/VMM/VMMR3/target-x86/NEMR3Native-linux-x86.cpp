@@ -1,4 +1,4 @@
-/* $Id: NEMR3Native-linux-x86.cpp 112731 2026-01-28 20:02:07Z alexander.eichner@oracle.com $ */
+/* $Id: NEMR3Native-linux-x86.cpp 112732 2026-01-28 20:22:02Z alexander.eichner@oracle.com $ */
 /** @file
  * NEM - Native execution manager, native ring-3 Linux backend.
  */
@@ -1241,7 +1241,7 @@ VMM_INT_DECL(int) NEMHCResumeCpuTickOnAll(PVMCC pVM, PVMCPUCC pVCpu, uint64_t uP
     uBuf.Core.pad   = 0;
     uBuf.Core.nmsrs = 1;
     int rcLnx = ioctl(pVM->apCpusR3[0]->nem.s.fdVCpu, KVM_SET_MSRS, &uBuf);
-    AssertMsgReturn(rcLnx == 1, ("rc=%d errno=%d\n", rc, errno), VERR_NEM_IPE_3);
+    AssertMsgReturn(rcLnx == 1, ("rc=%d errno=%d\n", rcLnx, errno), VERR_NEM_IPE_3);
 
     /* Do the other CPUs, adjusting for elapsed TSC and keeping finger crossed
        that we don't introduce too much drift here. */
@@ -1253,7 +1253,7 @@ VMM_INT_DECL(int) NEMHCResumeCpuTickOnAll(PVMCC pVM, PVMCPUCC pVCpu, uint64_t uP
         uBuf.Core.entries[0].data = uPausedTscValue + offDelta;
 
         rcLnx = ioctl(pVCpuDst->nem.s.fdVCpu, KVM_SET_MSRS, &uBuf);
-        AssertMsgReturn(rcLnx == 1, ("rc=%d errno=%d\n", rc, errno), VERR_NEM_SET_TSC);
+        AssertMsgReturn(rcLnx == 1, ("rc=%d errno=%d\n", rcLnx, errno), VERR_NEM_SET_TSC);
     }
 
     return VINF_SUCCESS;
