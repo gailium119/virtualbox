@@ -1,4 +1,4 @@
-/* $Id: UIVirtualBoxManager.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIVirtualBoxManager.cpp 112757 2026-01-29 16:52:37Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIVirtualBoxManager class implementation.
  */
@@ -618,12 +618,12 @@ bool UIVirtualBoxManager::eventFilter(QObject *pObject, QEvent *pEvent)
 {
     /* Ignore for non-active window except for FileOpen event which should be always processed: */
     if (!isActiveWindow() && pEvent->type() != QEvent::FileOpen)
-        return QMainWindowWithRestorableGeometry::eventFilter(pObject, pEvent);
+        return QIMainWindow::eventFilter(pObject, pEvent);
 
     /* Ignore for other objects: */
     if (qobject_cast<QWidget*>(pObject) &&
         qobject_cast<QWidget*>(pObject)->window() != this)
-        return QMainWindowWithRestorableGeometry::eventFilter(pObject, pEvent);
+        return QIMainWindow::eventFilter(pObject, pEvent);
 
     /* Which event do we have? */
     switch (pEvent->type())
@@ -640,7 +640,7 @@ bool UIVirtualBoxManager::eventFilter(QObject *pObject, QEvent *pEvent)
     }
 
     /* Call to base-class: */
-    return QMainWindowWithRestorableGeometry::eventFilter(pObject, pEvent);
+    return QIMainWindow::eventFilter(pObject, pEvent);
 }
 #endif /* VBOX_WS_MAC */
 
@@ -698,13 +698,13 @@ bool UIVirtualBoxManager::event(QEvent *pEvent)
             break;
     }
     /* Call to base-class: */
-    return QMainWindowWithRestorableGeometry::event(pEvent);
+    return QIMainWindow::event(pEvent);
 }
 
 void UIVirtualBoxManager::showEvent(QShowEvent *pEvent)
 {
     /* Call to base-class: */
-    QMainWindowWithRestorableGeometry::showEvent(pEvent);
+    QIMainWindow::showEvent(pEvent);
 
     /* Is polishing required? */
     if (!m_fPolished)
@@ -728,7 +728,7 @@ void UIVirtualBoxManager::polishEvent(QShowEvent *)
 void UIVirtualBoxManager::closeEvent(QCloseEvent *pEvent)
 {
     /* Call to base-class: */
-    QMainWindowWithRestorableGeometry::closeEvent(pEvent);
+    QIMainWindow::closeEvent(pEvent);
 
     /* Quit application: */
     QApplication::quit();

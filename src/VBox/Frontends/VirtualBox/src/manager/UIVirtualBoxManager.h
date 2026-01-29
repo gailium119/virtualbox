@@ -1,4 +1,4 @@
-/* $Id: UIVirtualBoxManager.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIVirtualBoxManager.h 112757 2026-01-29 16:52:37Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIVirtualBoxManager class declaration.
  */
@@ -32,12 +32,11 @@
 #endif
 
 /* Qt includes: */
-#include <QMainWindow>
 #include <QUrl>
 #include <QUuid>
 
 /* GUI includes: */
-#include "QIWithRestorableGeometry.h"
+#include "QIMainWindow.h"
 #include "UIAdvancedSettingsDialog.h"
 #include "UICloudMachineSettingsDialog.h"
 #include "UIDefs.h"
@@ -56,11 +55,8 @@ class UIVirtualMachineItem;
 class CCloudMachine;
 class CUnattended;
 
-/* Type definitions: */
-typedef QIWithRestorableGeometry<QMainWindow> QMainWindowWithRestorableGeometry;
-
-/** Singleton QMainWindow extension used as VirtualBox Manager instance. */
-class UIVirtualBoxManager : public QMainWindowWithRestorableGeometry
+/** Singleton QIMainWindow extension used as VirtualBox Manager instance. */
+class UIVirtualBoxManager : public QIMainWindow
 {
     Q_OBJECT;
 
