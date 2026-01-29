@@ -1,4 +1,4 @@
-/* $Id: UISoftKeyboard.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UISoftKeyboard.cpp 112756 2026-01-29 16:42:26Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UISoftKeyboard class implementation.
  */
@@ -38,6 +38,7 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>
+#include <QKeyEvent>
 #include <QPainter>
 #include <QPainterPath>
 #include <QPicture>
@@ -3979,7 +3980,7 @@ void UISoftKeyboardSettingsWidget::sltColorSelectionButtonClicked()
 
 UISoftKeyboard::UISoftKeyboard(QWidget *pParent, UIMachine *pMachine,
                                QWidget *pCenterWidget, QString strMachineName /* = QString() */)
-    : QMainWindowWithRestorableGeometry(pParent)
+    : QIMainWindow(pParent)
     , m_pMachine(pMachine)
     , m_pCenterWidget(pCenterWidget)
     , m_pMainLayout(0)
@@ -4070,7 +4071,7 @@ bool UISoftKeyboard::event(QEvent *pEvent)
         }
     }
 
-    return QMainWindowWithRestorableGeometry::event(pEvent);
+    return QIMainWindow::event(pEvent);
 }
 
 void UISoftKeyboard::sltLayoutSelectionChanged(const QUuid &layoutUid)
