@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# $Id: configure.py 112734 2026-01-29 07:49:48Z andreas.loeffler@oracle.com $
+# $Id: configure.py 112737 2026-01-29 08:33:01Z andreas.loeffler@oracle.com $
 """
 Configuration script for building VirtualBox.
 
@@ -61,7 +61,7 @@ SPDX-License-Identifier: GPL-3.0-only
 # External Python modules or other dependencies are not allowed!
 #
 
-__revision__ = "$Revision: 112734 $"
+__revision__ = "$Revision: 112737 $"
 
 import argparse
 import ctypes
@@ -2037,12 +2037,9 @@ class ToolCheck(CheckBase):
         g_oEnv.set('VBOX_PATH_GSOAP_IMPORT', sPathImport);
         return True;
 
-    def checkCallback_JDK(self):
+    def checkCallback_Java(self):
         """
-        Checks for JDK.
-
-        Note: We need JDK <= 17, as only there the 'wsimport' binary is available.
-              Otherwise other packages need to be installed in order to find 'wsimport'.
+        Checks for Java.
         """
 
         # Detect Java home directory.
@@ -2054,7 +2051,7 @@ class ToolCheck(CheckBase):
             if self.enmBuildTarget == BuildTarget.DARWIN:
                 _, sJavaHome = getPackagePath('openjdk');
                 if sJavaHome:
-                    sJavaHome = sJavaHome + '@17';
+                    sJavaHome = sJavaHome + '@8'; # One last try (we prefer Java <= 8, see below).
             else:
                 try:
                     sStdErr = subprocess.check_output(['java', '-XshowSettings:properties', '-version'], stderr=subprocess.STDOUT);
@@ -2071,7 +2068,8 @@ class ToolCheck(CheckBase):
             if sTail == 'jre':
                 sJavaHome = sHead;
 
-            mapCmds = { 'java':  [ r'java (\d+)\.(\d+)\.(\d+)' ],
+            mapCmds = { 'java':  [ r'openjdk (\d+)\.(\d+)\.(\d+)-?.*',
+                                   r'java (\d+)\.(\d+)\.(\d+)' ],
                         'javac': [ r'javac (\d+)\.(\d+)\.(\d+)_?.*' ] };
             for sCmd, (asRegEx) in mapCmds.items():
                 for sRegEx in asRegEx:
@@ -2080,14 +2078,27 @@ class ToolCheck(CheckBase):
                         reMatch = re.search(sRegEx, sVer);
                         if reMatch:
                             uMaj = int(reMatch.group(1));
-                            # For Java 8 and below, major version is 1 and minor is 8 or less.
-                            # Java 9+ is labeled as "version "9.xx".
+                            # Parsing the version is a bit more tricky, as the output changed between versions.
+                            # See also: https://openjdk.org/jeps/223
+                            #
+                            # Examples:
+                            #   java version "1.8.0_361"             ->  v8
+                            #   openjdk version "11.0.20" 2023-07-18 -> v11
+                            #   java version "17.0.2" 2022-01-18 LTS -> v17
+                            #
+                            # So for Java 8 and below, major version is 1 and minor is 8 or less.
                             if uMaj == 1:
                                 uMaj = int(reMatch.group(2));
-                            if uMaj > 17:
-                                self.print(f'JDK {uMaj} installed ({sCmd}), but need <= 17');
-                                fRc = False;
-                                break;
+                            # We prefer Java <= 8, as only there the 'wsimport' binary is available.
+                            # See also: https://openjdk.org/jeps/320
+                            if uMaj > 8:
+                                # Check if 'wsimport' installed via other packages onto the system.
+                                _, sVer = checkWhich('wsimport');
+                                if not sVer:
+                                    self.printWarn(f"Java {uMaj} installed ({sCmd}), which does not include the 'wsimport' binary anymore.");
+                                    self.printWarn( "Please either install Java <= 8, or install 'wsimport' according to your distribution / OS.", fDontCount = True);
+                                    fRc = False;
+                                    break;
                         else:
                             self.printWarn('Unable to detect Java version');
                             fRc = False;
@@ -2097,7 +2108,7 @@ class ToolCheck(CheckBase):
                         fRc = False;
                         break;
             if fRc:
-                self.printVerbose(1, f'JDK {uMaj} installed');
+                self.printVerbose(1, f'Java {uMaj} installed');
                 if uMaj:
                     self.sVer = str(uMaj);
                 self.sCmdPath = sJavaHome;
@@ -3330,8 +3341,8 @@ g_aoTools = [
     ToolCheck("devtools", asCmd = [ ], fnCallback = ToolCheck.checkCallback_devtools ),
     ToolCheck("gsoap", asCmd = [ ], fnCallback = ToolCheck.checkCallback_GSOAP ),
     ToolCheck("gsoapsources", asCmd = [ ], fnCallback = ToolCheck.checkCallback_GSOAPSources ),
-    ToolCheck("jdk", asCmd = [ ], fnCallback = ToolCheck.checkCallback_JDK,
-              dictDefinesToSetIfFailed = { 'VBOX_WITH_WEBSERVICES' : '' }),
+    ToolCheck("java", asCmd = [ ], fnCallback = ToolCheck.checkCallback_Java,
+              dictDefinesToSetIfFailed = { 'VBOX_WITH_JWS' : '', 'VBOX_WITH_JMSCOM': '', 'VBOX_WITH_JXPCOM' : '', 'VBOX_WITH_WEBSERVICES' : '' }),
     ToolCheck("makeself", asCmd = [ ], fnCallback = ToolCheck.checkCallback_makeself, aeTargets = [ BuildTarget.LINUX ]),
     # On Solaris nasm is not officially supported.
     ToolCheck("nasm", asCmd = [ "nasm" ], fnCallback = ToolCheck.checkCallback_NASM, aeTargetsExcluded = [ BuildTarget.SOLARIS ]),
@@ -3595,7 +3606,6 @@ def main():
 
     oParser.add_argument('--disable-docs', '--without-docs', help='Disables building the documentation', action='store_true', default=None, dest='VBOX_WITH_DOCS=');
     oParser.add_argument('--disable-dtrace', '--without-dtrace', help='Disables building features requiring DTrace ', action='store_true', default=None, dest='config_disable_dtrace');
-    oParser.add_argument('--disable-java', '--without-java', help='Disables building components which require Java', action='store_true', default=None, dest='config_disable_java');
     oParser.add_argument('--disable-python', '--without-python', help='Disables building the Python bindings', action='store_true', default=None, dest='config_disable_python');
     oParser.add_argument('--disable-pylint', '--without-pylint', help='Disables using pylint', action='store_true', default=None, dest='VBOX_WITH_PYLINT=');
     oParser.add_argument('--disable-sdl', '--without-sdl', help='Disables building the SDL frontend', action='store_true', default=None, dest='config_libs_disable_libsdl2');
@@ -3698,9 +3708,6 @@ def main():
         oArgs.config_tools_disable_openwatcom = True;
         oArgs.config_tools_disable_python_modules = True;
         oArgs.config_tools_disable_yasm = True;
-
-    if oArgs.config_disable_java:
-        oArgs.config_tools_disable_jdk = True;
 
     if not oArgs.config_file_log:
         g_sFileLog = os.path.join(oArgs.config_out_dir, 'configure.log');
@@ -3873,10 +3880,6 @@ def main():
                       'VBOX_WITH_QTGUI': '', \
                       'VBOX_WITH_VBOXSDL': '', \
                       'VBOX_WITH_DEBUGGER_GUI': '' } if g_oEnv['config_disable_com'] else {},
-        # Disable components which require Java.
-        lambda env: { 'VBOX_WITH_JXPCOM': '', \
-                      'VBOX_WITH_JWS': '', \
-                      'VBOX_WITH_JMSCOM': '' } if g_oEnv['config_disable_java'] else {},
         # Disable components which require Python. Most likely this will blow up the build, as Python is mandatory nowadays.
         lambda env: { 'VBOX_WITH_PYTHON': '' } if g_oEnv['config_disable_python'] else {},
         # Python is mandatory nowadays.
