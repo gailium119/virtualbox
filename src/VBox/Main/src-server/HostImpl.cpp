@@ -1,4 +1,4 @@
-/* $Id: HostImpl.cpp 112738 2026-01-29 09:33:31Z alexander.eichner@oracle.com $ */
+/* $Id: HostImpl.cpp 112740 2026-01-29 09:40:27Z alexander.eichner@oracle.com $ */
 /** @file
  * VirtualBox COM class implementation: Host
  */
@@ -4290,6 +4290,8 @@ BOOL Host::i_HostIsNativeApiSupported()
         return FALSE;
     if (cMaxHyperLeaf >= UINT32_C(0x40000005))
         return TRUE;
+
+    return FALSE;
 #  elif defined(RT_ARCH_ARM64)
     /** @todo would be great if we could recognize a root partition from the
      *        CPUID info, but I currently don't dare do that. Just assume that
@@ -4305,6 +4307,8 @@ BOOL Host::i_HostIsNativeApiSupported()
         close(fdKvm);
         return TRUE;
     }
+
+    return FALSE;
 # elif defined(RT_OS_DARWIN)
     /*
      * The kern.hv_support parameter indicates support for the hypervisor API
@@ -4317,8 +4321,9 @@ BOOL Host::i_HostIsNativeApiSupported()
         if (fHvSupport != 0)
             return TRUE;
     }
-# endif
+
     return FALSE;
+# endif
 }
 #endif
 
