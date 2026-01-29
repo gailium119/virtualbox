@@ -1,4 +1,4 @@
-/* $Id: VMR3Emt.cpp 112688 2026-01-26 10:44:27Z alexander.eichner@oracle.com $ */
+/* $Id: VMR3Emt.cpp 112735 2026-01-29 08:22:41Z alexander.eichner@oracle.com $ */
 /** @file
  * VM - Virtual Machine, The Emulation Thread.
  */
@@ -1063,7 +1063,7 @@ static DECLCALLBACK(void) vmR3DefaultNotifyCpuFF(PUVMCPU pUVCpu, uint32_t fFlags
         PVMCPU pVCpu = pUVCpu->pVCpu;
         if (pVCpu)
         {
-            VMCPUSTATE enmState = pVCpu->enmState;
+            VMCPUSTATE enmState = VMCPU_GET_STATE(pVCpu);
             if (   enmState == VMCPUSTATE_STARTED_EXEC_NEM
                 || enmState == VMCPUSTATE_STARTED_EXEC_NEM_WAIT)
                 NEMR3NotifyFF(pUVCpu->pVM, pVCpu, fFlags);
@@ -1096,7 +1096,12 @@ static DECLCALLBACK(void) vmR3NemNotifyCpuFF(PUVMCPU pUVCpu, uint32_t fFlags)
 {
     PVMCPU pVCpu = pUVCpu->pVCpu;
     if (pVCpu)
-        NEMR3NotifyFF(pUVCpu->pVM, pVCpu, fFlags);
+    {
+        VMCPUSTATE enmState = VMCPU_GET_STATE(pVCpu);
+        if (   enmState == VMCPUSTATE_STARTED_EXEC_NEM
+            || enmState == VMCPUSTATE_STARTED_EXEC_NEM_WAIT)
+            NEMR3NotifyFF(pUVCpu->pVM, pVCpu, fFlags);
+    }
 }
 #endif
 
