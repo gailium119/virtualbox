@@ -1,4 +1,4 @@
-# $Id: Makefile.kmk 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $
+# $Id: Makefile.kmk 112772 2026-01-30 23:43:40Z knut.osmundsen@oracle.com $
 ## @file
 # Sub-Makefile for the storage device & driver testcases.
 #
@@ -194,9 +194,7 @@ if defined(VBOX_WITH_TESTCASES) || defined(VBOX_WITH_VBOX_IMG)
 
 endif
 
-if   defined(VBOX_WITH_TESTCASES) && defined(VBOX_WITH_PLUGIN_CRYPT) \
-  && defined(VBOX_WITH_EXTPACK_PUEL) && defined(VBOX_WITH_EXTPACK_PUEL_BUILD) \
-  && defined(VBOX_WITH_VDKEYSTOREMGR)
+if defined(VBOX_WITH_TESTCASES) && defined(VBOX_WITH_PLUGIN_CRYPT) && defined(VBOX_WITH_VDKEYSTOREMGR)
  PROGRAMS += vdkeystoremgr
 
  #
@@ -213,7 +211,7 @@ if   defined(VBOX_WITH_TESTCASES) && defined(VBOX_WITH_PLUGIN_CRYPT) \
  	vdkeystoremgr.cpp \
  	../VDKeyStore.cpp
  vdkeystoremgr_SOURCES.win = \
- 	vdkeystoremgr_SOURCES.rc
+ 	vdkeystoremgr.rc
  vdkeystoremgr_LIBS = \
  	$(VBOX_LIB_RUNTIME_STATIC) \
  	$(PATH_STAGE_LIB)/SUPR3$(VBOX_SUFF_LIB)
