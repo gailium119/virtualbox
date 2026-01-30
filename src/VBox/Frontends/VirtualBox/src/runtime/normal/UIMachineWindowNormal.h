@@ -1,4 +1,4 @@
-/* $Id: UIMachineWindowNormal.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIMachineWindowNormal.h 112764 2026-01-30 11:05:32Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIMachineWindowNormal class declaration.
  */
@@ -124,6 +124,11 @@ private:
 
     /** Returns whether this window is maximized. */
     bool isMaximizedChecked();
+
+    /** Restarts geometry save timer. */
+    void restartGeometrySaveTimer();
+    /** Shutdowns geometry save timer. */
+    void shutdownGeometrySaveTimer();
 
     /** Holds the indicator-pool instance. */
     UIIndicatorsPool *m_pIndicatorsPool;

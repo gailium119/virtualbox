@@ -1,4 +1,4 @@
-/* $Id: UIMachineWindowNormal.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIMachineWindowNormal.cpp 112764 2026-01-30 11:05:32Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIMachineWindowNormal class implementation.
  */
@@ -393,9 +393,7 @@ bool UIMachineWindowNormal::event(QEvent *pEvent)
             }
 
             /* Restart geometry save timer: */
-            if (m_iGeometrySaveTimerId != -1)
-                killTimer(m_iGeometrySaveTimerId);
-            m_iGeometrySaveTimerId = startTimer(300);
+            restartGeometrySaveTimer();
 
             /* Let listeners know about geometry changes: */
             emit sigGeometryChange(geometry());
@@ -419,9 +417,7 @@ bool UIMachineWindowNormal::event(QEvent *pEvent)
             }
 
             /* Restart geometry save timer: */
-            if (m_iGeometrySaveTimerId != -1)
-                killTimer(m_iGeometrySaveTimerId);
-            m_iGeometrySaveTimerId = startTimer(300);
+            restartGeometrySaveTimer();
 
             /* Let listeners know about geometry changes: */
             emit sigGeometryChange(geometry());
@@ -439,8 +435,8 @@ bool UIMachineWindowNormal::event(QEvent *pEvent)
             QTimerEvent *pTimerEvent = static_cast<QTimerEvent*>(pEvent);
             if (pTimerEvent->timerId() == m_iGeometrySaveTimerId)
             {
-                killTimer(m_iGeometrySaveTimerId);
-                m_iGeometrySaveTimerId = -1;
+                /* Shutdown geometry save timer: */
+                shutdownGeometrySaveTimer();
 
                 /* HACK ALERT! Just ignore this if it arrives to late to be handled.  I typically get
                    these when the COM shutdown on windows flushes pending queue events.  The result
@@ -639,4 +635,20 @@ bool UIMachineWindowNormal::isMaximizedChecked()
 #else /* VBOX_WS_MAC */
     return isMaximized();
 #endif /* !VBOX_WS_MAC */
+}
+
+void UIMachineWindowNormal::restartGeometrySaveTimer()
+{
+    if (m_iGeometrySaveTimerId != -1)
+        killTimer(m_iGeometrySaveTimerId);
+    m_iGeometrySaveTimerId = startTimer(300);
+}
+
+void UIMachineWindowNormal::shutdownGeometrySaveTimer()
+{
+    if (m_iGeometrySaveTimerId != -1)
+    {
+        killTimer(m_iGeometrySaveTimerId);
+        m_iGeometrySaveTimerId = -1;
+    }
 }
