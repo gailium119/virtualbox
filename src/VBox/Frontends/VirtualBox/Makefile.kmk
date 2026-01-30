@@ -1,4 +1,4 @@
-# $Id: Makefile.kmk 112750 2026-01-29 16:19:14Z sergey.dubov@oracle.com $
+# $Id: Makefile.kmk 112767 2026-01-30 13:33:32Z sergey.dubov@oracle.com $
 ## @file
 # Makefile for the VirtualBox Qt GUI.
 #
@@ -1291,7 +1291,7 @@ endif
 
 VirtualBoxVM_SOURCES.darwin += \
 	src/platform/darwin/UIAbstractDockIconPreview.cpp \
-	src/platform/darwin/UICocoaDockIconPreview.mm
+	src/platform/darwin/UIDockIconPreview.mm
 
 if1of ($(KBUILD_TARGET), freebsd linux netbsd openbsd solaris) # U*nix
  VirtualBoxVM_SOURCES += \

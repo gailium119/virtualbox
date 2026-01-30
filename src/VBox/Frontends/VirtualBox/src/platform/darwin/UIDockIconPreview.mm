@@ -1,6 +1,6 @@
-/* $Id: UICocoaDockIconPreview.mm 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIDockIconPreview.mm 112767 2026-01-30 13:33:32Z sergey.dubov@oracle.com $ */
 /** @file
- * VBox Qt GUI - Cocoa helper for the dock icon preview.
+ * VBox Qt GUI - UIDockIconPreview class implementation.
  */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 /* VBox includes */
-#include "UICocoaDockIconPreview.h"
+#include "UIDockIconPreview.h"
 #include "VBoxCocoaHelper.h"
 
 /* System includes */
@@ -34,33 +34,33 @@
 
 @interface UIDockTileMonitor: NSView
 {
-    UICocoaDockIconPreviewPrivate *p;
+    UIDockIconPreviewPrivate *p;
 
     NSImageView *mScreenContent;
     NSImageView *mMonitorGlossy;
 }
-- (id)initWithFrame:(NSRect)frame parent:(UICocoaDockIconPreviewPrivate*)parent;
+- (id)initWithFrame:(NSRect)frame parent:(UIDockIconPreviewPrivate*)parent;
 - (NSImageView*)screenContent;
 - (void)resize:(NSSize)size;
 @end
 
 @interface UIDockTileOverlay: NSView
 {
-    UICocoaDockIconPreviewPrivate *p;
+    UIDockIconPreviewPrivate *p;
 }
-- (id)initWithFrame:(NSRect)frame parent:(UICocoaDockIconPreviewPrivate*)parent;
+- (id)initWithFrame:(NSRect)frame parent:(UIDockIconPreviewPrivate*)parent;
 @end
 
 @interface UIDockTile: NSView
 {
-    UICocoaDockIconPreviewPrivate *p;
+    UIDockIconPreviewPrivate *p;
 
     UIDockTileMonitor *mMonitor;
     NSImageView       *mAppIcon;
 
     UIDockTileOverlay *mOverlay;
 }
-- (id)initWithParent:(UICocoaDockIconPreviewPrivate*)parent;
+- (id)initWithParent:(UIDockIconPreviewPrivate*)parent;
 - (void)destroy;
 - (NSView*)screenContentWithParentView:(NSView*)parentView;
 - (void)cleanup;
@@ -75,16 +75,16 @@
  * Helper class which allow us to access all members/methods of AbstractDockIconPreviewHelper
  * from any Cocoa class.
  */
-class UICocoaDockIconPreviewPrivate: public UIAbstractDockIconPreviewHelper
+class UIDockIconPreviewPrivate: public UIAbstractDockIconPreviewHelper
 {
 public:
-    inline UICocoaDockIconPreviewPrivate(UIMachine *pMachine, const QPixmap& overlayImage)
+    inline UIDockIconPreviewPrivate(UIMachine *pMachine, const QPixmap& overlayImage)
         : UIAbstractDockIconPreviewHelper(pMachine, overlayImage)
     {
         mUIDockTile = [[UIDockTile alloc] initWithParent:this];
     }
 
-    inline ~UICocoaDockIconPreviewPrivate()
+    inline ~UIDockIconPreviewPrivate()
     {
 
         [mUIDockTile destroy];
@@ -97,43 +97,43 @@ public:
 /*
  * Cocoa wrapper for the abstract dock icon preview class
  */
-UICocoaDockIconPreview::UICocoaDockIconPreview(UIMachine *pMachine, const QPixmap& overlayImage)
+UIDockIconPreview::UIDockIconPreview(UIMachine *pMachine, const QPixmap& overlayImage)
     : UIAbstractDockIconPreview(pMachine, overlayImage)
 {
     CocoaAutoreleasePool pool;
 
-    d = new UICocoaDockIconPreviewPrivate(pMachine, overlayImage);
+    d = new UIDockIconPreviewPrivate(pMachine, overlayImage);
 }
 
-UICocoaDockIconPreview::~UICocoaDockIconPreview()
+UIDockIconPreview::~UIDockIconPreview()
 {
     CocoaAutoreleasePool pool;
 
     delete d;
 }
 
-void UICocoaDockIconPreview::updateDockOverlay()
+void UIDockIconPreview::updateDockOverlay()
 {
     CocoaAutoreleasePool pool;
 
     [d->mUIDockTile updateAppIcon];
 }
 
-void UICocoaDockIconPreview::updateDockPreview(CGImageRef VMImage)
+void UIDockIconPreview::updateDockPreview(CGImageRef VMImage)
 {
     CocoaAutoreleasePool pool;
 
     [d->mUIDockTile updateMonitorWithImage:VMImage];
 }
 
-void UICocoaDockIconPreview::updateDockPreview(UIFrameBuffer *pFrameBuffer)
+void UIDockIconPreview::updateDockPreview(UIFrameBuffer *pFrameBuffer)
 {
     CocoaAutoreleasePool pool;
 
     UIAbstractDockIconPreview::updateDockPreview(pFrameBuffer);
 }
 
-void UICocoaDockIconPreview::setOriginalSize(int width, int height)
+void UIDockIconPreview::setOriginalSize(int width, int height)
 {
     CocoaAutoreleasePool pool;
 
@@ -144,7 +144,7 @@ void UICocoaDockIconPreview::setOriginalSize(int width, int height)
  * Class for arranging/updating the layers for the glossy monitor preview.
  */
 @implementation UIDockTileMonitor
-- (id)initWithFrame:(NSRect)frame parent:(UICocoaDockIconPreviewPrivate*)parent
+- (id)initWithFrame:(NSRect)frame parent:(UIDockIconPreviewPrivate*)parent
 {
     self = [super initWithFrame:frame];
 
@@ -213,7 +213,7 @@ void UICocoaDockIconPreview::setOriginalSize(int width, int height)
  * in the application icon & preview mode.
  */
 @implementation UIDockTileOverlay
-- (id)initWithFrame:(NSRect)frame parent:(UICocoaDockIconPreviewPrivate*)parent
+- (id)initWithFrame:(NSRect)frame parent:(UIDockIconPreviewPrivate*)parent
 {
     self = [super initWithFrame:frame];
 
@@ -237,7 +237,7 @@ void UICocoaDockIconPreview::setOriginalSize(int width, int height)
  * and preview mode & forwards all update request to the appropriate methods.
  */
 @implementation UIDockTile
-- (id)initWithParent:(UICocoaDockIconPreviewPrivate*)parent
+- (id)initWithParent:(UIDockIconPreviewPrivate*)parent
 {
     self = [super init];
 

@@ -1,10 +1,10 @@
-/* $Id: DockIconPreview.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIDockIconPreview.h 112767 2026-01-30 13:33:32Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIDockIconPreview class declaration.
  */
 
 /*
- * Copyright (C) 2010-2026 Oracle and/or its affiliates.
+ * Copyright (C) 2009-2026 Oracle and/or its affiliates.
  *
  * This file is part of VirtualBox base platform packages, as
  * available from https://www.virtualbox.org.
@@ -25,25 +25,33 @@
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
-#ifndef FEQT_INCLUDED_SRC_platform_darwin_DockIconPreview_h
-#define FEQT_INCLUDED_SRC_platform_darwin_DockIconPreview_h
+#ifndef FEQT_INCLUDED_SRC_platform_darwin_UIDockIconPreview_h
+#define FEQT_INCLUDED_SRC_platform_darwin_UIDockIconPreview_h
 #ifndef RT_WITHOUT_PRAGMA_ONCE
 # pragma once
 #endif
 
-/* GUI includes: */
-#include "UICocoaDockIconPreview.h"
+/* Qt includes */
+#include "UIAbstractDockIconPreview.h"
 
+class UIDockIconPreviewPrivate;
 
-/** UICocoaDockIconPreview extension to be used for VM. */
-class UIDockIconPreview : public UICocoaDockIconPreview
+class UIDockIconPreview: public UIAbstractDockIconPreview
 {
 public:
 
-    /** Constructor taking passed @a pMachine and @a overlayImage. */
-    UIDockIconPreview(UIMachine *pMachine, const QPixmap& overlayImage)
-        : UICocoaDockIconPreview(pMachine, overlayImage) {}
+    UIDockIconPreview(UIMachine *pMachine, const QPixmap& overlayImage);
+    ~UIDockIconPreview();
+
+    virtual void updateDockOverlay();
+    virtual void updateDockPreview(CGImageRef VMImage);
+    virtual void updateDockPreview(UIFrameBuffer *pFrameBuffer);
+
+    virtual void setOriginalSize(int aWidth, int aHeight);
+
+private:
+
+    UIDockIconPreviewPrivate *d;
 };
 
-#endif /* !FEQT_INCLUDED_SRC_platform_darwin_DockIconPreview_h */
-
+#endif /* !FEQT_INCLUDED_SRC_platform_darwin_UIDockIconPreview_h */

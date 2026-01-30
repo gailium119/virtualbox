@@ -1,4 +1,4 @@
-/* $Id: UIMachineView.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIMachineView.cpp 112767 2026-01-30 13:33:32Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIMachineView class implementation.
  */
@@ -59,7 +59,6 @@
 #ifdef VBOX_WS_MAC
 # include "UICocoaApplication.h"
 # include "DarwinKeyboard.h"
-# include "DockIconPreview.h"
 #endif
 #ifdef VBOX_WITH_DRAG_AND_DROP
 # include "UIDnDHandler.h"

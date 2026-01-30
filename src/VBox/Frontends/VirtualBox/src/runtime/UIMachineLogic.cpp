@@ -1,4 +1,4 @@
-/* $Id: UIMachineLogic.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIMachineLogic.cpp 112767 2026-01-30 13:33:32Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIMachineLogic class implementation.
  */
@@ -84,7 +84,7 @@
 #include "UIVMLogViewerDialog.h"
 #include "UIVMInformationDialog.h"
 #ifdef VBOX_WS_MAC
-# include "DockIconPreview.h"
+# include "UIDockIconPreview.h"
 # include "UIExtraDataManager.h"
 #endif
 #ifdef VBOX_GUI_WITH_NETWORK_MANAGER
