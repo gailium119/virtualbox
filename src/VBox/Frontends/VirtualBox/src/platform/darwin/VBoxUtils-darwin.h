@@ -1,4 +1,4 @@
-/* $Id: VBoxUtils-darwin.h 112766 2026-01-30 12:57:58Z sergey.dubov@oracle.com $ */
+/* $Id: VBoxUtils-darwin.h 112768 2026-01-30 13:38:47Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - Declarations of utility classes and functions for handling Darwin specific tasks.
  */
@@ -41,7 +41,9 @@
 #include <VBox/VBoxCocoa.h>
 
 /* External includes: */
+#define UInt UInt_not_needed // libkern/OSTypes.h defines it without any code needing it, causing trouble with Qt's use of this type for different purpose!!
 #include <ApplicationServices/ApplicationServices.h>
+#undef UInt
 #undef PVM // Stupid, stupid apple headers (sys/param.h)!!
 
 /* Forward declarations: */
