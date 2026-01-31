@@ -1,4 +1,4 @@
-/* $Id: SUPDrv.cpp 112724 2026-01-28 13:01:53Z knut.osmundsen@oracle.com $ */
+/* $Id: SUPDrv.cpp 112774 2026-01-31 03:47:23Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxDrv - The VirtualBox Support Driver - Common code.
  */
@@ -7564,15 +7564,19 @@ static void supdrvIOCtl_ArmGetCacheInfoOnCpu(PSUPARMGETCACHEINFO pReq, uint32_t 
      * Note! We share system registe reader macros with supdrvIOCtl_ArmGetSysRegsOnCpu()!
      */
 #  ifdef _MSC_VER
-#   define COMPILER_WRITE_SYS_REG(a_Op0, a_Op1, a_CRn, a_CRm, a_Op2, a_u64Value) \
-        _WriteStatusReg(ARMV8_AARCH64_SYSREG_ID_CREATE(a_Op0, a_Op1, a_CRn, a_CRm, a_Op2) & 0x7fff, (a_u64Value))
-#   define COMPILER_WRITE_SYS_REG_NAMED(a_SysRegName, a_u64Value) \
-        _WriteStatusReg(RT_CONCAT(ARMV8_AARCH64_SYSREG_,a_SysRegName) & 0x7fff, (a_u64Value))
+#   define COMPILER_WRITE_SYS_REG(a_Op0, a_Op1, a_CRn, a_CRm, a_Op2, a_u64Value) do { \
+            _WriteStatusReg(ARMV8_AARCH64_SYSREG_ID_CREATE(a_Op0, a_Op1, a_CRn, a_CRm, a_Op2) & 0x7fff, (a_u64Value)); \
+            __isb(0xf /*_ARM_BARRIER_SY*/); \
+        } while (0)
+#   define COMPILER_WRITE_SYS_REG_NAMED(a_SysRegName, a_u64Value) do { \
+            _WriteStatusReg(RT_CONCAT(ARMV8_AARCH64_SYSREG_,a_SysRegName) & 0x7fff, (a_u64Value)); \
+            __isb(0xf /*_ARM_BARRIER_SY*/); \
+        } while (0)
 #  else
 #   define COMPILER_WRITE_SYS_REG(a_Op0, a_Op1, a_CRn, a_CRm, a_Op2, a_u64Value) \
-        __asm__ __volatile__ ("msr s" #a_Op0 "_" #a_Op1 "_c" #a_CRn "_c" #a_CRm "_" #a_Op2 ", %0" : : "r" (a_u64Value))
+        __asm__ __volatile__ ("msr s" #a_Op0 "_" #a_Op1 "_c" #a_CRn "_c" #a_CRm "_" #a_Op2 ", %0\n\tisb" : : "r" (a_u64Value))
 #   define COMPILER_WRITE_SYS_REG_NAMED(a_SysRegName, a_u64Value) \
-        __asm__ __volatile__ ("msr " #a_SysRegName ", %0"  : : "r" (a_u64Value))
+        __asm__ __volatile__ ("msr " #a_SysRegName ", %0\n\tisb"  : : "r" (a_u64Value))
 #  endif
 
     /* Read CTR_EL0 & DCZID_EL0 for the return request data.  */

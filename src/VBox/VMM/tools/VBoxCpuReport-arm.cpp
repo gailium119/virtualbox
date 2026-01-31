@@ -1,4 +1,4 @@
-/* $Id: VBoxCpuReport-arm.cpp 112724 2026-01-28 13:01:53Z knut.osmundsen@oracle.com $ */
+/* $Id: VBoxCpuReport-arm.cpp 112774 2026-01-31 03:47:23Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxCpuReport - Produces the basis for a CPU DB entry, x86 specifics.
  */
@@ -837,7 +837,7 @@ static void printCacheEntries(const char *pszNameC, uint32_t cEntries, SUPARMCAC
         uint32_t const uAssoc = (uint32_t)((paEntries[i].uCcsIdR >> 3) & ((fFeatCcIdx ? RT_BIT_32(21) : RT_BIT_32(10)) - 1U)) + 1U;
         uint64_t const cbCache = cbLine * cSets * uAssoc;
         char szTmp1[64], szTmp2[64];
-        vbCpuRepPrintf("    { %#04x, {%u,%u,%u}, %u, %s %s }, /* CSSEL=L%u-%s%s cbLine=%u cSets=%-5u Asc=%-2u (% .0RhubB) */\n",
+        vbCpuRepPrintf("    { %#04x, {%u,%u,%u}, %u, %s %s }, /* CSSEL=L%u-%s%s cbLine=%-3u cSets=%-5u Asc=%-2u (% .0RhubB) */\n",
                        paEntries[i].bCsSel,
                        paEntries[i].abReserved[0], paEntries[i].abReserved[1], paEntries[i].abReserved[2],
                        paEntries[i].fFlags,
