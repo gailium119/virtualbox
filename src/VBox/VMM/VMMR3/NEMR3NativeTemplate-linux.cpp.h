@@ -1,4 +1,4 @@
-/* $Id: NEMR3NativeTemplate-linux.cpp.h 112711 2026-01-27 10:17:32Z alexander.eichner@oracle.com $ */
+/* $Id: NEMR3NativeTemplate-linux.cpp.h 112789 2026-02-02 17:31:41Z alexander.eichner@oracle.com $ */
 /** @file
  * NEM - Native execution manager, native ring-3 Linux backend, common bits for x86 and arm64.
  */
@@ -28,8 +28,236 @@
 /*
  * Supply stuff missing from the kvm.h on the build box.
  */
+
+/*
+ * Exit codes
+ */
+#ifndef KVM_EXIT_UNKNOWN
+# define KVM_EXIT_UNKNOWN 0
+#endif
+#ifndef KVM_EXIT_EXCEPTION
+# define KVM_EXIT_EXCEPTION 1
+#endif
+#ifndef KVM_EXIT_IO
+# define KVM_EXIT_IO 2
+#endif
+#ifndef KVM_EXIT_HYPERCALL
+# define KVM_EXIT_HYPERCALL 3
+#endif
+#ifndef KVM_EXIT_DEBUG
+# define KVM_EXIT_DEBUG 4
+#endif
+#ifndef KVM_EXIT_HLT
+# define KVM_EXIT_HLT 5
+#endif
+#ifndef KVM_EXIT_MMIO
+# define KVM_EXIT_MMIO 6
+#endif
+#ifndef KVM_EXIT_IRQ_WINDOW_OPEN
+# define KVM_EXIT_IRQ_WINDOW_OPEN 7
+#endif
+#ifndef KVM_EXIT_SHUTDOWN
+# define KVM_EXIT_SHUTDOWN 8
+#endif
+#ifndef KVM_EXIT_FAIL_ENTRY
+# define KVM_EXIT_FAIL_ENTRY 9
+#endif
+#ifndef KVM_EXIT_INTR
+# define KVM_EXIT_INTR 10
+#endif
+#ifndef KVM_EXIT_SET_TPR
+# define KVM_EXIT_SET_TPR 11
+#endif
+#ifndef KVM_EXIT_TPR_ACCESS
+# define KVM_EXIT_TPR_ACCESS 12
+#endif
+#ifndef KVM_EXIT_S390_SIEIC
+# define KVM_EXIT_S390_SIEIC 13
+#endif
+#ifndef KVM_EXIT_S390_RESET
+# define KVM_EXIT_S390_RESET 14
+#endif
+#ifndef KVM_EXIT_DCR
+# define KVM_EXIT_DCR 15
+#endif
+#ifndef KVM_EXIT_NMI
+# define KVM_EXIT_NMI 16
+#endif
+#ifndef KVM_EXIT_INTERNAL_ERROR
+# define KVM_EXIT_INTERNAL_ERROR 17
+#endif
+#ifndef KVM_EXIT_OSI
+# define KVM_EXIT_OSI 18
+#endif
+#ifndef KVM_EXIT_PAPR_HCALL
+# define KVM_EXIT_PAPR_HCALL 19
+#endif
+#ifndef KVM_EXIT_S390_UCONTROL
+# define KVM_EXIT_S390_UCONTROL 20
+#endif
+#ifndef KVM_EXIT_WATCHDOG
+# define KVM_EXIT_WATCHDOG 21
+#endif
+#ifndef KVM_EXIT_S390_TSCH
+# define KVM_EXIT_S390_TSCH 22
+#endif
+#ifndef KVM_EXIT_EPR
+# define KVM_EXIT_EPR 23
+#endif
+#ifndef KVM_EXIT_SYSTEM_EVENT
+# define KVM_EXIT_SYSTEM_EVENT 24
+#endif
+#ifndef KVM_EXIT_S390_STSI
+# define KVM_EXIT_S390_STSI 25
+#endif
+#ifndef KVM_EXIT_IOAPIC_EOI
+# define KVM_EXIT_IOAPIC_EOI 26
+#endif
+#ifndef KVM_EXIT_HYPERV
+# define KVM_EXIT_HYPERV 27
+#endif
+#ifndef KVM_EXIT_ARM_NISV
+# define KVM_EXIT_ARM_NISV 28
+#endif
+#ifndef KVM_EXIT_X86_RDMSR
+# define KVM_EXIT_X86_RDMSR 29
+#endif
+#ifndef KVM_EXIT_X86_WRMSR
+# define KVM_EXIT_X86_WRMSR 30
+#endif
+#ifndef KVM_EXIT_DIRTY_RING_FULL
+# define KVM_EXIT_DIRTY_RING_FULL 32
+#endif
+#ifndef KVM_EXIT_AP_RESET_HOLD
+# define KVM_EXIT_AP_RESET_HOLD 32
+#endif
+#ifndef KVM_EXIT_X86_BUS_LOCK
+# define KVM_EXIT_X86_BUS_LOCK 33
+#endif
+#ifndef KVM_EXIT_XEN
+# define KVM_EXIT_XEN 34
+#endif
+#ifndef KVM_EXIT_RISCV_SBI
+# define KVM_EXIT_RISCV_SBI 35
+#endif
+#ifndef KVM_EXIT_RISCV_CSR
+# define KVM_EXIT_RISCV_CSR 36
+#endif
+#ifndef KVM_EXIT_NOTIFY
+# define KVM_EXIT_NOTIFY 37
+#endif
+#ifndef KVM_EXIT_LOONGARCH_IOCSR
+# define KVM_EXIT_LOONGARCH_IOCSR 38
+#endif
+#ifndef KVM_EXIT_MEMORY_FAULT
+# define KVM_EXIT_MEMORY_FAULT 39
+#endif
+#ifndef KVM_EXIT_TDX
+# define KVM_EXIT_TDX 40
+#endif
+
+
+/*
+ * Flags for certain exits.
+ */
 #ifndef KVM_INTERNAL_ERROR_UNEXPECTED_EXIT_REASON /* since 5.4 */
 # define KVM_INTERNAL_ERROR_UNEXPECTED_EXIT_REASON 4
+#endif
+
+
+/*
+ * Capabilities
+ */
+#ifndef KVM_CAP_HYPERV_SEND_IPI
+# define KVM_CAP_HYPERV_SEND_IPI 161
+#endif
+#ifndef KVM_CAP_COALESCED_PIO
+# define KVM_CAP_COALESCED_PIO 162
+#endif
+#ifndef KVM_CAP_HYPERV_ENLIGHTENED_VMCS
+# define KVM_CAP_HYPERV_ENLIGHTENED_VMCS 163
+#endif
+#ifndef KVM_CAP_EXCEPTION_PAYLOAD
+# define KVM_CAP_EXCEPTION_PAYLOAD 164
+#endif
+#ifndef KVM_CAP_ARM_VM_IPA_SIZE
+# define KVM_CAP_ARM_VM_IPA_SIZE 165
+#endif
+#ifndef KVM_CAP_MANUAL_DIRTY_LOG_PROTECT
+# define KVM_CAP_MANUAL_DIRTY_LOG_PROTECT 166
+#endif
+#ifndef KVM_CAP_HYPERV_CPUID
+# define KVM_CAP_HYPERV_CPUID 167
+#endif
+#ifndef KVM_CAP_MANUAL_DIRTY_LOG_PROTECT2
+# define KVM_CAP_MANUAL_DIRTY_LOG_PROTECT2 168
+#endif
+#ifndef KVM_CAP_PPC_IRQ_XIVE
+# define KVM_CAP_PPC_IRQ_XIVE 169
+#endif
+#ifndef KVM_CAP_ARM_SVE
+# define KVM_CAP_ARM_SVE 170
+#endif
+#ifndef KVM_CAP_ARM_PTRAUTH_ADDRESS
+# define KVM_CAP_ARM_PTRAUTH_ADDRESS 171
+#endif
+#ifndef KVM_CAP_ARM_PTRAUTH_GENERIC
+# define KVM_CAP_ARM_PTRAUTH_GENERIC 172
+#endif
+#ifndef KVM_CAP_PMU_EVENT_FILTER
+# define KVM_CAP_PMU_EVENT_FILTER 173
+#endif
+#ifndef KVM_CAP_ARM_IRQ_LINE_LAYOUT_2
+# define KVM_CAP_ARM_IRQ_LINE_LAYOUT_2 174
+#endif
+#ifndef KVM_CAP_HYPERV_DIRECT_TLBFLUSH
+# define KVM_CAP_HYPERV_DIRECT_TLBFLUSH 175
+#endif
+#ifndef KVM_CAP_PPC_GUEST_DEBUG_SSTEP
+# define KVM_CAP_PPC_GUEST_DEBUG_SSTEP 176
+#endif
+#ifndef KVM_CAP_ARM_NISV_TO_USER
+# define KVM_CAP_ARM_NISV_TO_USER 177
+#endif
+#ifndef KVM_CAP_ARM_INJECT_EXT_DABT
+# define KVM_CAP_ARM_INJECT_EXT_DABT 178
+#endif
+#ifndef KVM_CAP_S390_VCPU_RESETS
+# define KVM_CAP_S390_VCPU_RESETS 179
+#endif
+#ifndef KVM_CAP_S390_PROTECTED
+# define KVM_CAP_S390_PROTECTED 180
+#endif
+#ifndef KVM_CAP_PPC_SECURE_GUEST
+# define KVM_CAP_PPC_SECURE_GUEST 181
+#endif
+#ifndef KVM_CAP_HALT_POLL
+# define KVM_CAP_HALT_POLL 181
+#endif
+#ifndef KVM_CAP_ASYNC_PF_INT
+# define KVM_CAP_ASYNC_PF_INT 182
+#endif
+#ifndef KVM_CAP_LAST_CPU
+# define KVM_CAP_LAST_CPU 183
+#endif
+#ifndef KVM_CAP_SMALLER_MAXPHYADDR
+# define KVM_CAP_SMALLER_MAXPHYADDR 184
+#endif
+#ifndef KVM_CAP_S390_DIAG318
+# define KVM_CAP_S390_DIAG318 185
+#endif
+#ifndef KVM_CAP_STEAL_TIME
+# define KVM_CAP_STEAL_TIME 186
+#endif
+#ifndef KVM_CAP_X86_USER_SPACE_MSR
+# define KVM_CAP_X86_USER_SPACE_MSR 187
+#endif
+#ifndef KVM_CAP_X86_MSR_FILTER
+# define KVM_CAP_X86_MSR_FILTER 188
+# define MY_KVM_DEFINE_MSR_FILTER
+#endif
+#ifndef KVM_CAP_ENFORCE_PV_FEATURE_CPUID
+# define KVM_CAP_ENFORCE_PV_FEATURE_CPUID 189
 #endif
 #ifndef KVM_CAP_SYS_HYPERV_CPUID
 # define KVM_CAP_SYS_HYPERV_CPUID 191
@@ -193,6 +421,45 @@
 #ifndef KVM_CAP_GUEST_MEMFD_FLAGS
 # define KVM_CAP_GUEST_MEMFD_FLAGS 244
 #endif
+
+
+#ifdef MY_KVM_DEFINE_MSR_FILTER
+# define KVM_MSR_FILTER_MAX_RANGES 16
+
+struct kvm_msr_filter_range
+{
+    uint32_t flags;
+    uint32_t nmsrs;
+    uint32_t base;
+    uint8_t  *bitmap;
+};
+
+struct kvm_msr_filter
+{
+    uint32_t flags;
+    strict kvm_msr_filter_range ranges[KVM_MSR_FILTER_MAX_RANGES];
+};
+
+#define KVM_MSR_FILTER_DEFAULT_ALLOW 0
+#define KVM_MSR_FILTER_DEFAULT_DENY  1
+
+# define KVM_X86_SET_MSR_FILTER _IOW(KVMIO,  0xc6, struct kvm_msr_filter)
+
+# define KVM_MSR_EXIT_REASON_INVAL   (1 << 0)
+# define KVM_MSR_EXIT_REASON_UNKNOWN (1 << 1)
+# define KVM_MSR_EXIT_REASON_FILTER  (1 << 2)
+#endif
+
+/* This needs to be defined always. */
+typedef struct
+{
+    uint8_t error;
+    uint8_t pad[7];
+    uint32_t reason;
+    uint32_t index;
+    uint64_t data;
+} kvm_run_exit_msr;
+
 
 
 /**
