@@ -1,4 +1,4 @@
-/* $Id: APICR3Nem-linux-x86.cpp 112727 2026-01-28 17:02:49Z alexander.eichner@oracle.com $ */
+/* $Id: APICR3Nem-linux-x86.cpp 112788 2026-02-02 16:54:19Z alexander.eichner@oracle.com $ */
 /** @file
  * APIC - Advanced Programmable Interrupt Controller - NEM KVM backend.
  */
@@ -61,6 +61,10 @@
 
 /** The number of IO-APIC pins generating interrupts. */
 #define IOAPIC_NUM_PINS 24
+
+#ifndef KVM_CAP_X86_APIC_BUS_CYCLES_NS
+# define KVM_CAP_X86_APIC_BUS_CYCLES_NS 237
+#endif
 
 #ifdef VBOX_WITH_STATISTICS
 # define X2APIC_MSRRANGE(a_uFirst, a_uLast, a_szName) \
