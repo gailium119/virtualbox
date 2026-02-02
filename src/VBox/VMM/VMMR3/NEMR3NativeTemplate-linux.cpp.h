@@ -1,4 +1,4 @@
-/* $Id: NEMR3NativeTemplate-linux.cpp.h 112789 2026-02-02 17:31:41Z alexander.eichner@oracle.com $ */
+/* $Id: NEMR3NativeTemplate-linux.cpp.h 112791 2026-02-02 17:57:45Z alexander.eichner@oracle.com $ */
 /** @file
  * NEM - Native execution manager, native ring-3 Linux backend, common bits for x86 and arm64.
  */
@@ -437,7 +437,7 @@ struct kvm_msr_filter_range
 struct kvm_msr_filter
 {
     uint32_t flags;
-    strict kvm_msr_filter_range ranges[KVM_MSR_FILTER_MAX_RANGES];
+    struct kvm_msr_filter_range ranges[KVM_MSR_FILTER_MAX_RANGES];
 };
 
 #define KVM_MSR_FILTER_DEFAULT_ALLOW 0
