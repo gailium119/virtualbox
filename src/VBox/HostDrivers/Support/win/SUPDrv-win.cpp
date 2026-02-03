@@ -1,4 +1,4 @@
-/* $Id: SUPDrv-win.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: SUPDrv-win.cpp 112806 2026-02-03 12:13:08Z knut.osmundsen@oracle.com $ */
 /** @file
  * VBoxDrv - The VirtualBox Support Driver - Windows NT specifics.
  */
@@ -4481,7 +4481,7 @@ supdrvNtProtectCallback_ProcessHandlePre(PVOID pvUser, POB_PRE_OPERATION_INFORMA
                    PROCESS_SET_LIMITED_INFORMATION right.  It seems like it need it for
                    some myserious and weirdly placed cpu set management of our process.
                    I'd love to understand what that's all about...
-                   Currently playing safe and only grand this right, however limited, to
+                   Currently playing safe and only grant this right, however limited, to
                    audiodg.exe. */
                 if (   g_uNtVerCombined >= SUP_MAKE_NT_VER_SIMPLE(10, 0)
                     && (   fDesiredAccess == PROCESS_SET_LIMITED_INFORMATION
