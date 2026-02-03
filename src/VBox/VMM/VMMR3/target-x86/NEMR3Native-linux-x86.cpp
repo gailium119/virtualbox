@@ -1,4 +1,4 @@
-/* $Id: NEMR3Native-linux-x86.cpp 112793 2026-02-02 18:36:58Z alexander.eichner@oracle.com $ */
+/* $Id: NEMR3Native-linux-x86.cpp 112805 2026-02-03 11:54:11Z alexander.eichner@oracle.com $ */
 /** @file
  * NEM - Native execution manager, native ring-3 Linux backend.
  */
@@ -1873,8 +1873,55 @@ static VBOXSTRICTRC nemHCLnxHandleExitWrMsr(PVMCPUCC pVCpu, struct kvm_run *pRun
 }
 
 
+/**
+ * Setup the guest debug state if it is active.
+ *
+ * @returns VBox status code.
+ * @param   pVM             The cross context VM structure.
+ * @param   pVCpu           The cross context CPU structure of the calling EMT.
+ * @param   fSingleStepping Flag whether we are in single stepping mode.
+ * @param   fInjectDb       Flag whether to inject a #DB for a genuine guest trap.
+ * @param   fInjectBp       Flag whether to inject a #BP for a genuine guest trap.
+ */
+static int nemR3LnxGstDbgUpdate(PVM pVM, PVMCPU pVCpu, bool fSingleStepping, bool fInjectDb, bool fInjectBp)
+{
+    struct kvm_guest_debug GstDbg = { 0 };
 
-static VBOXSTRICTRC nemHCLnxHandleExit(PVMCC pVM, PVMCPUCC pVCpu, struct kvm_run *pRun, bool *pfStatefulExit)
+    GstDbg.control = KVM_GUESTDBG_ENABLE;
+    GstDbg.control |= fSingleStepping ? (KVM_GUESTDBG_SINGLESTEP | KVM_GUESTDBG_BLOCKIRQ) : 0;
+
+    if (fInjectDb)
+        GstDbg.control |= KVM_GUESTDBG_INJECT_DB;
+    if (fInjectBp)
+        GstDbg.control |= KVM_GUESTDBG_INJECT_BP;
+    if (pVM->dbgf.ro.cEnabledSwBreakpoints)
+        GstDbg.control |= KVM_GUESTDBG_USE_SW_BP;
+
+    if ((CPUMGetHyperDR7(pVCpu) & X86_DR7_ENABLED_MASK))
+    {
+        GstDbg.arch.debugreg[0] = CPUMGetHyperDR0(pVCpu);
+        GstDbg.arch.debugreg[1] = CPUMGetHyperDR1(pVCpu);
+        GstDbg.arch.debugreg[2] = CPUMGetHyperDR2(pVCpu);
+        GstDbg.arch.debugreg[3] = CPUMGetHyperDR3(pVCpu);
+        GstDbg.arch.debugreg[6] = CPUMGetHyperDR6(pVCpu);
+        GstDbg.arch.debugreg[7] = CPUMGetHyperDR7(pVCpu);
+        GstDbg.control |= KVM_GUESTDBG_USE_HW_BP;
+    }
+
+    int rcLnx = ioctl(pVCpu->nem.s.fdVCpu, KVM_SET_GUEST_DEBUG, &GstDbg);
+    if (rcLnx == 0)
+    { /* probable */ }
+    else
+    {
+        int rc = RTErrConvertFromErrno(errno);
+        AssertLogRelMsgFailedReturn(("KVM_SET_GUEST_DEBUG failed: rcLnx=%d errno=%u rc=%Rrc\n", rcLnx, errno, rc), rc);
+    }
+
+    return VINF_SUCCESS;
+}
+
+
+static VBOXSTRICTRC nemHCLnxHandleExit(PVMCC pVM, PVMCPUCC pVCpu, struct kvm_run *pRun, bool fSingleStepping, bool *pfStatefulExit)
 {
     STAM_REL_COUNTER_INC(&pVCpu->nem.s.StatExitTotal);
 
@@ -1953,15 +2000,22 @@ static VBOXSTRICTRC nemHCLnxHandleExit(PVMCC pVM, PVMCPUCC pVCpu, struct kvm_run
                 AssertRCReturn(rc2, rc2);
 
                 VBOXSTRICTRC rcStrict = DBGFTrap03Handler(pVM, pVCpu, &pVCpu->cpum.GstCtx);
-                /** @todo Forward genuine guest traps to the guest. */
-                Assert(rcStrict == VINF_EM_DBG_BREAKPOINT);
+                if (rcStrict == VINF_EM_RAW_GUEST_TRAP)
+                    rcStrict = nemR3LnxGstDbgUpdate(pVM, pVCpu, false /*fSingleStepping*/, false /*fInjectDb*/, true /*fInjectBp*/);
+                else
+                    Assert(rcStrict == VINF_EM_DBG_BREAKPOINT);
                 return rcStrict;
             }
             else if (pRun->debug.arch.exception == X86_XCPT_DB)
             {
                 /* Should be single stepping. */
                 Assert(pRun->debug.arch.dr6 & X86_DR6_BS);
-                return VINF_EM_DBG_STEPPED;
+                int rc = DBGFTrap01Handler(pVM, pVCpu, &pVCpu->cpum.GstCtx, pRun->debug.arch.dr6, fSingleStepping);
+                if (rc == VINF_EM_RAW_GUEST_TRAP)
+                    rc = nemR3LnxGstDbgUpdate(pVM, pVCpu, false /*fSingleStepping*/, true /*fInjectDb*/, false /*fInjectBp*/);
+                else
+                    Assert(rc == VINF_EM_DBG_BREAKPOINT || rc == VINF_EM_DBG_STEPPED);
+                return rc;
             }
             else
                 AssertFailed();
@@ -2046,37 +2100,6 @@ static VBOXSTRICTRC nemHCLnxHandleExit(PVMCC pVM, PVMCPUCC pVCpu, struct kvm_run
 
 
 /**
- * Setup the guest debug state if it is active.
- *
- * @returns VBox status code.
- * @param   pVM             The cross context VM structure.
- * @param   pVCpu           The cross context CPU structure of the calling EMT.
- * @param   fSingleStepping Flag whether we are in single stepping mode.
- */
-static int nemR3LnxGstDbgUpdate(PVM pVM, PVMCPU pVCpu, bool fSingleStepping)
-{
-    struct kvm_guest_debug GstDbg = { 0 };
-
-    GstDbg.control = KVM_GUESTDBG_ENABLE;
-    GstDbg.control |= fSingleStepping ? (KVM_GUESTDBG_SINGLESTEP | KVM_GUESTDBG_BLOCKIRQ) : 0;
-
-    if (pVM->dbgf.ro.cEnabledSwBreakpoints)
-        GstDbg.control |= KVM_GUESTDBG_USE_SW_BP;
-
-    int rcLnx = ioctl(pVCpu->nem.s.fdVCpu, KVM_SET_GUEST_DEBUG, &GstDbg);
-    if (rcLnx == 0)
-    { /* probable */ }
-    else
-    {
-        int rc = RTErrConvertFromErrno(errno);
-        AssertLogRelMsgFailedReturn(("KVM_SET_GUEST_DEBUG failed: rcLnx=%d errno=%u rc=%Rrc\n", rcLnx, errno, rc), rc);
-    }
-
-    return VINF_SUCCESS;
-}
-
-
-/**
  * Clears the guest debug state.
  *
  * @returns VBox status code.
@@ -2085,6 +2108,10 @@ static int nemR3LnxGstDbgUpdate(PVM pVM, PVMCPU pVCpu, bool fSingleStepping)
 static int nemR3LnxGstDbgClear(PVMCPU pVCpu)
 {
     struct kvm_guest_debug GstDbg = { 0 };
+
+    CPUMR3NemActivateGuestDebugState(pVCpu);
+    Assert(CPUMIsGuestDebugStateActive(pVCpu));
+    Assert(!CPUMIsHyperDebugStateActive(pVCpu));
 
     int rcLnx = ioctl(pVCpu->nem.s.fdVCpu, KVM_SET_GUEST_DEBUG, &GstDbg);
     if (rcLnx == 0)
@@ -2124,7 +2151,37 @@ VMMR3_INT_DECL(VBOXSTRICTRC) NEMR3RunGC(PVM pVM, PVMCPU pVCpu)
     bool                    fStatefulExit       = false;  /* For MMIO and IO exits. */
     const bool              fGstDbg             =    pVCpu->nem.s.fUseDebugLoop
                                                   || fSingleStepping
-                                                  || pVM->dbgf.ro.cEnabledSwBreakpoints;
+                                                  || pVM->dbgf.ro.cEnabledSwBreakpoints
+                                                  || pVM->dbgf.ro.cEnabledHwBreakpoints;
+
+    /* Make sure the hypervisor debug register values are up to date. */
+    if (   fGstDbg
+        && (CPUMGetHyperDR7(pVCpu) & X86_DR7_ENABLED_MASK))
+    {
+        if (pVCpu->cpum.GstCtx.fExtrn & CPUMCTX_EXTRN_DR_MASK)
+        {
+            int rc = nemHCLnxImportState(pVCpu, CPUMCTX_EXTRN_DR_MASK, &pVCpu->cpum.GstCtx, pVCpu->nem.s.pRun);
+            if (RT_SUCCESS(rc))
+                pVCpu->cpum.GstCtx.fExtrn &= ~CPUMCTX_EXTRN_DR_MASK;
+            else
+                return rc;
+        }
+
+        /*
+         * Use the combined guest and host DRx values found in the hypervisor register set
+         * because the hypervisor debugger has breakpoints active.
+         */
+        if (!CPUMIsHyperDebugStateActive(pVCpu))
+        {
+            /*
+             * Make sure the hypervisor values are up to date.
+             */
+            CPUMR3NemActivateHyperDebugState(pVCpu);
+            Assert(CPUMIsHyperDebugStateActive(pVCpu));
+            Assert(!CPUMIsGuestDebugStateActive(pVCpu));
+        }
+    }
+
     for (unsigned iLoop = 0;; iLoop++)
     {
         /*
@@ -2169,7 +2226,7 @@ VMMR3_INT_DECL(VBOXSTRICTRC) NEMR3RunGC(PVM pVM, PVMCPU pVCpu)
 
         if (fGstDbg)
         {
-            int rc2 = nemR3LnxGstDbgUpdate(pVM, pVCpu, fSingleStepping);
+            int rc2 = nemR3LnxGstDbgUpdate(pVM, pVCpu, fSingleStepping, false /*fInjectDb*/, false /*fInjectBp*/);
             AssertRCReturn(rc2, rc2);
         }
 
@@ -2221,7 +2278,7 @@ VMMR3_INT_DECL(VBOXSTRICTRC) NEMR3RunGC(PVM pVM, PVMCPU pVCpu)
                     /*
                      * Deal with the exit.
                      */
-                    rcStrict = nemHCLnxHandleExit(pVM, pVCpu, pRun, &fStatefulExit);
+                    rcStrict = nemHCLnxHandleExit(pVM, pVCpu, pRun, fSingleStepping, &fStatefulExit);
                     if (rcStrict == VINF_SUCCESS)
                     { /* hopefully likely */ }
                     else
@@ -2309,7 +2366,7 @@ VMMR3_INT_DECL(VBOXSTRICTRC) NEMR3RunGC(PVM pVM, PVMCPU pVCpu)
             AssertLogRelMsgBreakStmt(rcLnx == 0 && pRun->exit_reason == uOrgExit,
                                      ("rcLnx=%d errno=%d exit_reason=%d uOrgExit=%d\n", rcLnx, errno, pRun->exit_reason, uOrgExit),
                                      rcStrict = VERR_NEM_IPE_6);
-            VBOXSTRICTRC rcStrict2 = nemHCLnxHandleExit(pVM, pVCpu, pRun, &fStatefulExit);
+            VBOXSTRICTRC rcStrict2 = nemHCLnxHandleExit(pVM, pVCpu, pRun, fSingleStepping, &fStatefulExit);
             if (rcStrict2 == VINF_SUCCESS || rcStrict2 == rcStrict)
             { /* likely */ }
             else if (RT_FAILURE(rcStrict2))
