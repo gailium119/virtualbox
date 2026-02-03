@@ -1,4 +1,4 @@
-/* $Id: VBoxUtils-darwin.h 112802 2026-02-03 11:38:49Z sergey.dubov@oracle.com $ */
+/* $Id: VBoxUtils-darwin.h 112803 2026-02-03 11:43:28Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - Declarations of utility classes and functions for handling Darwin specific tasks.
  */
@@ -136,7 +136,7 @@ NativeNSViewRef darwinToNativeViewImpl(NativeNSWindowRef pWindow);
  ********************************************************************************/
 void darwinSetHidesAllTitleButtonsImpl(NativeNSWindowRef pWindow);
 void darwinSetShowsToolbarButtonImpl(NativeNSWindowRef pWindow, bool fEnabled);
-void darwinLabelWindow(NativeNSWindowRef pWindow, NativeNSImageRef pImage, double dDpr);
+void darwinSetWindowLabelImpl(NativeNSWindowRef pWindow, NativeNSImageRef pImage, double dDpr);
 void darwinSetWindowHasShadow(NativeNSWindowRef pWindow, bool fEnabled);
 
 /********************************************************************************
@@ -236,7 +236,7 @@ NativeNSButtonRef darwinNativeButtonOfWindow(QWidget *pWidget, StandardWindowBut
 SHARED_LIBRARY_STUFF bool darwinSetFrontMostProcess();
 SHARED_LIBRARY_STUFF void darwinSetHidesAllTitleButtons(QWidget *pWidget);
 void darwinSetShowsToolbarButton(QToolBar *aToolBar, bool fEnabled);
-SHARED_LIBRARY_STUFF void darwinLabelWindow(QWidget *pWidget, QPixmap *pPixmap);
+SHARED_LIBRARY_STUFF void darwinSetWindowLabel(QWidget *pWidget, QPixmap *pPixmap);
 SHARED_LIBRARY_STUFF void darwinSetWindowHasShadow(QWidget *pWidget, bool fEnabled);
 SHARED_LIBRARY_STUFF void darwinDisableIconsInMenus();
 

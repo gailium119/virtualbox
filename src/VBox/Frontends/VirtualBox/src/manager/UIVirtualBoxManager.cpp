@@ -1,4 +1,4 @@
-/* $Id: UIVirtualBoxManager.cpp 112782 2026-02-02 16:11:00Z sergey.dubov@oracle.com $ */
+/* $Id: UIVirtualBoxManager.cpp 112803 2026-02-03 11:43:28Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIVirtualBoxManager class implementation.
  */
@@ -2434,7 +2434,7 @@ void UIVirtualBoxManager::prepare()
     if (UIVersionInfo::showBetaLabel())
     {
         QPixmap betaLabel = ::betaLabel(QSize(74, darwinWindowTitleHeight(this) - 1));
-        ::darwinLabelWindow(this, &betaLabel);
+        darwinSetWindowLabel(this, &betaLabel);
     }
 #endif /* VBOX_WS_MAC */
 

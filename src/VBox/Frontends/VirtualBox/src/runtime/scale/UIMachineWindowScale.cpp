@@ -1,4 +1,4 @@
-/* $Id: UIMachineWindowScale.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIMachineWindowScale.cpp 112803 2026-02-03 11:43:28Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIMachineWindowScale class implementation.
  */
@@ -86,7 +86,7 @@ void UIMachineWindowScale::prepareVisualState()
     if (UIVersionInfo::showBetaLabel())
     {
         QPixmap betaLabel = ::betaLabel(QSize(74, darwinWindowTitleHeight(this) - 1));
-        ::darwinLabelWindow(this, &betaLabel);
+        darwinSetWindowLabel(this, &betaLabel);
     }
 
     /* Enable fullscreen support for every screen which requires it: */

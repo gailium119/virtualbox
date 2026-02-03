@@ -1,4 +1,4 @@
-/* $Id: VBoxUtils-darwin-cocoa.mm 112801 2026-02-03 11:15:16Z sergey.dubov@oracle.com $ */
+/* $Id: VBoxUtils-darwin-cocoa.mm 112803 2026-02-03 11:43:28Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI -  Declarations of utility classes and functions for handling Darwin Cocoa specific tasks.
  */
@@ -91,7 +91,7 @@ void darwinSetShowsToolbarButtonImpl(NativeNSWindowRef pWindow, bool fEnabled)
     [pWindow setShowsToolbarButton:fEnabled];
 }
 
-void darwinLabelWindow(NativeNSWindowRef pWindow, NativeNSImageRef pImage, double dDpr)
+void darwinSetWindowLabelImpl(NativeNSWindowRef pWindow, NativeNSImageRef pImage, double dDpr)
 {
     /* Get the parent view of the close button. */
     NSView *wv = [[pWindow standardWindowButton:NSWindowCloseButton] superview];
