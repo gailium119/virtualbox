@@ -1,4 +1,4 @@
-/* $Id: SUPDrv-linux.c 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: SUPDrv-linux.c 112795 2026-02-03 04:36:58Z ramshankar.venkataraman@oracle.com $ */
 /** @file
  * VBoxDrv - The VirtualBox Support Driver - Linux specifics.
  */
@@ -439,14 +439,27 @@ static int supdrvLinuxInitKvmSymbols(void)
                             unregister_kprobe(&KernProbe);
                             return VINF_SUCCESS;
                         }
+                        else
+                            printk(KERN_WARNING "vboxdrv: Failed to find or obtain reference for the KVM module\n");
                     }
+                    else
+                        printk(KERN_WARNING "vboxdrv: Cannot determine KVM module name for this CPU architecture\n");
                 }
+                else
+                    printk(KERN_WARNING "vboxdrv: The address of the found 'find_module' symbol isn't valid\n");
                 unregister_kprobe(&KernProbe);
             }
+            else
+                printk(KERN_WARNING "vboxdrv: Failed to register kprobe for 'find_module', rc=%d\n", rc);
             symbol_put_addr(pfnDisable);
         }
+        else
+            printk(KERN_WARNING "vboxdrv: Failed to find 'kvm_disable_virtualization'\n");
         symbol_put_addr(pfnEnable);
     }
+    else
+        printk(KERN_WARNING "vboxdrv: Failed to find 'kvm_enable_virtualization'\n");
+
     return VERR_NOT_FOUND;
 }
 
