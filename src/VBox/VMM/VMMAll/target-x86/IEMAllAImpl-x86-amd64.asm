@@ -1,4 +1,4 @@
-; $Id: IEMAllAImpl-x86-amd64.asm 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $
+; $Id: IEMAllAImpl-x86-amd64.asm 112809 2026-02-03 14:48:18Z knut.osmundsen@oracle.com $
 ;; @file
 ; IEM - Instruction Implementation in Assembly, x86 target, amd64 host.
 ;
@@ -409,7 +409,7 @@ GLOBALNAME_RAW NAME_FASTCALL(%1,%2,@), function, hidden
 ;
 %macro IEM_SAVE_FLAGS_RETVAL 4 0
  %if (%2 | %3 | %4) != 0
-        mov     T1_32, %1                                       ; flags
+        mov     T1_32, %1                                       ; flags - TODO: REMOVE THIS!
   %ifdef IEM_AIMPL_WITH_LOAD_AND_SAVE_ALL_STATUS_FLAGS
         pushf
         pop     T0
