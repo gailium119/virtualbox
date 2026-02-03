@@ -1,4 +1,4 @@
-/* $Id: VBoxUtils-darwin.h 112798 2026-02-03 10:59:39Z sergey.dubov@oracle.com $ */
+/* $Id: VBoxUtils-darwin.h 112799 2026-02-03 11:04:11Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - Declarations of utility classes and functions for handling Darwin specific tasks.
  */
@@ -55,7 +55,6 @@ class QWidget;
 
 /* Cocoa declarations: */
 ADD_COCOA_NATIVE_REF(NSButton);
-ADD_COCOA_NATIVE_REF(NSEvent);
 ADD_COCOA_NATIVE_REF(NSImage);
 ADD_COCOA_NATIVE_REF(NSString);
 ADD_COCOA_NATIVE_REF(NSView);
@@ -154,7 +153,7 @@ SHARED_LIBRARY_STUFF uint64_t darwinGetCurrentProcessId();
 
 bool darwinMouseGrabEvents(const void *pvCocoaEvent, const void *pvCarbonEvent, void *pvUser);
 
-SHARED_LIBRARY_STUFF bool darwinIsApplicationCommand(ConstNativeNSEventRef pEvent);
+SHARED_LIBRARY_STUFF bool darwinIsApplicationCommand(const void *pvCocoaEvent);
 
 void darwinRetranslateAppMenu();
 

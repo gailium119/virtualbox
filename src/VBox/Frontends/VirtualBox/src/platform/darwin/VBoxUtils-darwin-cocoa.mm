@@ -1,4 +1,4 @@
-/* $Id: VBoxUtils-darwin-cocoa.mm 112797 2026-02-03 10:54:09Z sergey.dubov@oracle.com $ */
+/* $Id: VBoxUtils-darwin-cocoa.mm 112799 2026-02-03 11:04:11Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI -  Declarations of utility classes and functions for handling Darwin Cocoa specific tasks.
  */
@@ -355,8 +355,9 @@ bool darwinMouseGrabEvents(const void *pvCocoaEvent, const void *pvCarbonEvent, 
  * @returns true if such a key combo was hit, false otherwise.
  * @param   pEvent          The Cocoa event.
  */
-bool darwinIsApplicationCommand(ConstNativeNSEventRef pEvent)
+bool darwinIsApplicationCommand(const void *pvCocoaEvent)
 {
+    NSEvent *pEvent = (NSEvent*)pvCocoaEvent;
     NSEventType  eEvtType = [pEvent type];
     bool         fGlobalHotkey = false;
 //
