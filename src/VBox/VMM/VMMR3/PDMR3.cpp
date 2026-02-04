@@ -1,4 +1,4 @@
-/* $Id: PDMR3.cpp 112820 2026-02-04 14:45:35Z alexander.eichner@oracle.com $ */
+/* $Id: PDMR3.cpp 112822 2026-02-04 14:47:38Z alexander.eichner@oracle.com $ */
 /** @file
  * PDM - Pluggable Device Manager.
  */
@@ -1340,7 +1340,7 @@ static DECLCALLBACK(int) pdmR3LoadExec(PVM pVM, PSSMHANDLE pSSM, uint32_t uVersi
             if (   SSMR3HandleGetAfter(pSSM) != SSMAFTER_DEBUG_IT
                 && RTStrCmp(pDevIns->pReg->szName, "tpm-ppi") /* !!HACK ALERT!! - ugly, see todo above */
                 && RTStrCmp(pDevIns->pReg->szName, "apic")
-                && RTStrCmp(pDevIns->pReg->szName, "apic-nem")))
+                && RTStrCmp(pDevIns->pReg->szName, "apic-nem"))
             {
                 RTCritSectRwLeaveShared(&pVM->pdm.s.CoreListCritSectRw);
                 return SSMR3SetCfgError(pSSM, RT_SRC_POS, N_("Device '%s'/%d not found in the saved state"),
