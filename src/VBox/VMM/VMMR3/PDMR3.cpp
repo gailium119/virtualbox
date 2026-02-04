@@ -1,4 +1,4 @@
-/* $Id: PDMR3.cpp 112819 2026-02-04 14:42:49Z alexander.eichner@oracle.com $ */
+/* $Id: PDMR3.cpp 112820 2026-02-04 14:45:35Z alexander.eichner@oracle.com $ */
 /** @file
  * PDM - Pluggable Device Manager.
  */
@@ -1309,7 +1309,7 @@ static DECLCALLBACK(int) pdmR3LoadExec(PVM pVM, PSSMHANDLE pSSM, uint32_t uVersi
              * one provided by the host hypervisor is used, which are saved state compatible.
              */
             /** @todo Maybe it is worth introducing a flag in the device registration structure to indicate that
-             *        the same functionality can be provided by different device registrations.
+             *        the same functionality can be provided by different device registrations. */
             if (   !RTStrCmp(szName, "apic")
                 || !RTStrCmp(szName, "apic-nem"))
                 fSkip = true;
