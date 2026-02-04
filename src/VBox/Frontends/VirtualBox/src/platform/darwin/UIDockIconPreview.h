@@ -1,4 +1,4 @@
-/* $Id: UIDockIconPreview.h 112767 2026-01-30 13:33:32Z sergey.dubov@oracle.com $ */
+/* $Id: UIDockIconPreview.h 112816 2026-02-04 12:57:14Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIDockIconPreview class declaration.
  */
@@ -31,27 +31,58 @@
 # pragma once
 #endif
 
-/* Qt includes */
-#include "UIAbstractDockIconPreview.h"
+/* GUI includes: */
+#include "VBoxUtils-darwin.h"
 
+/* Forward declarations: */
+class QPixmap;
 class UIDockIconPreviewPrivate;
+class UIFrameBuffer;
+class UIMachine;
 
-class UIDockIconPreview: public UIAbstractDockIconPreview
+class UIDockIconPreview
 {
 public:
 
     UIDockIconPreview(UIMachine *pMachine, const QPixmap& overlayImage);
     ~UIDockIconPreview();
 
-    virtual void updateDockOverlay();
-    virtual void updateDockPreview(CGImageRef VMImage);
-    virtual void updateDockPreview(UIFrameBuffer *pFrameBuffer);
+    void updateDockOverlay();
+    void updateDockPreview(CGImageRef VMImage);
+    void updateDockPreview(UIFrameBuffer *pFrameBuffer);
 
-    virtual void setOriginalSize(int aWidth, int aHeight);
+    void setOriginalSize(int aWidth, int aHeight);
 
 private:
 
     UIDockIconPreviewPrivate *d;
+};
+
+class UIDockIconPreviewHelper
+{
+public:
+    UIDockIconPreviewHelper(UIMachine *pMachine, const QPixmap& overlayImage);
+    virtual ~UIDockIconPreviewHelper();
+    void initPreviewImages();
+    void drawOverlayIcons(CGContextRef context);
+
+    void* currentPreviewWindowId() const;
+
+    /* Flipping is necessary cause the drawing context in Mac OS X is flipped by 180 degree */
+    inline CGRect flipRect(CGRect rect) const { return ::darwinFlipCGRect(rect, m_dockIconRect); }
+    inline CGRect centerRect(CGRect rect) const { return ::darwinCenterRectTo(rect, m_dockIconRect); }
+    inline CGRect centerRectTo(CGRect rect, const CGRect& toRect) const { return ::darwinCenterRectTo(rect, toRect); }
+
+    /* Private member vars */
+    UIMachine *m_pMachine;
+    const CGRect m_dockIconRect;
+
+    CGImageRef m_overlayImage;
+    CGImageRef m_dockMonitor;
+    CGImageRef m_dockMonitorGlossy;
+
+    CGRect m_updateRect;
+    CGRect m_monitorRect;
 };
 
 #endif /* !FEQT_INCLUDED_SRC_platform_darwin_UIDockIconPreview_h */

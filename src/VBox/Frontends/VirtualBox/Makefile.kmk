@@ -1,4 +1,4 @@
-# $Id: Makefile.kmk 112807 2026-02-03 13:54:18Z sergey.dubov@oracle.com $
+# $Id: Makefile.kmk 112816 2026-02-04 12:57:14Z sergey.dubov@oracle.com $
 ## @file
 # Makefile for the VirtualBox Qt GUI.
 #
@@ -1283,8 +1283,8 @@ ifdef VBOX_WITH_DRAG_AND_DROP
 endif
 
 VirtualBoxVM_SOURCES.darwin += \
-	src/platform/darwin/UIAbstractDockIconPreview.cpp \
-	src/platform/darwin/UIDockIconPreview.mm
+	src/platform/darwin/UIDockIconPreview.cpp \
+	src/platform/darwin/UIDockIconPreview-cocoa.mm
 
 if1of ($(KBUILD_TARGET), freebsd linux netbsd openbsd solaris) # U*nix
  VirtualBoxVM_SOURCES += \

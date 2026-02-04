@@ -1,4 +1,4 @@
-/* $Id: UIAbstractDockIconPreview.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIDockIconPreview.cpp 112816 2026-02-04 12:57:14Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - Realtime Dock Icon Preview
  */
@@ -29,23 +29,16 @@
 #include <QStyle>
 
 /* GUI includes: */
-#include "UIAbstractDockIconPreview.h"
 #include "UICommon.h"
-#include "UIConverter.h"
+#include "UIDockIconPreview.h"
 #include "UIExtraDataManager.h"
 #include "UIFrameBuffer.h"
 #include "UIMachine.h"
 #include "UIMachineLogic.h"
 #include "UIMachineView.h"
 
-/* COM includes: */
 
-
-UIAbstractDockIconPreview::UIAbstractDockIconPreview(UIMachine *, const QPixmap &)
-{
-}
-
-void UIAbstractDockIconPreview::updateDockPreview(UIFrameBuffer *pFrameBuffer)
+void UIDockIconPreview::updateDockPreview(UIFrameBuffer *pFrameBuffer)
 {
     CGColorSpaceRef cs = CGColorSpaceCreateDeviceRGB();
     Assert(cs);
@@ -66,7 +59,8 @@ void UIAbstractDockIconPreview::updateDockPreview(UIFrameBuffer *pFrameBuffer)
     CGColorSpaceRelease(cs);
 }
 
-UIAbstractDockIconPreviewHelper::UIAbstractDockIconPreviewHelper(UIMachine *pMachine, const QPixmap& overlayImage)
+
+UIDockIconPreviewHelper::UIDockIconPreviewHelper(UIMachine *pMachine, const QPixmap& overlayImage)
     : m_pMachine(pMachine)
     , m_dockIconRect(CGRectMake(0, 0, 128, 128))
     , m_dockMonitor(NULL)
@@ -78,7 +72,7 @@ UIAbstractDockIconPreviewHelper::UIAbstractDockIconPreviewHelper(UIMachine *pMac
     Assert(m_overlayImage);
 }
 
-void* UIAbstractDockIconPreviewHelper::currentPreviewWindowId() const
+void* UIDockIconPreviewHelper::currentPreviewWindowId() const
 {
     /* Get the MachineView which is currently previewed and return the win id
        of the viewport. */
@@ -88,7 +82,7 @@ void* UIAbstractDockIconPreviewHelper::currentPreviewWindowId() const
     return 0;
 }
 
-UIAbstractDockIconPreviewHelper::~UIAbstractDockIconPreviewHelper()
+UIDockIconPreviewHelper::~UIDockIconPreviewHelper()
 {
     CGImageRelease(m_overlayImage);
     if (m_dockMonitor)
@@ -97,7 +91,7 @@ UIAbstractDockIconPreviewHelper::~UIAbstractDockIconPreviewHelper()
         CGImageRelease(m_dockMonitorGlossy);
 }
 
-void UIAbstractDockIconPreviewHelper::initPreviewImages()
+void UIDockIconPreviewHelper::initPreviewImages()
 {
     if (!m_dockMonitor)
     {
@@ -121,7 +115,7 @@ void UIAbstractDockIconPreviewHelper::initPreviewImages()
     }
 }
 
-void UIAbstractDockIconPreviewHelper::drawOverlayIcons(CGContextRef context)
+void UIDockIconPreviewHelper::drawOverlayIcons(CGContextRef context)
 {
     /* Determine whether dock icon overlay is not disabled: */
     if (!gEDataManager->dockIconDisableOverlay(uiCommon().managedVMUuid()))

@@ -1,4 +1,4 @@
-/* $Id: UIDockIconPreview.mm 112808 2026-02-03 14:21:20Z sergey.dubov@oracle.com $ */
+/* $Id: UIDockIconPreview-cocoa.mm 112816 2026-02-04 12:57:14Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIDockIconPreview class implementation.
  */
@@ -74,11 +74,11 @@
  * Helper class which allow us to access all members/methods of AbstractDockIconPreviewHelper
  * from any Cocoa class.
  */
-class UIDockIconPreviewPrivate: public UIAbstractDockIconPreviewHelper
+class UIDockIconPreviewPrivate: public UIDockIconPreviewHelper
 {
 public:
     inline UIDockIconPreviewPrivate(UIMachine *pMachine, const QPixmap& overlayImage)
-        : UIAbstractDockIconPreviewHelper(pMachine, overlayImage)
+        : UIDockIconPreviewHelper(pMachine, overlayImage)
     {
         mUIDockTile = [[UIDockTile alloc] initWithParent:this];
     }
@@ -97,7 +97,6 @@ public:
  * Cocoa wrapper for the abstract dock icon preview class
  */
 UIDockIconPreview::UIDockIconPreview(UIMachine *pMachine, const QPixmap& overlayImage)
-    : UIAbstractDockIconPreview(pMachine, overlayImage)
 {
     CocoaAutoreleasePool pool;
 
@@ -123,13 +122,6 @@ void UIDockIconPreview::updateDockPreview(CGImageRef VMImage)
     CocoaAutoreleasePool pool;
 
     [d->mUIDockTile updateMonitorWithImage:VMImage];
-}
-
-void UIDockIconPreview::updateDockPreview(UIFrameBuffer *pFrameBuffer)
-{
-    CocoaAutoreleasePool pool;
-
-    UIAbstractDockIconPreview::updateDockPreview(pFrameBuffer);
 }
 
 void UIDockIconPreview::setOriginalSize(int width, int height)
