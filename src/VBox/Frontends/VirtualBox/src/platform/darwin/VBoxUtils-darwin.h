@@ -1,4 +1,4 @@
-/* $Id: VBoxUtils-darwin.h 112804 2026-02-03 11:46:00Z sergey.dubov@oracle.com $ */
+/* $Id: VBoxUtils-darwin.h 112815 2026-02-04 12:17:52Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - Declarations of utility classes and functions for handling Darwin specific tasks.
  */
@@ -182,6 +182,7 @@ SHARED_LIBRARY_STUFF void darwinSetMouseCoalescingEnabled(bool fEnabled);
 /********************************************************************************
  * Simple helper methods (OS System native)
  ********************************************************************************/
+SHARED_LIBRARY_STUFF bool darwinForceActiveFocus();
 SHARED_LIBRARY_STUFF bool darwinScreensHaveSeparateSpaces();
 SHARED_LIBRARY_STUFF bool darwinIsScrollerStyleOverlay();
 SHARED_LIBRARY_STUFF bool darwinIsApplicationCommand(const void *pvCocoaEvent);

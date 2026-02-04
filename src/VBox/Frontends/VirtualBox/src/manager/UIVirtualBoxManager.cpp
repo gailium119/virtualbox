@@ -1,4 +1,4 @@
-/* $Id: UIVirtualBoxManager.cpp 112803 2026-02-03 11:43:28Z sergey.dubov@oracle.com $ */
+/* $Id: UIVirtualBoxManager.cpp 112815 2026-02-04 12:17:52Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIVirtualBoxManager class implementation.
  */
@@ -725,6 +725,11 @@ void UIVirtualBoxManager::polishEvent(QShowEvent *)
 
     /* Make sure user warned about inaccessible media: */
     QMetaObject::invokeMethod(this, "sltHandleMediumEnumerationFinish", Qt::QueuedConnection);
+
+#ifdef VBOX_WS_MAC
+    /* Make sure window is activated within the cocoa hierarchy: */
+    QMetaObject::invokeMethod(this, "sltDarwinForceActiveFocus", Qt::QueuedConnection);
+#endif
 }
 
 void UIVirtualBoxManager::closeEvent(QCloseEvent *pEvent)
@@ -749,6 +754,13 @@ void UIVirtualBoxManager::dropEvent(QDropEvent *pEvent)
     sltHandleOpenUrlCall(pEvent->mimeData()->urls());
     pEvent->acceptProposedAction();
 }
+
+#ifdef VBOX_WS_MAC
+void UIVirtualBoxManager::sltDarwinForceActiveFocus()
+{
+    darwinForceActiveFocus();
+}
+#endif /* VBOX_WS_MAC */
 
 #ifdef VBOX_WS_NIX
 void UIVirtualBoxManager::sltHandleHostScreenAvailableAreaChange()

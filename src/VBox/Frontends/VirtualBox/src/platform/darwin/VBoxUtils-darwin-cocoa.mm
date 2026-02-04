@@ -1,4 +1,4 @@
-/* $Id: VBoxUtils-darwin-cocoa.mm 112808 2026-02-03 14:21:20Z sergey.dubov@oracle.com $ */
+/* $Id: VBoxUtils-darwin-cocoa.mm 112815 2026-02-04 12:17:52Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI -  Declarations of utility classes and functions for handling Darwin Cocoa specific tasks.
  */
@@ -274,6 +274,12 @@ void darwinSetMouseCoalescingEnabled(bool fEnabled)
     [NSEvent setMouseCoalescingEnabled:fEnabled];
 }
 
+
+bool darwinForceActiveFocus()
+{
+    [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
+    [NSApp activateIgnoringOtherApps:YES];
+}
 
 bool darwinScreensHaveSeparateSpaces()
 {

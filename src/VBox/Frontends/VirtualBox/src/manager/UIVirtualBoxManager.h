@@ -1,4 +1,4 @@
-/* $Id: UIVirtualBoxManager.h 112757 2026-01-29 16:52:37Z sergey.dubov@oracle.com $ */
+/* $Id: UIVirtualBoxManager.h 112815 2026-02-04 12:17:52Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIVirtualBoxManager class declaration.
  */
@@ -118,6 +118,11 @@ private slots:
 
     /** @name Common stuff.
       * @{ */
+#ifdef VBOX_WS_MAC
+        /** Makes sure window is activated within the cocoa hierarchy. */
+        void sltDarwinForceActiveFocus();
+#endif
+
 #ifdef VBOX_WS_NIX
         /** Handles host-screen available-area change. */
         void sltHandleHostScreenAvailableAreaChange();
