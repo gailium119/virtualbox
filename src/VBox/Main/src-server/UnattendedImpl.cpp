@@ -1,4 +1,4 @@
-/* $Id: UnattendedImpl.cpp 112812 2026-02-03 18:06:17Z serkan.bayraktar@oracle.com $ */
+/* $Id: UnattendedImpl.cpp 112814 2026-02-04 10:25:26Z serkan.bayraktar@oracle.com $ */
 /** @file
  * Unattended class implementation
  */
@@ -210,13 +210,25 @@ typedef struct {
 } OsVersionMapEntry;
 
 static const OsVersionMapEntry os_version_map[] = {
-    { VBOXOSTYPE_Oracle_x64, 8, VBOXOSTYPE_Oracle8_x64 },
-    { VBOXOSTYPE_Oracle_x64, 9, VBOXOSTYPE_Oracle9_x64 },
-    { VBOXOSTYPE_Oracle_x64, 10, VBOXOSTYPE_Oracle10_x64 },
-    { VBOXOSTYPE_Ubuntu_x64, 22, VBOXOSTYPE_Ubuntu22_x64 },
-    { VBOXOSTYPE_Ubuntu_x64, 24, VBOXOSTYPE_Ubuntu24_x64 },
-    { VBOXOSTYPE_Debian_x64, 11, VBOXOSTYPE_Debian11_x64 },
-    { VBOXOSTYPE_Debian_x64, 12, VBOXOSTYPE_Debian12_x64 },
+    { VBOXOSTYPE_Oracle_x64,   8,   VBOXOSTYPE_Oracle8_x64   },
+    { VBOXOSTYPE_Oracle_x64,   9,   VBOXOSTYPE_Oracle9_x64   },
+    { VBOXOSTYPE_Oracle_x64,   10,  VBOXOSTYPE_Oracle10_x64  },
+    { VBOXOSTYPE_Ubuntu_x64,   22,  VBOXOSTYPE_Ubuntu22_x64  },
+    { VBOXOSTYPE_Ubuntu_x64,   23,  VBOXOSTYPE_Ubuntu23_x64  },
+    { VBOXOSTYPE_Ubuntu_x64,   24,  VBOXOSTYPE_Ubuntu24_x64  },
+    { VBOXOSTYPE_Ubuntu_x64,   25,  VBOXOSTYPE_Ubuntu25_x64  },
+    { VBOXOSTYPE_Ubuntu_arm64, 22,  VBOXOSTYPE_Ubuntu22_arm64},
+    { VBOXOSTYPE_Ubuntu_arm64, 23,  VBOXOSTYPE_Ubuntu23_arm64},
+    { VBOXOSTYPE_Ubuntu_arm64, 24,  VBOXOSTYPE_Ubuntu24_arm64},
+    { VBOXOSTYPE_Ubuntu_arm64, 25,  VBOXOSTYPE_Ubuntu25_arm64},
+    { VBOXOSTYPE_Debian_x64,   9,   VBOXOSTYPE_Debian9_x64   },
+    { VBOXOSTYPE_Debian_x64,   10,  VBOXOSTYPE_Debian10_x64  },
+    { VBOXOSTYPE_Debian_x64,   11,  VBOXOSTYPE_Debian11_x64  },
+    { VBOXOSTYPE_Debian_x64,   12,  VBOXOSTYPE_Debian12_x64  },
+    { VBOXOSTYPE_Debian_arm64, 9,   VBOXOSTYPE_Debian9_arm64 },
+    { VBOXOSTYPE_Debian_arm64, 10,  VBOXOSTYPE_Debian10_arm64},
+    { VBOXOSTYPE_Debian_arm64, 11,  VBOXOSTYPE_Debian11_arm64},
+    { VBOXOSTYPE_Debian_arm64, 12,  VBOXOSTYPE_Debian12_arm64},
 };
 
 /**
