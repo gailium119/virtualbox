@@ -1,4 +1,4 @@
-/* $Id: NEMR3Native-win-x86.cpp 112813 2026-02-04 09:34:28Z ramshankar.venkataraman@oracle.com $ */
+/* $Id: NEMR3Native-win-x86.cpp 112831 2026-02-05 06:13:51Z ramshankar.venkataraman@oracle.com $ */
 /** @file
  * NEM - Native execution manager, native ring-3 Windows backend.
  *
@@ -4677,6 +4677,7 @@ static VBOXSTRICTRC nemR3WinHandleExitException(PVMCC pVM, PVMCPUCC pVCpu, WHV_R
          *       decode both and let the GIM provider decide whether to accept it.)
          */
         case X86_XCPT_UD:
+            AssertCompile(X86_XCPT_UD == WHvX64ExceptionTypeInvalidOpcodeFault);
             STAM_REL_COUNTER_INC(&pVCpu->nem.s.StatExitExceptionUd);
             EMHistoryAddExit(pVCpu, EMEXIT_MAKE_FT(EMEXIT_F_KIND_NEM, NEMEXITTYPE_XCPT_UD),
                              pExit->VpContext.Rip + pExit->VpContext.Cs.Base, ASMReadTSC());
@@ -4704,6 +4705,7 @@ static VBOXSTRICTRC nemR3WinHandleExitException(PVMCC pVM, PVMCPUCC pVCpu, WHV_R
          * hypervisor and tries to log stuff to the host.
          */
         case X86_XCPT_GP:
+            AssertCompile(X86_XCPT_GP == WHvX64ExceptionTypeGeneralProtectionFault);
             STAM_REL_COUNTER_INC(&pVCpu->nem.s.StatExitExceptionGp);
             /** @todo r=bird: Need workaround in IEM for this, right?
             EMHistoryAddExit(pVCpu, EMEXIT_MAKE_FT(EMEXIT_F_KIND_NEM, NEMEXITTYPE_XCPT_GP),
@@ -4733,6 +4735,7 @@ static VBOXSTRICTRC nemR3WinHandleExitException(PVMCC pVM, PVMCPUCC pVCpu, WHV_R
          * Filter debug exceptions.
          */
         case X86_XCPT_DB:
+            AssertCompile(X86_XCPT_DB == WHvX64ExceptionTypeDebugTrapOrFault);
             STAM_REL_COUNTER_INC(&pVCpu->nem.s.StatExitExceptionDb);
             EMHistoryAddExit(pVCpu, EMEXIT_MAKE_FT(EMEXIT_F_KIND_NEM, NEMEXITTYPE_XCPT_DB),
                              pExit->VpContext.Rip + pExit->VpContext.Cs.Base, ASMReadTSC());
@@ -4741,6 +4744,7 @@ static VBOXSTRICTRC nemR3WinHandleExitException(PVMCC pVM, PVMCPUCC pVCpu, WHV_R
             break;
 
         case X86_XCPT_BP:
+            AssertCompile(X86_XCPT_BP == WHvX64ExceptionTypeBreakpointTrap);
             STAM_REL_COUNTER_INC(&pVCpu->nem.s.StatExitExceptionBp);
             EMHistoryAddExit(pVCpu, EMEXIT_MAKE_FT(EMEXIT_F_KIND_NEM, NEMEXITTYPE_XCPT_BP),
                              pExit->VpContext.Rip + pExit->VpContext.Cs.Base, ASMReadTSC());
