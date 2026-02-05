@@ -1,4 +1,4 @@
-﻿/* $Id: UIAdvancedSettingsDialog.cpp 112837 2026-02-05 13:03:53Z sergey.dubov@oracle.com $ */
+﻿/* $Id: UIAdvancedSettingsDialog.cpp 112838 2026-02-05 13:05:37Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIAdvancedSettingsDialog class implementation.
  */
@@ -1234,6 +1234,9 @@ void UIAdvancedSettingsDialog::addItem(const QString &strBigIcon,
                                        UISettingsPage *pSettingsPage /* = 0 */,
                                        int iParentId /* = -1 */)
 {
+    /* Assign parent dialog: */
+    pSettingsPage->setParentDialog(this);
+
     /* Init m_iPageId if we haven't yet: */
     if (m_iPageId == MachineSettingsPageType_Invalid)
         m_iPageId = cId;

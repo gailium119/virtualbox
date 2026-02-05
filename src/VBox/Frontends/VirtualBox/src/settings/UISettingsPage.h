@@ -1,4 +1,4 @@
-/* $Id: UISettingsPage.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UISettingsPage.h 112838 2026-02-05 13:05:37Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UISettingsPage class declaration.
  */
@@ -47,6 +47,7 @@ class QLabel;
 class QLayout;
 class QVariant;
 class QWidget;
+class UIAdvancedSettingsDialog;
 class UISettingsPageValidator;
 
 /* Using declarations: */
@@ -109,6 +110,11 @@ signals:
     void sigOperationProgressError(QString strErrorInfo);
 
 public:
+
+    /** Defines parent @a pDialog. */
+    void setParentDialog(UIAdvancedSettingsDialog *pDialog) { m_pParentDialog = pDialog; }
+    /** Returns parent dialog. */
+    UIAdvancedSettingsDialog *parentDialog() { return m_pParentDialog; }
 
     /** Loads settings from external object(s) packed inside @a data to cache.
       * @note  This task WILL be performed in other than the GUI thread, no widget interactions! */
@@ -188,6 +194,9 @@ protected:
     UISettingsPage();
 
 private:
+
+    /** Holds the parent dialog reference. */
+    UIAdvancedSettingsDialog *m_pParentDialog;
 
     /** Holds the configuration access level. */
     ConfigurationAccessLevel  m_enmConfigurationAccessLevel;
