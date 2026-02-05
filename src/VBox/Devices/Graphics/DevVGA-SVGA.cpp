@@ -1,4 +1,4 @@
-/* $Id: DevVGA-SVGA.cpp 112713 2026-01-27 11:55:00Z vitali.pelenjow@oracle.com $ */
+/* $Id: DevVGA-SVGA.cpp 112846 2026-02-05 17:22:12Z vitali.pelenjow@oracle.com $ */
 /** @file
  * VMware SVGA device.
  *
@@ -425,6 +425,8 @@ static void vmsvgaR3SetTraces(PPDMDEVINS pDevIns, PVGASTATE pThis, bool fTraces)
 static int vmsvgaR3LoadExecFifo(PCPDMDEVHLPR3 pHlp, PVGASTATE pThis, PVGASTATECC pThisCC, PSSMHANDLE pSSM,
                                 uint32_t uVersion, uint32_t uPass);
 static int vmsvgaR3SaveExecFifo(PCPDMDEVHLPR3 pHlp, PVGASTATECC pThisCC, PSSMHANDLE pSSM);
+static PVMSVGACMDBUF vmsvgaR3CmdBufAlloc(PVMSVGACMDBUFCTX pCmdBufCtx, VMSVGACMDBUFTYPE enmCBType);
+static void vmsvgaR3CmdBufSubmitHostCommand(PPDMDEVINS pDevIns, PVGASTATE pThis, PVGASTATECC pThisCC, PVMSVGACMDBUF pCmdBuf);
 static void vmsvgaR3CmdBufSubmit(PPDMDEVINS pDevIns, PVGASTATE pThis, PVGASTATECC pThisCC, RTGCPHYS GCPhysCB, SVGACBContext CBCtx);
 static void vmsvgaR3PowerOnDevice(PPDMDEVINS pDevIns, PVGASTATE pThis, PVGASTATECC pThisCC, bool fLoadState);
 # if defined(VMSVGA_USE_FIFO_ACCESS_HANDLER) || defined(DEBUG_FIFO_ACCESS)
@@ -1936,6 +1938,132 @@ static void vmsvgaR3RegUpdateCursor(PVGASTATECC pThisCC, PVGASTATE pThis, uint32
     pThisCC->pDrv->pfnVBVAReportCursorPosition(pThisCC->pDrv, fFlags, idScreen, x, y);
 }
 
+
+# ifdef VBOX_WITH_VMSVGA3D
+/** Updates mouse pointer image from a MOB.
+ *
+ * @param pThis       The shared VGA/VMSVGA instance data.
+ * @param pThisCC     The VGA/VMSVGA state for the current context.
+ * @thread FIFO
+ */
+static void vmsvgaR3CursorMobId(PVGASTATE pThis, PVGASTATECC pThisCC)
+{
+    PVMSVGAR3STATE pSVGAState = pThisCC->svga.pSvgaR3State;
+
+    uint32_t const mobid = ASMAtomicReadU32(&pThisCC->svga.pSvgaR3State->Cursor.mobId);
+    LogFlow(("CURSOR_MOBID: mobid = %u\n", mobid));
+
+    /*
+     * Translate and validate the memory object ID.
+     */
+    PVMSVGAMOB pMob = vmsvgaR3MobGet(pSVGAState, mobid);
+    if (pMob)
+    {
+        uint32_t const cbMaxMob = pThis->vram_size;
+        uint32_t const cbMob = vmsvgaR3MobSize(pMob);
+        if (   cbMob <= cbMaxMob
+            && cbMob >= sizeof(SVGAGBCursorHeader))
+        {
+            /*
+             * Read the header first.
+             */
+            SVGAGBCursorHeader Hdr = { SVGA_COLOR_CURSOR };
+            int rc = vmsvgaR3MobRead(pSVGAState, pMob, 0 /*off*/, &Hdr, sizeof(Hdr));
+            if (RT_SUCCESS(rc))
+            {
+                /*
+                 * Validate the header and calculate the raw cursor data size.
+                 */
+                if (Hdr.sizeInBytes <= cbMob - sizeof(Hdr))
+                {
+                    uint32_t cbData;
+                    if (Hdr.type == SVGA_ALPHA_CURSOR)
+                    {
+                        ASSERT_GUEST_MSG_RETURN_VOID(Hdr.header.alphaHeader.height <= VMSVGA_CURSOR_MAX_DIMENSION,
+                                                     ("%ux%u\n", Hdr.header.alphaHeader.height, Hdr.header.alphaHeader.width));
+                        ASSERT_GUEST_MSG_RETURN_VOID(Hdr.header.alphaHeader.width  <= VMSVGA_CURSOR_MAX_DIMENSION,
+                                                     ("%ux%u\n", Hdr.header.alphaHeader.height, Hdr.header.alphaHeader.width));
+                        cbData = Hdr.header.alphaHeader.height * Hdr.header.alphaHeader.width * sizeof(uint32_t);
+                        ASSERT_GUEST_MSG_RETURN_VOID(cbData <= Hdr.sizeInBytes,
+                                                     ("%ux%u -> %#x bytes vs  max %#x bytes\n", Hdr.header.alphaHeader.height,
+                                                     Hdr.header.alphaHeader.width, cbData, Hdr.sizeInBytes));
+                    }
+                    else if (Hdr.type == SVGA_COLOR_CURSOR)
+                    {
+                        ASSERT_GUEST_MSG_RETURN_VOID(Hdr.header.colorHeader.height <= VMSVGA_CURSOR_MAX_DIMENSION,
+                                                     ("%ux%u\n", Hdr.header.colorHeader.height, Hdr.header.colorHeader.width));
+                        ASSERT_GUEST_MSG_RETURN_VOID(Hdr.header.colorHeader.width  <= VMSVGA_CURSOR_MAX_DIMENSION,
+                                                     ("%ux%u\n", Hdr.header.colorHeader.height, Hdr.header.colorHeader.width));
+                        ASSERT_GUEST_MSG_RETURN_VOID(Hdr.header.colorHeader.andMaskDepth <= 32,
+                                                     ("%u\n", Hdr.header.colorHeader.andMaskDepth));
+                        ASSERT_GUEST_MSG_RETURN_VOID(Hdr.header.colorHeader.xorMaskDepth <= 32,
+                                                     ("%u\n", Hdr.header.colorHeader.xorMaskDepth));
+                        RT_UNTRUSTED_VALIDATED_FENCE();
+
+                        uint32_t const cbAndLine = RT_ALIGN_32(  Hdr.header.colorHeader.width
+                                                               * (  Hdr.header.colorHeader.andMaskDepth
+                                                                  + (Hdr.header.colorHeader.andMaskDepth == 15)),
+                                                               32) / 8;
+                        uint32_t const cbAndMask = cbAndLine * Hdr.header.colorHeader.height;
+                        uint32_t const cbXorLine = RT_ALIGN_32(  Hdr.header.colorHeader.width
+                                                               * (  Hdr.header.colorHeader.xorMaskDepth
+                                                                  + (Hdr.header.colorHeader.xorMaskDepth == 15)),
+                                                               32) / 8;
+                        uint32_t const cbXorMask = cbXorLine * Hdr.header.colorHeader.height;
+                        cbData = cbAndMask + cbXorMask;
+                        ASSERT_GUEST_MSG_RETURN_VOID(cbData <= Hdr.sizeInBytes,
+                                                     ("%ux%u and=%u xor=%u -> %#x bytes vs  max %#x bytes\n",
+                                                      Hdr.header.colorHeader.height, Hdr.header.colorHeader.width,
+                                                      Hdr.header.colorHeader.andMaskDepth,  Hdr.header.colorHeader.xorMaskDepth,
+                                                      cbData, Hdr.sizeInBytes));
+                    }
+                    else
+                    {
+                        LogRelMax(16, ("VMSVGA: CURSOR_MOBID: Invalid cursor type %#x. Ignoring request\n", Hdr.type));
+                        return;
+                    }
+                    Assert(cbData <= VMSVGA_CURSOR_MAX_BYTES);
+                    RT_UNTRUSTED_VALIDATED_FENCE();
+
+                    /*
+                     * Allocate bounce buffer for the cursor data, read it and caller
+                     * worker function to install the cursor.
+                     */
+                    uint8_t *pbData = (uint8_t *)RTMemTmpAllocZ(cbData);
+                    if (pbData)
+                    {
+                        rc = vmsvgaR3MobRead(pSVGAState, pMob, sizeof(Hdr) /*off*/, pbData, cbData);
+                        if (RT_SUCCESS(rc))
+                        {
+                            if (Hdr.type == SVGA_ALPHA_CURSOR)
+                                vmsvgaR3InstallAlphaCursor(pThis, pThisCC, &Hdr.header.alphaHeader, pbData, cbData, mobid);
+                            else if (Hdr.type == SVGA_COLOR_CURSOR)
+                                vmsvgaR3InstallColorCursor(pThis, pThisCC, &Hdr.header.colorHeader, pbData, cbData, mobid);
+                            else
+                                AssertFailed();
+                        }
+                        /* else: header read error */
+                        RTMemTmpFree(pbData);
+                    }
+                    else
+                        LogRelMax(16, ("VMSVGA: CURSOR_MOBID: Unable to allocate %#x bytes bounce buffer!\n", cbMob));
+                }
+                else
+                    LogRelMax(16, ("VMSVGA: CURSOR_MOBID: Invalid payload size %#x (cbMob=%#x)! Ignoring request\n",
+                                   Hdr.sizeInBytes, cbMob));
+            }
+            /* else: header read error */
+        }
+        else
+            LogRelMax(16, ("VMSVGA: CURSOR_MOBID: Invalid MOB size %#x. Ignoring request.\n", cbMob));
+    }
+    else
+    {
+        LogRelMax(16, ("VMSVGA: CURSOR_MOBID: Invalid mobid = %u (%#x). Ignoring request.\n", mobid, mobid));
+    }
+}
+# endif /* VBOX_WITH_VMSVGA3D */
+
 #endif /* IN_RING3 */
 
 
@@ -2438,112 +2566,18 @@ static VBOXSTRICTRC vmsvgaWritePort(PPDMDEVINS pDevIns, PVGASTATE pThis, PVGASTA
 # ifdef IN_RING3
             STAM_REL_COUNTER_INC(&pThis->svga.StatRegCursorMobIdWr);
 
-            /*
-             * Translate and validate the memory object ID.
-             */
-            PVMSVGAMOB pMob = vmsvgaR3MobGet(pSVGAState, u32);
-            if (pMob)
+            if (pThis->svga.fEnabled)
             {
-                uint32_t const cbMaxMob = pThis->vram_size;
-                uint32_t const cbMob = vmsvgaR3MobSize(pMob);
-                if (   cbMob <= cbMaxMob
-                    && cbMob >= sizeof(SVGAGBCursorHeader))
+                ASMAtomicWriteU32(&pThisCC->svga.pSvgaR3State->Cursor.mobId, u32);
+
+                PVMSVGACMDBUFCTX pCmdBufCtx = pThisCC->svga.pSvgaR3State->apCmdBufCtxs[0];
+                PVMSVGACMDBUF pCmdBuf = vmsvgaR3CmdBufAlloc(pCmdBufCtx, VMSVGACMDBUFTYPE_HOST);
+                if (RT_LIKELY(pCmdBuf))
                 {
-                    /*
-                     * Read the header first.
-                     */
-                    SVGAGBCursorHeader Hdr = { SVGA_COLOR_CURSOR };
-                    rc = vmsvgaR3MobRead(pSVGAState, pMob, 0 /*off*/, &Hdr, sizeof(Hdr));
-                    if (RT_SUCCESS(rc))
-                    {
-                        /*
-                         * Validate the header and calculate the raw cursor data size.
-                         */
-                        if (Hdr.sizeInBytes <= cbMob - sizeof(Hdr))
-                        {
-                            uint32_t cbData;
-                            if (Hdr.type == SVGA_ALPHA_CURSOR)
-                            {
-                                ASSERT_GUEST_MSG_BREAK(Hdr.header.alphaHeader.height <= VMSVGA_CURSOR_MAX_DIMENSION,
-                                                       ("%ux%u\n", Hdr.header.alphaHeader.height, Hdr.header.alphaHeader.width));
-                                ASSERT_GUEST_MSG_BREAK(Hdr.header.alphaHeader.width  <= VMSVGA_CURSOR_MAX_DIMENSION,
-                                                       ("%ux%u\n", Hdr.header.alphaHeader.height, Hdr.header.alphaHeader.width));
-                                cbData = Hdr.header.alphaHeader.height * Hdr.header.alphaHeader.width * sizeof(uint32_t);
-                                ASSERT_GUEST_MSG_BREAK(cbData <= Hdr.sizeInBytes,
-                                                       ("%ux%u -> %#x bytes vs  max %#x bytes\n", Hdr.header.alphaHeader.height,
-                                                        Hdr.header.alphaHeader.width, cbData, Hdr.sizeInBytes));
-                            }
-                            else if (Hdr.type == SVGA_COLOR_CURSOR)
-                            {
-                                ASSERT_GUEST_MSG_BREAK(Hdr.header.colorHeader.height <= VMSVGA_CURSOR_MAX_DIMENSION,
-                                                       ("%ux%u\n", Hdr.header.colorHeader.height, Hdr.header.colorHeader.width));
-                                ASSERT_GUEST_MSG_BREAK(Hdr.header.colorHeader.width  <= VMSVGA_CURSOR_MAX_DIMENSION,
-                                                       ("%ux%u\n", Hdr.header.colorHeader.height, Hdr.header.colorHeader.width));
-                                ASSERT_GUEST_MSG_BREAK(Hdr.header.colorHeader.andMaskDepth <= 32,
-                                                       ("%u\n", Hdr.header.colorHeader.andMaskDepth));
-                                ASSERT_GUEST_MSG_BREAK(Hdr.header.colorHeader.xorMaskDepth <= 32,
-                                                       ("%u\n", Hdr.header.colorHeader.xorMaskDepth));
-                                RT_UNTRUSTED_VALIDATED_FENCE();
-
-                                uint32_t const cbAndLine = RT_ALIGN_32(  Hdr.header.colorHeader.width
-                                                                       * (  Hdr.header.colorHeader.andMaskDepth
-                                                                          + (Hdr.header.colorHeader.andMaskDepth == 15)),
-                                                                       32) / 8;
-                                uint32_t const cbAndMask = cbAndLine * Hdr.header.colorHeader.height;
-                                uint32_t const cbXorLine = RT_ALIGN_32(  Hdr.header.colorHeader.width
-                                                                       * (  Hdr.header.colorHeader.xorMaskDepth
-                                                                          + (Hdr.header.colorHeader.xorMaskDepth == 15)),
-                                                                       32) / 8;
-                                uint32_t const cbXorMask = cbXorLine * Hdr.header.colorHeader.height;
-                                cbData = cbAndMask + cbXorMask;
-                                ASSERT_GUEST_MSG_BREAK(cbData <= Hdr.sizeInBytes,
-                                                       ("%ux%u and=%u xor=%u -> %#x bytes vs  max %#x bytes\n",
-                                                        Hdr.header.colorHeader.height, Hdr.header.colorHeader.width,
-                                                        Hdr.header.colorHeader.andMaskDepth,  Hdr.header.colorHeader.xorMaskDepth,
-                                                        cbData, Hdr.sizeInBytes));
-                            }
-                            else
-                            {
-                                LogRelMax(16, ("VMSVGA: CURSOR_MOBID: Invalid cursor type %#x. Ignoring request\n", Hdr.type));
-                                break;
-                            }
-                            Assert(cbData <= VMSVGA_CURSOR_MAX_BYTES);
-                            RT_UNTRUSTED_VALIDATED_FENCE();
-
-                            /*
-                             * Allocate bounce buffer for the cursor data, read it and caller
-                             * worker function to install the cursor.
-                             */
-                            uint8_t *pbData = (uint8_t *)RTMemTmpAllocZ(cbData);
-                            if (pbData)
-                            {
-                                rc = vmsvgaR3MobRead(pSVGAState, pMob, sizeof(Hdr) /*off*/, pbData, cbData);
-                                if (RT_SUCCESS(rc))
-                                {
-                                    if (Hdr.type == SVGA_ALPHA_CURSOR)
-                                        vmsvgaR3InstallAlphaCursor(pThis, pThisCC, &Hdr.header.alphaHeader, pbData, cbData, u32);
-                                    else if (Hdr.type == SVGA_COLOR_CURSOR)
-                                        vmsvgaR3InstallColorCursor(pThis, pThisCC, &Hdr.header.colorHeader, pbData, cbData, u32);
-                                    else
-                                        AssertFailed();
-                                }
-                                /* else: header read error */
-                                RTMemTmpFree(pbData);
-                            }
-                            else
-                                LogRelMax(16, ("VMSVGA: CURSOR_MOBID: Unable to allocate %#x bytes bounce buffer!\n", cbMob));
-                        }
-                        else
-                            LogRelMax(16, ("VMSVGA: CURSOR_MOBID: Invalid payload size %#x (cbMob=%#x)! Ignoring request\n",
-                                           Hdr.sizeInBytes, cbMob));
-                    }
-                    /* else: header read error */
+                    pCmdBuf->idHostCommand = VMSVGACMDBUF_HOSTCOMMAND_CURSOR_MOBID;
+                    vmsvgaR3CmdBufSubmitHostCommand(pDevIns, pThis, pThisCC, pCmdBuf);
                 }
-                else
-                    LogRelMax(16, ("VMSVGA: CURSOR_MOBID: Invalid MOB size %#x. Ignoring request.\n", cbMob));
             }
-            else
-                LogRelMax(16, ("VMSVGA: CURSOR_MOBID: Invalid ID %#x. Ignoring request.\n", u32));
 # else  /* !IN_RING3 */
             rc = VINF_IOM_R3_IOPORT_WRITE;
 # endif /* !IN_RING3 */
@@ -3403,7 +3437,7 @@ static void vmsvgaR3CmdBufRaiseIRQ(PPDMDEVINS pDevIns, PVGASTATE pThis, uint32_t
  * @param pCmdBufCtx  The command buffer context which must allocate the buffer.
  * @return Pointer to the allocated command buffer structure.
  */
-static PVMSVGACMDBUF vmsvgaR3CmdBufAlloc(PVMSVGACMDBUFCTX pCmdBufCtx)
+static PVMSVGACMDBUF vmsvgaR3CmdBufAlloc(PVMSVGACMDBUFCTX pCmdBufCtx, VMSVGACMDBUFTYPE enmCBType)
 {
     if (!pCmdBufCtx)
         return NULL;
@@ -3413,9 +3447,14 @@ static PVMSVGACMDBUF vmsvgaR3CmdBufAlloc(PVMSVGACMDBUFCTX pCmdBufCtx)
     {
         // RT_ZERO(pCmdBuf->nodeBuffer);
         pCmdBuf->pCmdBufCtx = pCmdBufCtx;
+        pCmdBuf->enmCBType = enmCBType;
         // pCmdBuf->GCPhysCB = 0;
         // RT_ZERO(pCmdBuf->hdr);
         // pCmdBuf->pvCommands = NULL;
+        // pCmdBuf->idHostCommand = 0;
+        // pCmdBuf->cbHostCommandData = 0;
+        // pCmdBuf->pvHostCommandData = NULL;
+        // RT_ZERO(pCmdBuf->au32HostCommandData);
     }
 
     return pCmdBuf;
@@ -3429,7 +3468,15 @@ static PVMSVGACMDBUF vmsvgaR3CmdBufAlloc(PVMSVGACMDBUFCTX pCmdBufCtx)
 static void vmsvgaR3CmdBufFree(PVMSVGACMDBUF pCmdBuf)
 {
     if (pCmdBuf)
-        RTMemFree(pCmdBuf->pvCommands);
+    {
+        if (pCmdBuf->enmCBType == VMSVGACMDBUFTYPE_GUEST)
+            RTMemFree(pCmdBuf->pvCommands);
+        else if (pCmdBuf->enmCBType == VMSVGACMDBUFTYPE_HOST)
+        {
+            if (pCmdBuf->cbHostCommandData)
+                RTMemFree(pCmdBuf->pvHostCommandData);
+        }
+    }
     RTMemFree(pCmdBuf);
 }
 
@@ -3461,7 +3508,8 @@ static void vmsvgaR3CmdBufCtxTerm(PVMSVGACMDBUFCTX pCmdBufCtx)
         RTListForEachSafe(&pCmdBufCtx->listSubmitted, pIter, pNext, VMSVGACMDBUF, nodeBuffer)
         {
             RTListNodeRemove(&pIter->nodeBuffer);
-            --pCmdBufCtx->cSubmitted;
+            if (pIter->enmCBType == VMSVGACMDBUFTYPE_GUEST)
+                --pCmdBufCtx->cSubmitted;
             vmsvgaR3CmdBufFree(pIter);
         }
     }
@@ -3528,31 +3576,28 @@ static SVGACBStatus vmsvgaR3CmdBufDCPreempt(PPDMDEVINS pDevIns, PVMSVGAR3STATE p
 
     int rc = RTCritSectEnter(&pSvgaR3State->CritSectCmdBuf);
     AssertRC(rc);
-    if (pCmd->ignoreIDZero)
-    {
-        RTListInit(&listPreempted);
 
-        PVMSVGACMDBUF pIter, pNext;
-        RTListForEachSafe(&pCmdBufCtx->listSubmitted, pIter, pNext, VMSVGACMDBUF, nodeBuffer)
-        {
-            if (pIter->hdr.id == 0)
-                continue;
-
-            RTListNodeRemove(&pIter->nodeBuffer);
-            --pCmdBufCtx->cSubmitted;
-            RTListAppend(&listPreempted, &pIter->nodeBuffer);
-        }
-    }
-    else
-    {
-        RTListMove(&listPreempted, &pCmdBufCtx->listSubmitted);
-        pCmdBufCtx->cSubmitted = 0;
-    }
-    RTCritSectLeave(&pSvgaR3State->CritSectCmdBuf);
+    RTListInit(&listPreempted);
 
     PVMSVGACMDBUF pIter, pNext;
+    RTListForEachSafe(&pCmdBufCtx->listSubmitted, pIter, pNext, VMSVGACMDBUF, nodeBuffer)
+    {
+        if (pIter->enmCBType != VMSVGACMDBUFTYPE_GUEST)
+            continue;
+
+        if (pCmd->ignoreIDZero && pIter->hdr.id == 0)
+            continue;
+
+        RTListNodeRemove(&pIter->nodeBuffer);
+        --pCmdBufCtx->cSubmitted;
+        RTListAppend(&listPreempted, &pIter->nodeBuffer);
+    }
+
+    RTCritSectLeave(&pSvgaR3State->CritSectCmdBuf);
+
     RTListForEachSafe(&listPreempted, pIter, pNext, VMSVGACMDBUF, nodeBuffer)
     {
+        Assert(pIter->enmCBType == VMSVGACMDBUFTYPE_GUEST);
         RTListNodeRemove(&pIter->nodeBuffer);
         vmsvgaR3CmdBufWriteStatus(pDevIns, pIter->GCPhysCB, SVGA_CB_STATUS_PREEMPTED, 0);
         LogFunc(("Preempted %RX64\n", pIter->GCPhysCB));
@@ -3668,6 +3713,7 @@ static SVGACBStatus vmsvgaR3CmdBufSubmitDC(PPDMDEVINS pDevIns, PVGASTATECC pThis
     return vmsvgaR3CmdBufProcessDC(pDevIns, pSvgaR3State, (*ppCmdBuf)->pvCommands, (*ppCmdBuf)->hdr.length, poffNextCmd);
 }
 
+
 /** Submits a command buffer for asynchronous processing by the FIFO thread.
  *
  * @param pDevIns      The device instance.
@@ -3687,6 +3733,8 @@ static SVGACBStatus vmsvgaR3CmdBufSubmitCtx(PPDMDEVINS pDevIns, PVGASTATE pThis,
 
     PVMSVGACMDBUF const pCmdBuf = *ppCmdBuf;
     PVMSVGACMDBUFCTX const pCmdBufCtx = pCmdBuf->pCmdBufCtx;
+
+    Assert(pCmdBuf->enmCBType == VMSVGACMDBUFTYPE_GUEST);
 
     int rc = RTCritSectEnter(&pSvgaR3State->CritSectCmdBuf);
     AssertRC(rc);
@@ -3708,6 +3756,36 @@ static SVGACBStatus vmsvgaR3CmdBufSubmitCtx(PPDMDEVINS pDevIns, PVGASTATE pThis,
         PDMDevHlpSUPSemEventSignal(pDevIns, pThis->svga.hFIFORequestSem);
 
     return CBstatus;
+}
+
+
+/** Submits a host command, which is normally a result of a SVGA_REG_* write,
+ *  for synchronous processing by the FIFO thread.
+ *
+ * @param pDevIns      The device instance.
+ * @param pThis        The shared VGA/VMSVGA state.
+ * @param pThisCC      The VGA/VMSVGA state for the current context.
+ * @param pCmdBuf      Pointer to the command buffer to submit.
+ * @thread EMT
+ */
+static void vmsvgaR3CmdBufSubmitHostCommand(PPDMDEVINS pDevIns, PVGASTATE pThis, PVGASTATECC pThisCC, PVMSVGACMDBUF pCmdBuf)
+{
+    PVMSVGAR3STATE const pSvgaR3State = pThisCC->svga.pSvgaR3State;
+
+    Assert(pCmdBuf->enmCBType != VMSVGACMDBUFTYPE_GUEST);
+
+    PVMSVGACMDBUFCTX const pCmdBufCtx = pCmdBuf->pCmdBufCtx;
+
+    int rc = RTCritSectEnter(&pSvgaR3State->CritSectCmdBuf);
+    AssertRC(rc);
+
+    RTListAppend(&pCmdBufCtx->listSubmitted, &pCmdBuf->nodeBuffer);
+    ASMAtomicWriteU32(&pThisCC->svga.pSvgaR3State->fCmdBuf, 1);
+
+    RTCritSectLeave(&pSvgaR3State->CritSectCmdBuf);
+
+    /* Inform the FIFO thread. */
+    PDMDevHlpSUPSemEventSignal(pDevIns, pThis->svga.hFIFORequestSem);
 }
 
 
@@ -3741,7 +3819,7 @@ static void vmsvgaR3CmdBufSubmit(PPDMDEVINS pDevIns, PVGASTATE pThis, PVGASTATEC
     }
 
     /* Allocate a new command buffer. */
-    PVMSVGACMDBUF pCmdBuf = vmsvgaR3CmdBufAlloc(pCmdBufCtx);
+    PVMSVGACMDBUF pCmdBuf = vmsvgaR3CmdBufAlloc(pCmdBufCtx, VMSVGACMDBUFTYPE_GUEST);
     if (RT_LIKELY(pCmdBuf))
     {
         pCmdBuf->GCPhysCB = GCPhysCB;
@@ -4519,8 +4597,12 @@ static void vmsvgaR3CmdBufProcessBuffers(PPDMDEVINS pDevIns, PVGASTATE pThis, PV
                 pCmdBuf = RTListRemoveFirst(&pCmdBufCtx->listSubmitted, VMSVGACMDBUF, nodeBuffer);
                 if (pCmdBuf)
                 {
-                    Assert(pCmdBufCtx->cSubmitted > 0);
-                    --pCmdBufCtx->cSubmitted;
+                    if (pCmdBuf->enmCBType == VMSVGACMDBUFTYPE_GUEST)
+                    {
+                        Assert(pCmdBufCtx->cSubmitted > 0);
+                        --pCmdBufCtx->cSubmitted;
+                    }
+
                     break;
                 }
             }
@@ -4534,6 +4616,16 @@ static void vmsvgaR3CmdBufProcessBuffers(PPDMDEVINS pDevIns, PVGASTATE pThis, PV
         }
 
         RTCritSectLeave(&pSvgaR3State->CritSectCmdBuf);
+
+        if (pCmdBuf->enmCBType == VMSVGACMDBUFTYPE_HOST)
+        {
+            if (pCmdBuf->idHostCommand == VMSVGACMDBUF_HOSTCOMMAND_CURSOR_MOBID)
+                vmsvgaR3CursorMobId(pThis, pThisCC);
+            else
+                AssertFailed();
+            vmsvgaR3CmdBufFree(pCmdBuf);
+            continue;
+        }
 
         SVGACBStatus CBstatus = SVGA_CB_STATUS_NONE;
         uint32_t offNextCmd = RT_BOOL(pThis->svga.u32DeviceCaps & SVGA_CAP_CMD_BUFFERS_2)
@@ -6269,18 +6361,55 @@ static DECLCALLBACK(void) vmsvgaR3Info(PPDMDEVINS pDevIns, PCDBGFINFOHLP pHlp, c
 
 }
 
-static int vmsvgaR3LoadBufCtx(PPDMDEVINS pDevIns, PVGASTATE pThis, PVGASTATECC pThisCC, PSSMHANDLE pSSM, PVMSVGACMDBUFCTX pBufCtx, SVGACBContext CBCtx)
+static int vmsvgaR3LoadBufCtx(PPDMDEVINS pDevIns, PVGASTATE pThis, PVGASTATECC pThisCC, PSSMHANDLE pSSM, uint32_t uVersion, PVMSVGACMDBUFCTX pBufCtx, SVGACBContext CBCtx)
 {
     PCPDMDEVHLPR3 pHlp = pDevIns->pHlpR3;
     PVMSVGAR3STATE pSvgaR3State = pThisCC->svga.pSvgaR3State;
 
-    uint32_t cSubmitted;
-    int rc = pHlp->pfnSSMGetU32(pSSM, &cSubmitted);
+    uint32_t cEntries;
+    int rc = pHlp->pfnSSMGetU32(pSSM, &cEntries);
     AssertLogRelRCReturn(rc, rc);
 
-    for (uint32_t i = 0; i < cSubmitted; ++i)
+    for (uint32_t i = 0; i < cEntries; ++i)
     {
-        PVMSVGACMDBUF pCmdBuf = vmsvgaR3CmdBufAlloc(pBufCtx);
+        uint32_t u32CBType = VMSVGACMDBUFTYPE_GUEST;
+        if (uVersion >= VGA_SAVEDSTATE_VERSION_VMSVGA_HOST_CMDS)
+        {
+            rc = pHlp->pfnSSMGetU32(pSSM, &u32CBType);
+            AssertRCReturn(rc, rc);
+
+            if ((VMSVGACMDBUFTYPE)u32CBType == VMSVGACMDBUFTYPE_HOST)
+            {
+                PVMSVGACMDBUF pCmdBuf = vmsvgaR3CmdBufAlloc(pBufCtx, (VMSVGACMDBUFTYPE)u32CBType);
+                AssertPtrReturn(pCmdBuf, VERR_NO_MEMORY);
+
+                pHlp->pfnSSMGetU32(pSSM, &pCmdBuf->idHostCommand);
+                pHlp->pfnSSMGetU32(pSSM, &pCmdBuf->cbHostCommandData);
+                if (pCmdBuf->cbHostCommandData)
+                {
+                    pCmdBuf->pvHostCommandData = RTMemAlloc(pCmdBuf->cbHostCommandData);
+                    AssertPtrReturn(pCmdBuf->pvHostCommandData, VERR_NO_MEMORY);
+
+                    rc = pHlp->pfnSSMGetMem(pSSM, pCmdBuf->pvHostCommandData, pCmdBuf->cbHostCommandData);
+                    AssertRCReturn(rc, rc);
+                }
+                else
+                {
+                    pHlp->pfnSSMGetU32(pSSM, &pCmdBuf->au32HostCommandData[0]);
+                    rc = pHlp->pfnSSMGetU32(pSSM, &pCmdBuf->au32HostCommandData[1]);
+                }
+                AssertLogRelRCReturn(rc, rc);
+
+                vmsvgaR3CmdBufSubmitHostCommand(pDevIns, pThis, pThisCC, pCmdBuf);
+                continue;
+            }
+        }
+
+        AssertLogRelMsgReturn((VMSVGACMDBUFTYPE)u32CBType == VMSVGACMDBUFTYPE_GUEST,
+                              ("u32CBType=%#x\n", u32CBType),
+                              VERR_SSM_DATA_UNIT_FORMAT_CHANGED);
+
+        PVMSVGACMDBUF pCmdBuf = vmsvgaR3CmdBufAlloc(pBufCtx, VMSVGACMDBUFTYPE_GUEST);
         AssertPtrReturn(pCmdBuf, VERR_NO_MEMORY);
 
         pHlp->pfnSSMGetGCPhys(pSSM, &pCmdBuf->GCPhysCB);
@@ -6320,7 +6449,7 @@ static int vmsvgaR3LoadBufCtx(PPDMDEVINS pDevIns, PVGASTATE pThis, PVGASTATECC p
     return rc;
 }
 
-static int vmsvgaR3LoadCommandBuffers(PPDMDEVINS pDevIns, PVGASTATE pThis, PVGASTATECC pThisCC, PSSMHANDLE pSSM)
+static int vmsvgaR3LoadCommandBuffers(PPDMDEVINS pDevIns, PVGASTATE pThis, PVGASTATECC pThisCC, PSSMHANDLE pSSM, uint32_t uVersion)
 {
     PCPDMDEVHLPR3 pHlp = pDevIns->pHlpR3;
     PVMSVGAR3STATE pSvgaR3State = pThisCC->svga.pSvgaR3State;
@@ -6329,7 +6458,7 @@ static int vmsvgaR3LoadCommandBuffers(PPDMDEVINS pDevIns, PVGASTATE pThis, PVGAS
     uint32_t u32;
 
     /* Device context command buffers. */
-    int rc = vmsvgaR3LoadBufCtx(pDevIns, pThis, pThisCC, pSSM, &pSvgaR3State->CmdBufCtxDC, SVGA_CB_CONTEXT_MAX);
+    int rc = vmsvgaR3LoadBufCtx(pDevIns, pThis, pThisCC, pSSM,uVersion, &pSvgaR3State->CmdBufCtxDC, SVGA_CB_CONTEXT_MAX);
     AssertLogRelRCReturn(rc, rc);
 
     /* DX contexts command buffers. */
@@ -6347,7 +6476,7 @@ static int vmsvgaR3LoadCommandBuffers(PPDMDEVINS pDevIns, PVGASTATE pThis, PVGAS
             AssertPtrReturn(pSvgaR3State->apCmdBufCtxs[j], VERR_NO_MEMORY);
             vmsvgaR3CmdBufCtxInit(pSvgaR3State->apCmdBufCtxs[j]);
 
-            rc = vmsvgaR3LoadBufCtx(pDevIns, pThis, pThisCC, pSSM, pSvgaR3State->apCmdBufCtxs[j], (SVGACBContext)j);
+            rc = vmsvgaR3LoadBufCtx(pDevIns, pThis, pThisCC, pSSM, uVersion, pSvgaR3State->apCmdBufCtxs[j], (SVGACBContext)j);
             AssertLogRelRCReturn(rc, rc);
         }
     }
@@ -6631,7 +6760,7 @@ int vmsvgaR3LoadExec(PPDMDEVINS pDevIns, PSSMHANDLE pSSM, uint32_t uVersion, uin
             AssertLogRelRCReturn(rc, rc);
             if (f)
             {
-                rc = vmsvgaR3LoadCommandBuffers(pDevIns, pThis, pThisCC, pSSM);
+                rc = vmsvgaR3LoadCommandBuffers(pDevIns, pThis, pThisCC, pSSM, uVersion);
                 AssertLogRelRCReturn(rc, rc);
             }
         }
@@ -6644,7 +6773,7 @@ int vmsvgaR3LoadExec(PPDMDEVINS pDevIns, PSSMHANDLE pSSM, uint32_t uVersion, uin
         {
             if (uVersion < VGA_SAVEDSTATE_VERSION_VMSVGA_DX_CMDBUF)
             {
-                rc = vmsvgaR3LoadCommandBuffers(pDevIns, pThis, pThisCC, pSSM);
+                rc = vmsvgaR3LoadCommandBuffers(pDevIns, pThis, pThisCC, pSSM, uVersion);
                 AssertLogRelRCReturn(rc, rc);
             }
 
@@ -6695,7 +6824,7 @@ int vmsvgaR3LoadExec(PPDMDEVINS pDevIns, PSSMHANDLE pSSM, uint32_t uVersion, uin
              */
             if (uVersion >= VGA_SAVEDSTATE_VERSION_VMSVGA_CURSOR_MOB)
             {
-                rc = pHlp->pfnSSMGetU32(pSSM, &pSVGAState->Cursor.mobId);
+                rc = pHlp->pfnSSMGetU32(pSSM, (uint32_t *)&pSVGAState->Cursor.mobId);
                 AssertRCReturn(rc, rc);
                 if (pSVGAState->Cursor.mobId != SVGA_ID_INVALID) /* MOB in use? */
                 {
@@ -6777,14 +6906,44 @@ int vmsvgaR3LoadDone(PPDMDEVINS pDevIns)
 static int vmsvgaR3SaveBufCtx(PPDMDEVINS pDevIns, PSSMHANDLE pSSM, PVMSVGACMDBUFCTX pBufCtx)
 {
     PCPDMDEVHLPR3 pHlp = pDevIns->pHlpR3;
+    PVMSVGACMDBUF pIter;
 
-    int rc = pHlp->pfnSSMPutU32(pSSM, pBufCtx->cSubmitted);
-    AssertLogRelRCReturn(rc, rc);
-    if (pBufCtx->cSubmitted)
+    uint32_t cEntries = 0;
+    RTListForEach(&pBufCtx->listSubmitted, pIter, VMSVGACMDBUF, nodeBuffer)
     {
-        PVMSVGACMDBUF pIter;
+        ++cEntries;
+    }
+
+    int rc = pHlp->pfnSSMPutU32(pSSM, cEntries);
+    AssertLogRelRCReturn(rc, rc);
+    if (cEntries)
+    {
         RTListForEach(&pBufCtx->listSubmitted, pIter, VMSVGACMDBUF, nodeBuffer)
         {
+            /*
+             * VGA_SAVEDSTATE_VERSION_VMSVGA_HOST_CMDS begin
+             */
+            pHlp->pfnSSMPutU32(pSSM, pIter->enmCBType);
+            if (pIter->enmCBType == VMSVGACMDBUFTYPE_HOST)
+            {
+                pHlp->pfnSSMPutU32(pSSM, pIter->idHostCommand);
+                pHlp->pfnSSMPutU32(pSSM, pIter->cbHostCommandData);
+                if (pIter->cbHostCommandData)
+                    rc = pHlp->pfnSSMPutMem(pSSM, pIter->pvHostCommandData, pIter->cbHostCommandData);
+                else
+                {
+                    pHlp->pfnSSMPutU32(pSSM, pIter->au32HostCommandData[0]);
+                    rc = pHlp->pfnSSMPutU32(pSSM, pIter->au32HostCommandData[1]);
+                }
+                AssertLogRelRCReturn(rc, rc);
+                continue;
+            }
+
+            AssertContinue(pIter->enmCBType == VMSVGACMDBUFTYPE_GUEST);
+            /*
+             * VGA_SAVEDSTATE_VERSION_VMSVGA_HOST_CMDS end
+             */
+
             pHlp->pfnSSMPutGCPhys(pSSM, pIter->GCPhysCB);
             pHlp->pfnSSMPutU32(pSSM, sizeof(SVGACBHeader));
             pHlp->pfnSSMPutMem(pSSM, &pIter->hdr, sizeof(SVGACBHeader));

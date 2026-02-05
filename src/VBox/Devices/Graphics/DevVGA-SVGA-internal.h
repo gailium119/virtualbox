@@ -1,4 +1,4 @@
-/* $Id: DevVGA-SVGA-internal.h 112692 2026-01-26 11:23:41Z knut.osmundsen@oracle.com $ */
+/* $Id: DevVGA-SVGA-internal.h 112846 2026-02-05 17:22:12Z vitali.pelenjow@oracle.com $ */
 /** @file
  * VMWare SVGA device - internal header for DevVGA-SVGA* source files.
  */
@@ -66,19 +66,49 @@ typedef struct
 typedef struct VMSVGACMDBUF *PVMSVGACMDBUF;
 typedef struct VMSVGACMDBUFCTX *PVMSVGACMDBUFCTX;
 
+typedef enum VMSVGACMDBUFTYPE
+{
+    VMSVGACMDBUFTYPE_GUEST, /* A guest command buffer submitted via SVGA_REG_COMMAND_LOW. */
+    VMSVGACMDBUFTYPE_HOST, /* A host command to be processed synchronously by FIFO thread. */
+    VMSVGACMDBUFTYPE_32BIT_HACK = 0x7fffffff
+} VMSVGACMDBUFTYPE;
+
+#define VMSVGACMDBUF_HOSTCOMMAND_CURSOR_MOBID 1
+
 /* Command buffer. */
+#include "vmsvga_headers_begin.h" /* GCC complains that 'ISO C++ prohibits anonymous structs' when "-Wpedantic" is enabled. */
 typedef struct VMSVGACMDBUF
 {
     RTLISTNODE nodeBuffer;
     /* Context of the buffer. */
     PVMSVGACMDBUFCTX pCmdBufCtx;
-    /* PA of the buffer. */
-    RTGCPHYS GCPhysCB;
-    /* A copy of the buffer header. */
-    SVGACBHeader hdr;
-    /* A copy of the commands. Size of the memory buffer is hdr.length */
-    void *pvCommands;
+    VMSVGACMDBUFTYPE enmCBType;
+    union
+    {
+        /* VMSVGACMDBUFTYPE_GUEST */
+        struct
+        {
+            /* PA of the buffer. */
+            RTGCPHYS GCPhysCB;
+            /* A copy of the buffer header. */
+            SVGACBHeader hdr;
+            /* A copy of the commands. Size of the memory buffer is hdr.length */
+            void *pvCommands;
+        };
+        /* VMSVGACMDBUFTYPE_HOST */
+        struct
+        {
+            uint32_t idHostCommand;
+            uint32_t cbHostCommandData;
+            union
+            {
+                void *pvHostCommandData;         /* Allocated buffer (cbCommandData != 0) */
+                uint32_t au32HostCommandData[2]; /* Command specific data (cbCommandData == 0) */
+            };
+        };
+    };
 } VMSVGACMDBUF;
+#include "vmsvga_headers_end.h"
 
 /* Command buffer context. */
 typedef struct VMSVGACMDBUFCTX
@@ -107,7 +137,7 @@ typedef struct VMSVGAR3STATE
         bool                fActive;
         /** The current cursor MOB ID. See @bugref{11042}.
          *  Set to SVGA_ID_INVALID if not set (yet). */
-        SVGAMobId           mobId;
+        SVGAMobId volatile  mobId;
         uint32_t            xHotspot;
         uint32_t            yHotspot;
         uint32_t            width;
