@@ -1,4 +1,4 @@
-/* $Id: UIAdvancedSettingsDialog.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIAdvancedSettingsDialog.h 112837 2026-02-05 13:03:53Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIAdvancedSettingsDialog class declaration.
  */
@@ -47,6 +47,7 @@ class QTimer;
 class QIDialogButtonBox;
 class UIFilterEditor;
 class UIModeCheckBox;
+class UINotificationCenter;
 class UISettingsPage;
 class UISettingsPageFrame;
 class UISettingsPageValidator;
@@ -83,6 +84,9 @@ public:
                              const QString &strControl);
     /** Destructs settings dialog. */
     virtual ~UIAdvancedSettingsDialog() RT_OVERRIDE;
+
+    /** Returns local notification-center reference. */
+    UINotificationCenter *notificationCenter() const { return m_pNotificationCenter; }
 
     /** Loads the dialog data. */
     virtual bool load() = 0;
@@ -312,6 +316,9 @@ private:
 
         /** Holds the button-box instance. */
         QIDialogButtonBox *m_pButtonBox;
+
+        /** Holds the local notification-center instance. */
+        UINotificationCenter *m_pNotificationCenter;
     /** @} */
 };
 
