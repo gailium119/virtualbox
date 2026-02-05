@@ -1,4 +1,4 @@
-/* $Id: UINotificationObjects.cpp 112844 2026-02-05 16:49:16Z sergey.dubov@oracle.com $ */
+/* $Id: UINotificationObjects.cpp 112845 2026-02-05 16:55:12Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - Various UINotificationObjects implementations.
  */
@@ -243,47 +243,45 @@ void UINotificationMessage::cannotValidateExtentionPackSHA256Sum(const QString &
 
 /* static */
 void UINotificationMessage::cannotCreateMachineFolder(const QString &strPath,
-                                                      UINotificationCenter *pParent /* = 0 */)
+                                                      QWidget *pParent)
 {
     createMessage(
         QApplication::translate("UIMessageCenter", "Can't create machine folder ..."),
         QApplication::translate("UIMessageCenter", "Failed to create machine folder at <nobr><b>%1</b></nobr>.")
                                                    .arg(strPath),
-        QString(), QString(), pParent);
+        pParent);
 }
 
 /* static */
 void UINotificationMessage::cannotOverwriteMachineFolder(const QString &strPath,
-                                                         UINotificationCenter *pParent /* = 0 */)
+                                                         QWidget *pParent)
 {
     createMessage(
         QApplication::translate("UIMessageCenter", "Can't overwrite machine folder ..."),
         QApplication::translate("UIMessageCenter", "Failed to overwrite machine folder at <nobr><b>%1</b></nobr>.")
                                                    .arg(strPath),
-        QString(), QString(), pParent);
+        pParent);
 }
 
 /* static */
 void UINotificationMessage::cannotRemoveMachineFolder(const QString &strPath,
-                                                      UINotificationCenter *pParent /* = 0 */)
+                                                      QWidget *pParent)
 {
     createMessage(
         QApplication::translate("UIMessageCenter", "Can't remove machine folder ..."),
         QApplication::translate("UIMessageCenter", "Failed to remove machine folder at <nobr><b>%1</b></nobr>.")
                                                    .arg(strPath),
-        QString(), QString(), pParent);
+        pParent);
 }
 
 /* static */
-void UINotificationMessage::cannotMoveMachineFolder(const QString &strPath,
-                                                    UINotificationCenter *pParent /* = 0 */)
+void UINotificationMessage::cannotMoveMachineFolder(const QString &strPath)
 {
     createMessage(
         QApplication::translate("UIMessageCenter", "Can't move machine folder ..."),
         QApplication::translate("UIMessageCenter", "Failed to move machine folder to <nobr><b>%1</b></nobr>.  "
                                                    "A file with the same name already exists!")
-                                                   .arg(strPath),
-        QString(), QString(), pParent);
+                                                   .arg(strPath));
 }
 
 /* static */
@@ -318,24 +316,24 @@ void UINotificationMessage::cannotAcquireCloudMachineSettings(const QString &str
 
 /* static */
 void UINotificationMessage::cannotCreateMediumStorageInFAT(const QString &strPath,
-                                                           UINotificationCenter *pParent /* = 0 */)
+                                                           QWidget *pParent)
 {
     createMessage(
         QApplication::translate("UIMessageCenter", "Can't create medium ..."),
         QApplication::translate("UIMessageCenter", "Failed to create medium storage at <nobr><b>%1</b></nobr>.")
                                                    .arg(strPath),
-        QString(), QString(), pParent);
+        pParent);
 }
 
 /* static */
 void UINotificationMessage::cannotOverwriteMediumStorage(const QString &strPath,
-                                                         UINotificationCenter *pParent /* = 0 */)
+                                                         QWidget *pParent)
 {
     createMessage(
         QApplication::translate("UIMessageCenter", "Can't overwrite medium ..."),
         QApplication::translate("UIMessageCenter", "Failed to overwrite medium storage at <nobr><b>%1</b></nobr>.")
                                                    .arg(strPath),
-        QString(), QString(), pParent);
+        pParent);
 }
 
 /* static */
@@ -651,13 +649,13 @@ void UINotificationMessage::cannotAcquireVirtualBoxParameter(const CVirtualBox &
 
 /* static */
 void UINotificationMessage::cannotAcquireApplianceParameter(const CAppliance &comAppliance,
-                                                            UINotificationCenter *pParent /* = 0 */)
+                                                            QWidget *pParent)
 {
     createMessage(
         QApplication::translate("UIMessageCenter", "Appliance failure ..."),
         QApplication::translate("UIMessageCenter", "Failed to acquire appliance parameter.") +
         UIErrorString::formatErrorInfo(comAppliance),
-        QString(), QString(), pParent);
+        pParent);
 }
 
 /* static */
@@ -977,13 +975,13 @@ void UINotificationMessage::cannotAcquireVirtualSystemDescriptionParameter(const
 
 /* static */
 void UINotificationMessage::cannotAcquireVirtualSystemDescriptionFormParameter(const CVirtualSystemDescriptionForm &comVsdForm,
-                                                                               UINotificationCenter *pParent /* = 0 */)
+                                                                               QWidget *pParent)
 {
     createMessage(
         QApplication::translate("UIMessageCenter", "VSD form failure ..."),
         QApplication::translate("UIMessageCenter", "Failed to acquire VSD form parameter.") +
         UIErrorString::formatErrorInfo(comVsdForm),
-        QString(), QString(), pParent);
+        pParent);
 }
 
 /* static */
@@ -1169,13 +1167,13 @@ void UINotificationMessage::cannotChangeKeyboardParameter(const CKeyboard &comKe
 
 /* static */
 void UINotificationMessage::cannotChangeVirtualSystemDescriptionParameter(const CVirtualSystemDescription &comVsd,
-                                                                          UINotificationCenter *pParent /* = 0 */)
+                                                                          QWidget *pParent)
 {
     createMessage(
         QApplication::translate("UIMessageCenter", "VSD failure ..."),
         QApplication::translate("UIMessageCenter", "Failed to change VSD parameter.") +
         UIErrorString::formatErrorInfo(comVsd),
-        QString(), QString(), pParent);
+        pParent);
 }
 
 /* static */
@@ -1203,14 +1201,14 @@ void UINotificationMessage::cannotEnumerateHostUSBDevices(const CHost &comHost)
 /* static */
 void UINotificationMessage::cannotOpenMedium(const CVirtualBox &comVBox,
                                              const QString &strLocation,
-                                             UINotificationCenter *pParent /* = 0 */)
+                                             QWidget *pParent /* = 0 */)
 {
     createMessage(
         QApplication::translate("UIMessageCenter", "Can't open medium ..."),
         QApplication::translate("UIMessageCenter", "Failed to open the disk image file <nobr><b>%1</b></nobr>.")
                                                    .arg(strLocation) +
         UIErrorString::formatErrorInfo(comVBox),
-        QString(), QString(), pParent);
+        pParent);
 }
 
 /* static */
@@ -1267,38 +1265,38 @@ void UINotificationMessage::cannotCreateAppliance(const CVirtualBox &comVBox,
 /* static */
 void UINotificationMessage::cannotRegisterMachine(const CVirtualBox &comVBox,
                                                   const QString &strName,
-                                                  UINotificationCenter *pParent /* = 0 */)
+                                                  QWidget *pParent /* = 0 */)
 {
     createMessage(
         QApplication::translate("UIMessageCenter", "Can't register machine ..."),
         QApplication::translate("UIMessageCenter", "Failed to register machine <b>%1</b>.")
                                                    .arg(strName) +
         UIErrorString::formatErrorInfo(comVBox),
-        QString(), QString(), pParent);
+        pParent);
 }
 
 /* static */
 void UINotificationMessage::cannotCreateMachine(const CVirtualBox &comVBox,
-                                                UINotificationCenter *pParent /* = 0 */)
+                                                QWidget *pParent)
 {
     createMessage(
         QApplication::translate("UIMessageCenter", "Can't create machine ..."),
         QApplication::translate("UIMessageCenter", "Failed to create machine.") +
         UIErrorString::formatErrorInfo(comVBox),
-        QString(), QString(), pParent);
+        pParent);
 }
 
 /* static */
 void UINotificationMessage::cannotFindMachineById(const CVirtualBox &comVBox,
                                                   const QUuid &uMachineId,
-                                                  UINotificationCenter *pParent /* = 0 */)
+                                                  QWidget *pParent)
 {
     createMessage(
         QApplication::translate("UIMessageCenter", "Can't find machine ..."),
         QApplication::translate("UIMessageCenter", "Failed to find the machine with following ID: <nobr><b>%1</b></nobr>.")
                                                    .arg(uMachineId.toString()) +
         UIErrorString::formatErrorInfo(comVBox),
-        QString(), QString(), pParent);
+        pParent);
 }
 
 /* static */
@@ -1314,14 +1312,14 @@ void UINotificationMessage::cannotOpenMachine(const CVirtualBox &comVBox, const 
 /* static */
 void UINotificationMessage::cannotCreateMediumStorage(const CVirtualBox &comVBox,
                                                       const QString &strPath,
-                                                      UINotificationCenter *pParent /* = 0 */)
+                                                      QWidget *pParent)
 {
     createMessage(
         QApplication::translate("UIMessageCenter", "Can't create medium storage ..."),
         QApplication::translate("UIMessageCenter", "Failed to create medium storage at <nobr><b>%1</b></nobr>.")
                                                    .arg(strPath) +
         UIErrorString::formatErrorInfo(comVBox),
-        QString(), QString(), pParent);
+        pParent);
 }
 
 /* static */
@@ -1334,33 +1332,33 @@ void UINotificationMessage::cannotGetExtensionPackManager(const CVirtualBox &com
 }
 
 /* static */
-void UINotificationMessage::cannotCreateVfsExplorer(const CAppliance &comAppliance, UINotificationCenter *pParent /* = 0 */)
+void UINotificationMessage::cannotCreateVfsExplorer(const CAppliance &comAppliance, QWidget *pParent)
 {
     createMessage(
         QApplication::translate("UIMessageCenter", "Can't create VFS explorer ..."),
         QApplication::translate("UIMessageCenter", "Failed to create VFS explorer to check files.") +
         UIErrorString::formatErrorInfo(comAppliance),
-        QString(), QString(), pParent);
+        pParent);
 }
 
 /* static */
-void UINotificationMessage::cannotAddDiskEncryptionPassword(const CAppliance &comAppliance, UINotificationCenter *pParent /* = 0 */)
+void UINotificationMessage::cannotAddDiskEncryptionPassword(const CAppliance &comAppliance, QWidget *pParent)
 {
     createMessage(
         QApplication::translate("UIMessageCenter", "Bad password ..."),
         QApplication::translate("UIMessageCenter", "Bad password or authentication failure.") +
         UIErrorString::formatErrorInfo(comAppliance),
-        QString(), QString(), pParent);
+        pParent);
 }
 
 /* static */
-void UINotificationMessage::cannotInterpretAppliance(const CAppliance &comAppliance, UINotificationCenter *pParent /* = 0 */)
+void UINotificationMessage::cannotInterpretAppliance(const CAppliance &comAppliance, QWidget *pParent)
 {
     createMessage(
         QApplication::translate("UIMessageCenter", "Can't interpret appliance ..."),
         QApplication::translate("UIMessageCenter", "Failed to interpret appliance being imported.") +
         UIErrorString::formatErrorInfo(comAppliance),
-        QString(), QString(), pParent);
+        pParent);
 }
 
 /* static */
@@ -1596,25 +1594,25 @@ void UINotificationMessage::cannotDiscardSavedState(const CMachine &comMachine)
 }
 
 /* static */
-void UINotificationMessage::cannotRemoveMachine(const CMachine &comMachine, UINotificationCenter *pParent /* = 0 */)
+void UINotificationMessage::cannotRemoveMachine(const CMachine &comMachine, QWidget *pParent /* = 0 */)
 {
     createMessage(
         QApplication::translate("UIMessageCenter", "Can't remove machine ..."),
         QApplication::translate("UIMessageCenter", "Failed to remove the virtual machine <b>%1</b>.")
                                                    .arg(CMachine(comMachine).GetName()) +
         UIErrorString::formatErrorInfo(comMachine),
-        QString(), QString(), pParent);
+        pParent);
 }
 
 /* static */
-void UINotificationMessage::cannotExportMachine(const CMachine &comMachine, UINotificationCenter *pParent /* = 0 */)
+void UINotificationMessage::cannotExportMachine(const CMachine &comMachine, QWidget *pParent)
 {
     createMessage(
         QApplication::translate("UIMessageCenter", "Can't export machine ..."),
         QApplication::translate("UIMessageCenter", "Failed to export virtual machine <b>%1</b>.")
                                                    .arg(CMachine(comMachine).GetName()) +
         UIErrorString::formatErrorInfo(comMachine),
-        QString(), QString(), pParent);
+        pParent);
 }
 
 /* static */
@@ -1622,7 +1620,7 @@ void UINotificationMessage::cannotAttachDevice(const CMachine &comMachine,
                                                UIMediumDeviceType enmType,
                                                const QString &strLocation,
                                                const StorageSlot &storageSlot,
-                                               UINotificationCenter *pParent /* = 0 */)
+                                               QWidget *pParent)
 {
     QString strMessage;
     switch (enmType)
@@ -1660,7 +1658,7 @@ void UINotificationMessage::cannotAttachDevice(const CMachine &comMachine,
     createMessage(
         QApplication::translate("UIMessageCenter", "Can't attach device ..."),
         strMessage + UIErrorString::formatErrorInfo(comMachine),
-        QString(), QString(), pParent);
+        pParent);
 }
 
 /* static */
@@ -1676,14 +1674,14 @@ void UINotificationMessage::cannotFindSnapshotById(const CMachine &comMachine, c
 /* static */
 void UINotificationMessage::cannotFindSnapshotByName(const CMachine &comMachine,
                                                      const QString &strName,
-                                                     UINotificationCenter *pParent /* = 0 */)
+                                                     QWidget *pParent)
 {
     createMessage(
         QApplication::translate("UIMessageCenter", "Can't find snapshot ..."),
         QApplication::translate("UIMessageCenter", "Failed to find snapshot with name=<b>%1</b>.")
                                                    .arg(strName) +
         UIErrorString::formatErrorInfo(comMachine),
-        QString(), QString(), pParent);
+        pParent);
 }
 
 /* static */
@@ -1772,7 +1770,7 @@ void UINotificationMessage::cannotDetachWebCam(const CEmulatedUSB &comDispatcher
 }
 
 /* static */
-void UINotificationMessage::cannotSaveMachineSettings(const CMachine &comMachine, UINotificationCenter *pParent /* = 0 */)
+void UINotificationMessage::cannotSaveMachineSettings(const CMachine &comMachine, QWidget *pParent /* = 0 */)
 {
     createMessage(
         QApplication::translate("UIMessageCenter", "Can't save machine settings ..."),
@@ -1781,7 +1779,7 @@ void UINotificationMessage::cannotSaveMachineSettings(const CMachine &comMachine
                                                    .arg(CMachine(comMachine).GetName(),
                                                         CMachine(comMachine).GetSettingsFilePath()) +
         UIErrorString::formatErrorInfo(comMachine),
-        QString(), QString(), pParent);
+        pParent);
 }
 
 /* static */

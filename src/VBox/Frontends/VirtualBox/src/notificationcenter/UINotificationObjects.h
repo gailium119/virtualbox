@@ -1,4 +1,4 @@
-/* $Id: UINotificationObjects.h 112844 2026-02-05 16:49:16Z sergey.dubov@oracle.com $ */
+/* $Id: UINotificationObjects.h 112845 2026-02-05 16:55:12Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - Various UINotificationObjects declarations.
  */
@@ -162,19 +162,18 @@ public:
         /** Notifies about inability to create machine folder.
           * @param  strPath  Brings the machine folder path. */
         static void cannotCreateMachineFolder(const QString &strPath,
-                                              UINotificationCenter *pParent = 0);
+                                              QWidget *pParent);
         /** Notifies about inability to overwrite machine folder.
           * @param  strPath  Brings the machine folder path. */
         static void cannotOverwriteMachineFolder(const QString &strPath,
-                                                 UINotificationCenter *pParent = 0);
+                                                 QWidget *pParent);
         /** Notifies about inability to remove machine folder.
           * @param  strPath  Brings the machine folder path. */
         static void cannotRemoveMachineFolder(const QString &strPath,
-                                              UINotificationCenter *pParent = 0);
+                                              QWidget *pParent);
         /** Notifies about inability to move machine folder.
           * @param  strPath  Brings the machine folder path. */
-        static void cannotMoveMachineFolder(const QString &strPath,
-                                            UINotificationCenter *pParent = 0);
+        static void cannotMoveMachineFolder(const QString &strPath);
 
         /** Notifies about inability to register existing machine.
           * @param  streName     Brings the machine name.
@@ -193,11 +192,11 @@ public:
         /** Notifies about inability to create medium storage in FAT.
           * @param  strPath  Brings the medium path. */
         static void cannotCreateMediumStorageInFAT(const QString &strPath,
-                                                   UINotificationCenter *pParent = 0);
+                                                   QWidget *pParent);
         /** Notifies about inability to overwrite medium storage.
           * @param  strPath  Brings the medium path. */
         static void cannotOverwriteMediumStorage(const QString &strPath,
-                                                 UINotificationCenter *pParent = 0);
+                                                 QWidget *pParent);
 
         /** Notifies about inability to open license file.
           * @param  strPath  Brings the license file path. */
@@ -298,7 +297,7 @@ public:
         /** Notifies about inability to acquire IAppliance parameter.
           * @param  comVBox  Brings the object parameter get acquired from. */
         static void cannotAcquireApplianceParameter(const CAppliance &comAppliance,
-                                                    UINotificationCenter *pParent = 0);
+                                                    QWidget *pParent);
         /** Notifies about inability to acquire IPlatform parameter.
           * @param  comPlatform  Brings the object parameter get acquired from. */
         static void cannotAcquirePlatformParameter(const CPlatform &comPlatform);
@@ -405,7 +404,7 @@ public:
         /** Notifies about inability to acquire IVirtualSystemDescriptionForm parameter.
           * @param  comVsdForm  Brings the object parameter get acquired from. */
         static void cannotAcquireVirtualSystemDescriptionFormParameter(const CVirtualSystemDescriptionForm &comVsdForm,
-                                                                       UINotificationCenter *pParent = 0);
+                                                                       QWidget *pParent);
         /** Notifies about inability to acquire ICloudProviderManager parameter.
           * @param  comCloudProviderManager  Brings the object parameter get acquired from. */
         static void cannotAcquireCloudProviderManagerParameter(const CCloudProviderManager &comCloudProviderManager,
@@ -471,7 +470,7 @@ public:
         /** Notifies about inability to change IVirtualSystemDescription parameter.
           * @param  comVsd  Brings the object parameter being changed for. */
         static void cannotChangeVirtualSystemDescriptionParameter(const CVirtualSystemDescription &comVsd,
-                                                                  UINotificationCenter *pParent = 0);
+                                                                  QWidget *pParent);
 
         /** Notifies about inability to enumerate host USB devices.
           * @param  comHost  Brings the host devices enumerated for. */
@@ -480,7 +479,7 @@ public:
           * @param  comVBox      Brings common VBox object trying to open medium.
           * @param  strLocation  Brings the medium location. */
         static void cannotOpenMedium(const CVirtualBox &comVBox, const QString &strLocation,
-                                     UINotificationCenter *pParent = 0);
+                                     QWidget *pParent = 0);
 
         /** Notifies about inability to pause machine.
           * @param  comConsole  Brings console trying to pause machine. */
@@ -504,16 +503,16 @@ public:
         /** Notifies about inability to register machine.
           * @param  comVBox  Brings common VBox object trying to register machine.
           * @param  strName  Brings the name of VM being registered. */
-        static void cannotRegisterMachine(const CVirtualBox &comVBox, const QString &strName, UINotificationCenter *pParent = 0);
+        static void cannotRegisterMachine(const CVirtualBox &comVBox, const QString &strName, QWidget *pParent = 0);
         /** Notifies about inability to create machine.
           * @param  comVBox  Brings common VBox object trying to create machine. */
-        static void cannotCreateMachine(const CVirtualBox &comVBox, UINotificationCenter *pParent = 0);
+        static void cannotCreateMachine(const CVirtualBox &comVBox, QWidget *pParent);
         /** Notifies about inability to find machine by ID.
           * @param  comVBox     Brings common VBox object trying to find machine.
           * @param  uMachineId  Brings the machine ID. */
         static void cannotFindMachineById(const CVirtualBox &comVBox,
                                           const QUuid &uMachineId,
-                                          UINotificationCenter *pParent = 0);
+                                          QWidget *pParent);
         /** Notifies about inability to open machine.
           * @param  comVBox      Brings common VBox object trying to open machine.
           * @param  strLocation  Brings the machine location. */
@@ -523,20 +522,20 @@ public:
           * @param  strPath  Brings the medium path. */
         static void cannotCreateMediumStorage(const CVirtualBox &comVBox,
                                               const QString &strPath,
-                                              UINotificationCenter *pParent = 0);
+                                              QWidget *pParent);
         /** Notifies about inability to get ext pack manager.
           * @param  comVBox      Brings common VBox object trying to open machine. */
         static void cannotGetExtensionPackManager(const CVirtualBox &comVBox);
 
         /** Notifies about inability to create VFS explorer.
           * @param  comAppliance  Brings appliance trying to create VFS explorer. */
-        static void cannotCreateVfsExplorer(const CAppliance &comAppliance, UINotificationCenter *pParent = 0);
+        static void cannotCreateVfsExplorer(const CAppliance &comAppliance, QWidget *pParent);
         /** Notifies about inability to add disk scryption password.
           * @param  comAppliance  Brings appliance trying to add disk scryption password. */
-        static void cannotAddDiskEncryptionPassword(const CAppliance &comAppliance, UINotificationCenter *pParent = 0);
+        static void cannotAddDiskEncryptionPassword(const CAppliance &comAppliance, QWidget *pParent);
         /** Notifies about inability to interpret appliance.
           * @param  comAppliance  Brings appliance we are trying to interpret. */
-        static void cannotInterpretAppliance(const CAppliance &comAppliance, UINotificationCenter *pParent = 0);
+        static void cannotInterpretAppliance(const CAppliance &comAppliance, QWidget *pParent);
         /** Notifies about inability to create VSD.
           * @param  comAppliance  Brings appliance trying to create VSD. */
         static void cannotCreateVirtualSystemDescription(const CAppliance &comAppliance, UINotificationCenter *pParent = 0);
@@ -627,17 +626,17 @@ public:
         static void cannotDiscardSavedState(const CMachine &comMachine);
         /** Notifies about inability to remove machine.
           * @param  comMachine  Brings machine being removed. */
-        static void cannotRemoveMachine(const CMachine &comMachine, UINotificationCenter *pParent = 0);
+        static void cannotRemoveMachine(const CMachine &comMachine, QWidget *pParent = 0);
         /** Notifies about inability to export appliance.
           * @param  comMachine  Brings machine trying to export appliance. */
-        static void cannotExportMachine(const CMachine &comMachine, UINotificationCenter *pParent = 0);
+        static void cannotExportMachine(const CMachine &comMachine, QWidget *pParent);
         /** Notifies about inability to attach device.
           * @param  comMachine  Brings machine trying to attach device. */
         static void cannotAttachDevice(const CMachine &comMachine,
                                        UIMediumDeviceType enmType,
                                        const QString &strLocation,
                                        const StorageSlot &storageSlot,
-                                       UINotificationCenter *pParent = 0);
+                                       QWidget *pParent);
 
         /** Notifies about inability to find snapshot by ID.
           * @param  comMachine  Brings the machine being searched for particular snapshot.
@@ -646,7 +645,7 @@ public:
         /** Notifies about inability to find snapshot by name.
           * @param  comMachine  Brings the machine being searched for particular snapshot.
           * @param  strName     Brings the required snapshot name. */
-        static void cannotFindSnapshotByName(const CMachine &comMachine, const QString &strName, UINotificationCenter *pParent = 0);
+        static void cannotFindSnapshotByName(const CMachine &comMachine, const QString &strName, QWidget *pParent);
         /** Notifies about inability to change snapshot.
           * @param  comSnapshot      Brings the snapshot being changed.
           * @param  strSnapshotName  Brings snapshot name.
@@ -696,7 +695,7 @@ public:
 
         /** Notifies about inability to save machine settings.
           * @param  comMachine  Brings the machine trying to save settings. */
-        static void cannotSaveMachineSettings(const CMachine &comMachine, UINotificationCenter *pParent = 0);
+        static void cannotSaveMachineSettings(const CMachine &comMachine, QWidget *pParent = 0);
 
         /** Notifies about inability to toggle audio input.
           * @param  comAdapter      Brings the adapter input being toggled for.

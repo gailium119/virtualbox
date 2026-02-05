@@ -1,4 +1,4 @@
-/* $Id: UIWizardNewVD.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIWizardNewVD.cpp 112845 2026-02-05 16:55:12Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIWizardNewVD class implementation.
  */
@@ -184,7 +184,7 @@ bool UIWizardNewVD::createVirtualDisk()
                                                   m_strMediumPath, KAccessMode_ReadWrite, m_enmDeviceType);
     if (!comVBox.isOk())
     {
-        UINotificationMessage::cannotCreateMediumStorage(comVBox, m_strMediumPath, notificationCenter());
+        UINotificationMessage::cannotCreateMediumStorage(comVBox, m_strMediumPath, this);
         return false;
     }
 

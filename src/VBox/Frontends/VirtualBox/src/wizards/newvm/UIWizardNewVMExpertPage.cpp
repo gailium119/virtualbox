@@ -1,4 +1,4 @@
-/* $Id: UIWizardNewVMExpertPage.cpp 112600 2026-01-15 11:11:39Z serkan.bayraktar@oracle.com $ */
+/* $Id: UIWizardNewVMExpertPage.cpp 112845 2026-02-05 16:55:12Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIWizardNewVMExpertPage class implementation.
  */
@@ -726,7 +726,7 @@ bool UIWizardNewVMExpertPage::validatePage()
         fResult = !QFileInfo(strMediumPath).exists();
         if (!fResult)
         {
-            UINotificationMessage::cannotOverwriteMediumStorage(strMediumPath, wizard()->notificationCenter());
+            UINotificationMessage::cannotOverwriteMediumStorage(strMediumPath, wizard());
             return fResult;
         }
         qulonglong uSize = pWizard->mediumSize();
@@ -735,7 +735,7 @@ bool UIWizardNewVMExpertPage::validatePage()
         fResult =  UIWizardDiskEditors::checkFATSizeLimitation(uVariant, strMediumPath, uSize);
         if (!fResult)
         {
-            UINotificationMessage::cannotCreateMediumStorageInFAT(strMediumPath, wizard()->notificationCenter());
+            UINotificationMessage::cannotCreateMediumStorageInFAT(strMediumPath, wizard());
             return fResult;
         }
         /* Try to create the hard drive:*/

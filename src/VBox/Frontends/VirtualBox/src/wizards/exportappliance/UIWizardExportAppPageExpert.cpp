@@ -1,4 +1,4 @@
-/* $Id: UIWizardExportAppPageExpert.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIWizardExportAppPageExpert.cpp 112845 2026-02-05 16:55:12Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIWizardExportAppPageExpert class implementation.
  */
@@ -630,7 +630,7 @@ bool UIWizardExportAppPageExpert::validatePage()
             comForm.GetVirtualSystemDescription();
             fResult = comForm.isOk();
             if (!fResult)
-                UINotificationMessage::cannotAcquireVirtualSystemDescriptionFormParameter(comForm, wizard()->notificationCenter());
+                UINotificationMessage::cannotAcquireVirtualSystemDescriptionFormParameter(comForm, wizard());
         }
 
         /* Final stage? */

@@ -1,4 +1,4 @@
-/* $Id: UIWizardExportApp.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIWizardExportApp.cpp 112845 2026-02-05 16:55:12Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIWizardExportApp class implementation.
  */
@@ -154,7 +154,7 @@ bool UIWizardExportApp::exportAppliance()
         CVFSExplorer comExplorer = comAppliance.CreateVFSExplorer(uri(false /* fWithFile */));
         if (!comAppliance.isOk())
         {
-            UINotificationMessage::cannotCreateVfsExplorer(comAppliance, notificationCenter());
+            UINotificationMessage::cannotCreateVfsExplorer(comAppliance, this);
             return false;
         }
 
@@ -299,7 +299,7 @@ bool UIWizardExportApp::exportVMs(CAppliance &comAppliance)
                                   encryptionPasswords.values().toVector());
         if (!comAppliance.isOk())
         {
-            UINotificationMessage::cannotAddDiskEncryptionPassword(comAppliance, notificationCenter());
+            UINotificationMessage::cannotAddDiskEncryptionPassword(comAppliance, this);
             return false;
         }
     }

@@ -1,4 +1,4 @@
-/* $Id: UIWizardImportAppPageSource.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIWizardImportAppPageSource.cpp 112845 2026-02-05 16:55:12Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIWizardImportAppPageSource class implementation.
  */
@@ -378,7 +378,7 @@ void UIWizardImportAppSource::refreshCloudStuff(CAppliance &comCloudAppliance,
     /* Acquire virtual system description: */
     QVector<CVirtualSystemDescription> descriptions = comCloudAppliance.GetVirtualSystemDescriptions();
     if (!comCloudAppliance.isOk())
-        return UINotificationMessage::cannotAcquireApplianceParameter(comCloudAppliance, pWizard->notificationCenter());
+        return UINotificationMessage::cannotAcquireApplianceParameter(comCloudAppliance, pWizard);
 
     /* Make sure there is at least one virtual system description created: */
     AssertReturnVoid(!descriptions.isEmpty());

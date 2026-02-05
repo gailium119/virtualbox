@@ -1,4 +1,4 @@
-/* $Id: UIWizardCloneVM.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIWizardCloneVM.cpp 112845 2026-02-05 16:55:12Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIWizardCloneVM class implementation.
  */
@@ -182,7 +182,7 @@ bool UIWizardCloneVM::cloneVM()
         const CSnapshot comCreatedSnapshot = m_machine.FindSnapshot(uSnapshotId.toString());
         if (comCreatedSnapshot.isNull())
         {
-            UINotificationMessage::cannotFindSnapshotByName(m_machine, strSnapshotName, notificationCenter());
+            UINotificationMessage::cannotFindSnapshotByName(m_machine, strSnapshotName, this);
             return false;
         }
 
@@ -198,7 +198,7 @@ bool UIWizardCloneVM::cloneVM()
                                                   QString(), QString(), QString());
     if (!comVBox.isOk())
     {
-        UINotificationMessage::cannotCreateMachine(comVBox, notificationCenter());
+        UINotificationMessage::cannotCreateMachine(comVBox, this);
         return false;
     }
 

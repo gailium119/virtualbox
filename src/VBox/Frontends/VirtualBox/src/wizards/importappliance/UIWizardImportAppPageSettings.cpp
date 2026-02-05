@@ -1,4 +1,4 @@
-/* $Id: UIWizardImportAppPageSettings.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIWizardImportAppPageSettings.cpp 112845 2026-02-05 16:55:12Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIWizardImportAppPageSettings class implementation.
  */
@@ -534,7 +534,7 @@ bool UIWizardImportAppPageSettings::validatePage()
             comForm.GetVirtualSystemDescription();
             fResult = comForm.isOk();
             if (!fResult)
-                UINotificationMessage::cannotAcquireVirtualSystemDescriptionFormParameter(comForm, wizard()->notificationCenter());
+                UINotificationMessage::cannotAcquireVirtualSystemDescriptionFormParameter(comForm, wizard());
         }
     }
     else

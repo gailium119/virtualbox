@@ -1,4 +1,4 @@
-/* $Id: UIWizardNewVMNameOSTypePage.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIWizardNewVMNameOSTypePage.cpp 112845 2026-02-05 16:55:12Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIWizardNewVMPageBasicNameOSStype class implementation.
  */
@@ -412,7 +412,7 @@ bool UIWizardNewVMNameOSTypeCommon::createMachineFolder(UINameAndSystemEditor *p
     /* Cleanup previosly created folder if any: */
     if (!cleanupMachineFolder(pWizard))
     {
-        UINotificationMessage::cannotRemoveMachineFolder(strCreatedFolder, pWizard->notificationCenter());
+        UINotificationMessage::cannotRemoveMachineFolder(strCreatedFolder, pWizard);
         return false;
     }
 
@@ -425,7 +425,7 @@ bool UIWizardNewVMNameOSTypeCommon::createMachineFolder(UINameAndSystemEditor *p
         /* The folder is there but not because of this wizard. Avoid overwriting a existing machine's folder */
         else
         {
-            UINotificationMessage::cannotOverwriteMachineFolder(strMachineFolder, pWizard->notificationCenter());
+            UINotificationMessage::cannotOverwriteMachineFolder(strMachineFolder, pWizard);
             return false;
         }
     }
@@ -434,7 +434,7 @@ bool UIWizardNewVMNameOSTypeCommon::createMachineFolder(UINameAndSystemEditor *p
     bool fMachineFolderCreated = QDir().mkpath(strMachineFolder);
     if (!fMachineFolderCreated)
     {
-        UINotificationMessage::cannotCreateMachineFolder(strMachineFolder, pWizard->notificationCenter());
+        UINotificationMessage::cannotCreateMachineFolder(strMachineFolder, pWizard);
         return false;
     }
     pWizard->setCreatedMachineFolder(strMachineFolder);

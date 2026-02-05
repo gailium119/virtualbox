@@ -1,4 +1,4 @@
-/* $Id: UIWizardNewVDExpertPage.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIWizardNewVDExpertPage.cpp 112845 2026-02-05 16:55:12Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIWizardNewVDExpertPage class implementation.
  */
@@ -208,7 +208,7 @@ bool UIWizardNewVDExpertPage::validatePage()
     fResult = !QFileInfo(strMediumPath).exists();
     if (!fResult)
     {
-        UINotificationMessage::cannotOverwriteMediumStorage(strMediumPath, wizard()->notificationCenter());
+        UINotificationMessage::cannotOverwriteMediumStorage(strMediumPath, wizard());
         return fResult;
     }
 
@@ -218,7 +218,7 @@ bool UIWizardNewVDExpertPage::validatePage()
                                                           pWizard->mediumSize());
     if (!fResult)
     {
-        UINotificationMessage::cannotCreateMediumStorageInFAT(strMediumPath, wizard()->notificationCenter());
+        UINotificationMessage::cannotCreateMediumStorageInFAT(strMediumPath, wizard());
         return fResult;
     }
 
