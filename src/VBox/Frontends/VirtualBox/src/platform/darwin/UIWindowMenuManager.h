@@ -1,4 +1,4 @@
-/* $Id: UIWindowMenuManager.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: UIWindowMenuManager.h 112835 2026-02-05 10:41:28Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - UIWindowMenuManager class declaration.
  */
@@ -72,7 +72,7 @@ protected:
     /** Constructs 'Window' menu Manager. */
     UIWindowMenuManager();
     /** Destructs 'Window' menu Manager. */
-    ~UIWindowMenuManager();
+    virtual ~UIWindowMenuManager() RT_OVERRIDE;
 
     /** Preprocesses any Qt @a pEvent for passed @a pObject. */
     virtual bool eventFilter(QObject *pObject, QEvent *pEvent) RT_OVERRIDE;
