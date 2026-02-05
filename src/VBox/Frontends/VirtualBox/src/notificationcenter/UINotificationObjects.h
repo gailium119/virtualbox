@@ -1,4 +1,4 @@
-/* $Id: UINotificationObjects.h 112842 2026-02-05 14:06:53Z sergey.dubov@oracle.com $ */
+/* $Id: UINotificationObjects.h 112844 2026-02-05 16:49:16Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - Various UINotificationObjects declarations.
  */
@@ -768,6 +768,13 @@ private:
                               const QString &strInternalName = QString(),
                               const QString &strHelpKeyword = QString(),
                               UINotificationCenter *pParent = 0);
+    /** Creates message.
+      * @param  strName     Brings the message name.
+      * @param  strDetails  Brings the message details.
+      * @param  pParent     Brings the parent reference. */
+    static void createMessage(const QString &strName,
+                              const QString &strDetails,
+                              QWidget *pParent);
     /** Destroys message.
       * @param  strInternalName  Brings the message internal name.
       * @param  pParent          Brings the local notification-center reference. */

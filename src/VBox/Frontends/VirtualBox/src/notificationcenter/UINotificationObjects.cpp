@@ -1,4 +1,4 @@
-/* $Id: UINotificationObjects.cpp 112842 2026-02-05 14:06:53Z sergey.dubov@oracle.com $ */
+/* $Id: UINotificationObjects.cpp 112844 2026-02-05 16:49:16Z sergey.dubov@oracle.com $ */
 /** @file
  * VBox Qt GUI - Various UINotificationObjects implementations.
  */
@@ -1913,6 +1913,17 @@ void UINotificationMessage::createMessage(const QString &strName,
                                                                          strHelpKeyword));
     if (!strInternalName.isEmpty())
         m_messages[strInternalName] = uId;
+}
+
+/* static */
+void UINotificationMessage::createMessage(const QString &strName,
+                                          const QString &strDetails,
+                                          QWidget *pParent)
+{
+    QPointer<UINotificationCenter> pNotificationCenter;
+    if (pParent)
+        pNotificationCenter = pParent->property("notification_center").value<QPointer<UINotificationCenter>>();
+    return createMessage(strName, strDetails, QString(), QString(), pNotificationCenter);
 }
 
 /* static */
