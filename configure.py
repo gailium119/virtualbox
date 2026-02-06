@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# $Id: configure.py 112849 2026-02-06 07:46:16Z knut.osmundsen@oracle.com $
+# $Id: configure.py 112854 2026-02-06 14:15:48Z klaus.espenlaub@oracle.com $
 """
 Configuration script for building VirtualBox.
 
@@ -61,7 +61,7 @@ SPDX-License-Identifier: GPL-3.0-only
 # External Python modules or other dependencies are not allowed!
 #
 
-__revision__ = "$Revision: 112849 $"
+__revision__ = "$Revision: 112854 $"
 
 import argparse
 import ctypes
@@ -3392,12 +3392,16 @@ def write_autoconfig_kmk(sFilePath, enmBuildTarget, oEnv, aoLibs, aoTools):
     w.write_raw('\n');
 
     # Features
-    w.write_raw('# Features');
+    w.write_raw('# Features related to library presence');
     for oLibCur in aoLibs:
         if      oLibCur.isInTarget() \
         and not oLibCur.fHave:
             sVarBase = oLibCur.sName.upper().replace("+", "PLUS").replace("-", "_");
             w.write_raw(f"VBOX_WITH_{sVarBase.ljust(26)} :=");
+    w.write_raw('\n');
+
+    w.write_raw('# Features derived from arguments');
+    w.write_all(asPrefixInclude = ['VBOX_WITH_']);
     w.write_raw('\n');
 
     # Tools
