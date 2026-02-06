@@ -1,4 +1,4 @@
-/* $Id: VBoxDD.h 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: VBoxDD.h 112860 2026-02-06 21:07:19Z alexander.eichner@oracle.com $ */
 /** @file
  * Built-in drivers & devices (part 1) header.
  */
@@ -116,6 +116,9 @@ extern const PDMDEVREG g_DeviceQemuFwCfg;
 #ifdef VBOX_WITH_TPM
 extern const PDMDEVREG g_DeviceTpm;
 extern const PDMDEVREG g_DeviceTpmPpi;
+#endif
+#ifdef VBOX_WITH_VFIO_PCI_PASSTHROUGH
+extern const PDMDEVREG g_DevicePciVfio;
 #endif
 
 extern const PDMDRVREG g_DrvMouseQueue;
@@ -247,6 +250,7 @@ extern const PDMUSBREG g_UsbSCardReader;
 extern const PDMDRVREG g_DrvCardReaderReg;
 # endif
 #endif
+
 
 /* VBoxAcpi.cpp */
 int acpiPrepareDsdt(PPDMDEVINS pDevIns, void **ppvPtr, size_t *pcbDsdt);

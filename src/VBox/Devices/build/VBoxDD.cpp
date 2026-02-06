@@ -1,4 +1,4 @@
-/* $Id: VBoxDD.cpp 112403 2026-01-11 19:29:08Z knut.osmundsen@oracle.com $ */
+/* $Id: VBoxDD.cpp 112860 2026-02-06 21:07:19Z alexander.eichner@oracle.com $ */
 /** @file
  * VBoxDD - Built-in drivers & devices (part 1).
  */
@@ -248,6 +248,11 @@ extern "C" DECLEXPORT(int) VBoxDevicesRegister(PPDMDEVREGCB pCallbacks, uint32_t
         return rc;
 
     rc = pCallbacks->pfnRegister(pCallbacks, &g_DeviceTpmPpi);
+    if (RT_FAILURE(rc))
+        return rc;
+#endif
+#ifdef VBOX_WITH_VFIO_PCI_PASSTHROUGH
+    rc = pCallbacks->pfnRegister(pCallbacks, &g_DevicePciVfio);
     if (RT_FAILURE(rc))
         return rc;
 #endif
