@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# $Id: configure.py 112769 2026-01-30 14:04:09Z andreas.loeffler@oracle.com $
+# $Id: configure.py 112849 2026-02-06 07:46:16Z knut.osmundsen@oracle.com $
 """
 Configuration script for building VirtualBox.
 
@@ -61,7 +61,7 @@ SPDX-License-Identifier: GPL-3.0-only
 # External Python modules or other dependencies are not allowed!
 #
 
-__revision__ = "$Revision: 112769 $"
+__revision__ = "$Revision: 112849 $"
 
 import argparse
 import ctypes
@@ -3416,7 +3416,7 @@ def write_autoconfig_kmk(sFilePath, enmBuildTarget, oEnv, aoLibs, aoTools):
     # Serialize all changes to disk.
     w.save();
 
-    if g_fDebug:
+    if g_fDebug or True: ## @todo remove 'or True'.
         abBuf = None;
         print(f'Contents of {sFilePath}:');
         with open(sFilePath, 'r', encoding = 'utf-8') as fh:
@@ -3480,7 +3480,7 @@ rem\n""");
 
     w.save(); # Serialize all changes to disk.
 
-    if g_fDebug:
+    if g_fDebug or True: ## @todo remove 'or True'.
         abBuf = None;
         print(f'Contents of {sFilePath}:');
         with open(sFilePath, 'r', encoding = 'utf-8') as fh:
