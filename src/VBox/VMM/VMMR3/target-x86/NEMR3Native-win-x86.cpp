@@ -1010,7 +1010,7 @@ static int nemR3WinInitCheckCapabilities(PVM pVM, PRTERRINFO pErrInfo)
     NEM_LOG_REL_FIELD(IbrsSupport);
     NEM_LOG_REL_FIELD(StibpSupport);
     NEM_LOG_REL_FIELD(IbpbSupport);
-# if WDK_NTDDI_VERSION > MY_NTDDI_WIN11_22000
+# if WDK_NTDDI_VERSION >= MY_NTDDI_WIN11_26100
     NEM_LOG_REL_FIELD(UnrestrictedGuestSupport);
 # else
     NEM_LOG_REL_FIELD(Reserved2);
@@ -1095,7 +1095,7 @@ static int nemR3WinInitCheckCapabilities(PVM pVM, PRTERRINFO pErrInfo)
         NEM_LOG_REL_FIELD(AmxBf16Support);
         NEM_LOG_REL_FIELD(AmxInt8Support);
         NEM_LOG_REL_FIELD(AvxVnniSupport);
-#if WDK_NTDDI_VERSION > MY_NTDDI_WIN11_22000 /** @todo Introduced at some later point. */
+#if WDK_NTDDI_VERSION >= MY_NTDDI_WIN11_26100 /** @todo Introduced at some later point. */
         NEM_LOG_REL_FIELD(AvxIfmaSupport);
         NEM_LOG_REL_FIELD(AvxNeConvertSupport);
         NEM_LOG_REL_FIELD(AvxVnniInt8Support);
@@ -1204,7 +1204,7 @@ static int nemR3WinInitCheckCapabilities(PVM pVM, PRTERRINFO pErrInfo)
             NEM_LOG_REL_FIELD(IbrsSupport);
             NEM_LOG_REL_FIELD(StibpSupport);
             NEM_LOG_REL_FIELD(IbpbSupport);
-# if WDK_NTDDI_VERSION > MY_NTDDI_WIN11_22000
+# if WDK_NTDDI_VERSION >= MY_NTDDI_WIN11_26100
             NEM_LOG_REL_FIELD(UnrestrictedGuestSupport);
 # else
             NEM_LOG_REL_FIELD(Reserved2);
@@ -1241,7 +1241,7 @@ static int nemR3WinInitCheckCapabilities(PVM pVM, PRTERRINFO pErrInfo)
             NEM_LOG_REL_FIELD(TscInvariantSupport);
             NEM_LOG_REL_FIELD(ClZeroSupport);
             NEM_LOG_REL_FIELD(RdpruSupport);
-#if WDK_NTDDI_VERSION > MY_NTDDI_WIN11_22000
+#if WDK_NTDDI_VERSION >= MY_NTDDI_WIN11_26100
             NEM_LOG_REL_FIELD(La57Support);
             NEM_LOG_REL_FIELD(MbecSupport);
 #else
@@ -1267,7 +1267,7 @@ static int nemR3WinInitCheckCapabilities(PVM pVM, PRTERRINFO pErrInfo)
             NEM_LOG_REL_FIELD(FZLRepMovsb);
             NEM_LOG_REL_FIELD(FSRepStosb);
             NEM_LOG_REL_FIELD(FSRepCmpsb);
-#if WDK_NTDDI_VERSION > MY_NTDDI_WIN11_22000
+#if WDK_NTDDI_VERSION >= MY_NTDDI_WIN11_26100
             NEM_LOG_REL_FIELD(TsxLdTrkSupport);
             NEM_LOG_REL_FIELD(VmxInsOutsExitInfoSupport);
             NEM_LOG_REL_FIELD(Reserved3);
@@ -1377,7 +1377,7 @@ static int nemR3WinInitCheckCapabilities(PVM pVM, PRTERRINFO pErrInfo)
             NEM_LOG_REL_FIELD(QueryNumaDistance);
             NEM_LOG_REL_FIELD(SignalEvents);
             NEM_LOG_REL_FIELD(RetargetDeviceInterrupt);
-#if WDK_NTDDI_VERSION > MY_NTDDI_WIN11_22000
+#if WDK_NTDDI_VERSION >= MY_NTDDI_WIN11_26100
             NEM_LOG_REL_FIELD(RestoreTime);
             NEM_LOG_REL_FIELD(EnlightenedVmcs);
             NEM_LOG_REL_FIELD(NestedDebugCtl);
@@ -1428,14 +1428,14 @@ static int nemR3WinInitCheckCapabilities(PVM pVM, PRTERRINFO pErrInfo)
      * 0x100a - Physical address width.
      */
     RT_ZERO(Caps);
-#if WDK_NTDDI_VERSION <= MY_NTDDI_WIN11_22000
+#if WDK_NTDDI_VERSION <= MY_NTDDI_WIN11_22621
 # define WHvCapabilityCodePhysicalAddressWidth ((WHV_CAPABILITY_CODE)0x100a)
 #endif
     hrc = WHvGetCapabilityWrapper(WHvCapabilityCodePhysicalAddressWidth, &Caps, sizeof(Caps));
     if (SUCCEEDED(hrc))
     {
         NEM_CHECK_RET_SIZE(cbRet, sizeof(UINT32), "WHvCapabilityCodePhysicalAddressWidth");
-#if WDK_NTDDI_VERSION > MY_NTDDI_WIN11_22000
+#if WDK_NTDDI_VERSION >= MY_NTDDI_WIN11_26100
         NEM_LOG_REL_CAP_EX("WHvCapabilityCodePhysicalAddressWidth", "%RU32", Caps.PhysicalAddressWidth);
 #else
         NEM_LOG_REL_CAP_EX("WHvCapabilityCodePhysicalAddressWidth", "%RU32", *(uint32_t const *)&Caps);

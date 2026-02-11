@@ -54,15 +54,17 @@ VBoxSF_SOURCES     = \
 	VBoxSF.rc
 VBoxSF_SOURCES.x86 = \
 	Win2kWorkarounds.c \
-	Win2kWorkaroundsA.asm
+	Win2kWorkaroundsA.asm \
+	Arm64CopySupStub.cpp
 VBoxSF_SOURCES.arm64 = \
+	Arm64CopySupStub.cpp
+VBoxSF_SOURCES.amd64 = \
 	Arm64CopySupStub.cpp
 
 if1of ($(KBUILD_TARGET_ARCH), amd64 x86)
  VBoxSF_LIBS = \
  	$(PATH_SDK_$(VBOX_WINDDK_GST_WLH)_LIB.$(KBUILD_TARGET_ARCH))/rxce.lib \
  	$(VBoxSF_0_OUTDIR)/rdbsslib.lib \
- 	$(PATH_SDK_$(VBOX_WINDDK_GST_WLH)_LIB.$(KBUILD_TARGET_ARCH))/copysup.lib \
  	$(PATH_SDK_$(VBOX_WINDDK_GST_WLH)_LIB.$(KBUILD_TARGET_ARCH))/hal.lib \
  	$(PATH_SDK_$(VBOX_WINDDK_GST_WLH)_LIB.$(KBUILD_TARGET_ARCH))/ksecdd.lib \
  	$(VBOX_LIB_VBGL_R0) \
@@ -101,7 +103,7 @@ VBoxSF_VBOX_IMPORT_CHECKER.win.amd64 = xp64/r0
 ## @todo win.arm64: support shared folders on windows 10 arm64.
 
 
-ifeq ($(KBUILD_TARGET_ARCH),x86)
+ifeq ($(KBUILD_TARGET_ARCH),test)
  #
  # This driver version is used for Windows 2000, XP, W2K3, Vista and 7.
  #

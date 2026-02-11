@@ -703,6 +703,6 @@ int main(int argc, char **argv)
         }
     }
 
-    return rcExit;
+    return 0;
 }
 

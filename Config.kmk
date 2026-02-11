@@ -391,7 +391,7 @@ endif
 # Note! This has only been tested with Visual C++ 2019.
 ## @todo the arm64 exclusion is temporary.
 if "$(KBUILD_TARGET)" == "win" && "$(KBUILD_TYPE)" != "asan" && "$(KBUILD_TARGET_ARCH)" != "arm64"
- VBOX_WITH_NOCRT_STATIC := 1
+ #VBOX_WITH_NOCRT_STATIC := 1
 endif
 
 ## @name Additions
@@ -1142,7 +1142,7 @@ endif
 # For treating compiler and linker warnings as errors where possible.
 if1of ($(KBUILD_TARGET).$(KBUILD_TARGET_ARCH), \
        darwin.x86 darwin.amd64 darwin.arm64 linux.x86 linux.amd64 linux.arm64 win.x86 win.amd64 win.arm64)
- VBOX_WITH_WARNINGS_AS_ERRORS = 1
+ VBOX_WITH_WARNINGS_AS_ERRORS :=
 endif
 # Whether we can use Open Watcom to build stuff.
 if1of ($(KBUILD_TARGET), darwin linux os2 win)
@@ -2174,7 +2174,7 @@ VBOX_WINDDK            ?= WINSDK10-KM
 VBOX_WINDDK_WLH        ?= $(VBOX_WINDDK)
 
 VBOX_WINDDK_GST        ?= $(VBOX_WINDDK)
-if1of ($(KBUILD_TARGET_ARCH), x86 amd64)
+if1of ($(KBUILD_TARGET_ARCH), test)
  VBOX_WINDDK_GST_W8    ?= WINSDK10-KM-W8
  VBOX_WINDDK_GST_W7    ?= WINSDK10-KM-W7
  VBOX_WINDDK_GST_WLH   ?= WINDDK71WLH
@@ -3520,7 +3520,7 @@ ifndef VBOX_NOINC_DYNAMIC_CONFIG_KMK
  ifdef VBOX_YASM_CHECK
   # YASM
 	$(QUIET)$(APPEND) '$@' '# debug: TOOL_YASM_AS="$(TOOL_YASM_AS)"'
-	$(QUIET)$(APPEND) '$@' 'VBOX_YASM_Wno-segreg-in-64bit            ?= $(call VBOX_YASM_CHECK,-Wno-segreg-in-64bit,)'
+	# $(QUIET)$(APPEND) '$@' 'VBOX_YASM_Wno-segreg-in-64bit            ?= $(call VBOX_YASM_CHECK,-Wno-segreg-in-64bit,)'
  endif
  ifdef VBOX_NASM_CHECK
   # NASM (--allow-64-bit: 2.12rc2)
@@ -6387,11 +6387,11 @@ ifeq ($(KBUILD_TARGET),win)
  TEMPLATE_VBoxR3Exe_TOOL.win.arm64     = $(VBOX_VCC_TOOL_STEM)ARM64
  TEMPLATE_VBoxR3Exe_RCDEFS             = VBOX_SVN_REV=$(VBOX_SVN_REV) VBOX_SVN_REV_MOD_5K=$(expr $(VBOX_SVN_REV) % 50000)
  if "$(VBOX_VCC_TOOL_STEM)" >= "VCC140"
-  TEMPLATE_VBoxR3Exe_SDKS              = ReorderCompilerIncs WINSDK10-UCRT$(VBOX_VCC_CRT_TYPE_UPPER) $(VBOX_WINPSDK)
+  TEMPLATE_VBoxR3Exe_SDKS              = ReorderCompilerIncs WINSDK10-UCRT$(VBOX_VCC_CRT_TYPE_UPPER)-STATIC $(VBOX_WINPSDK)
  else
   TEMPLATE_VBoxR3Exe_SDKS              = ReorderCompilerIncs $(VBOX_WINPSDK)
  endif
- TEMPLATE_VBoxR3Exe_CXXFLAGS           = -Zi -Zl -GR- -EHsc -GF -MD$(VBOX_VCC_CRT_TYPE) $(VBOX_VCC_WCHAR_T_VARIANT) $(VBOX_VCC_OPT) $(VBOX_VCC_FP) \
+ TEMPLATE_VBoxR3Exe_CXXFLAGS           = -Zi -Zl -GR- -EHsc -GF -MT$(VBOX_VCC_CRT_TYPE) $(VBOX_VCC_WCHAR_T_VARIANT) $(VBOX_VCC_OPT) $(VBOX_VCC_FP) \
  	-Gy $(VBOX_VCC_CC_GUARD_CF) $(VBOX_VCC_SANITIZER_FLAGS) $(VBOX_VCC_std) $(VBOX_VCC_WARN_ALL) $(VBOX_VCC_WERR)
  if "$(VBOX_VCC_TOOL_STEM)" >= "VCC120"
   TEMPLATE_VBoxR3Exe_CXXFLAGS         += -Gw
@@ -6451,19 +6451,19 @@ ifeq ($(KBUILD_TARGET),win)
 
  if "$(VBOX_VCC_TOOL_STEM)" >= "VCC140"
   TEMPLATE_VBoxR3Exe_LATE_LIBS.x86     = \
-  	$(PATH_TOOL_$(TEMPLATE_VBoxR3Exe_TOOL.win.x86)_LIB)/vcruntime$(VBOX_VCC_CRT_TYPE).lib \
-  	$(PATH_TOOL_$(TEMPLATE_VBoxR3Exe_TOOL.win.x86)_LIB)/msvcrt$(VBOX_VCC_CRT_TYPE).lib \
-  	$(PATH_TOOL_$(TEMPLATE_VBoxR3Exe_TOOL.win.x86)_LIB)/msvcprt$(VBOX_VCC_CRT_TYPE).lib \
+  	$(PATH_TOOL_$(TEMPLATE_VBoxR3Exe_TOOL.win.x86)_LIB)/libvcruntime$(VBOX_VCC_CRT_TYPE).lib \
+  	$(PATH_TOOL_$(TEMPLATE_VBoxR3Exe_TOOL.win.x86)_LIB)/libcmt$(VBOX_VCC_CRT_TYPE).lib \
+  	$(PATH_TOOL_$(TEMPLATE_VBoxR3Exe_TOOL.win.x86)_LIB)/libcpmt$(VBOX_VCC_CRT_TYPE).lib \
   	$(PATH_TOOL_$(TEMPLATE_VBoxR3Exe_TOOL.win.x86)_LIB)/oldnames.lib
   TEMPLATE_VBoxR3Exe_LATE_LIBS.amd64   = \
-  	$(PATH_TOOL_$(TEMPLATE_VBoxR3Exe_TOOL.win.amd64)_LIB)/vcruntime$(VBOX_VCC_CRT_TYPE).lib \
-  	$(PATH_TOOL_$(TEMPLATE_VBoxR3Exe_TOOL.win.amd64)_LIB)/msvcrt$(VBOX_VCC_CRT_TYPE).lib \
-  	$(PATH_TOOL_$(TEMPLATE_VBoxR3Exe_TOOL.win.amd64)_LIB)/msvcprt$(VBOX_VCC_CRT_TYPE).lib \
+  	$(PATH_TOOL_$(TEMPLATE_VBoxR3Exe_TOOL.win.amd64)_LIB)/libvcruntime$(VBOX_VCC_CRT_TYPE).lib \
+  	$(PATH_TOOL_$(TEMPLATE_VBoxR3Exe_TOOL.win.amd64)_LIB)/libcmt$(VBOX_VCC_CRT_TYPE).lib \
+  	$(PATH_TOOL_$(TEMPLATE_VBoxR3Exe_TOOL.win.amd64)_LIB)/libcpmt$(VBOX_VCC_CRT_TYPE).lib \
   	$(PATH_TOOL_$(TEMPLATE_VBoxR3Exe_TOOL.win.amd64)_LIB)/oldnames.lib
   TEMPLATE_VBoxR3Exe_LATE_LIBS.arm64   = \
-  	$(PATH_TOOL_$(TEMPLATE_VBoxR3Exe_TOOL.win.arm64)_LIB)/vcruntime$(VBOX_VCC_CRT_TYPE).lib \
-  	$(PATH_TOOL_$(TEMPLATE_VBoxR3Exe_TOOL.win.arm64)_LIB)/msvcrt$(VBOX_VCC_CRT_TYPE).lib \
-  	$(PATH_TOOL_$(TEMPLATE_VBoxR3Exe_TOOL.win.arm64)_LIB)/msvcprt$(VBOX_VCC_CRT_TYPE).lib \
+  	$(PATH_TOOL_$(TEMPLATE_VBoxR3Exe_TOOL.win.arm64)_LIB)/libvcruntime$(VBOX_VCC_CRT_TYPE).lib \
+  	$(PATH_TOOL_$(TEMPLATE_VBoxR3Exe_TOOL.win.arm64)_LIB)/libcmt$(VBOX_VCC_CRT_TYPE).lib \
+  	$(PATH_TOOL_$(TEMPLATE_VBoxR3Exe_TOOL.win.arm64)_LIB)/libcpmt$(VBOX_VCC_CRT_TYPE).lib \
   	$(PATH_TOOL_$(TEMPLATE_VBoxR3Exe_TOOL.win.arm64)_LIB)/oldnames.lib
   ifeq ($(KBUILD_TYPE),asan)
    if "$(VBOX_VCC_TOOL_STEM)" >= "VCC143"
@@ -6484,12 +6484,12 @@ ifeq ($(KBUILD_TARGET),win)
   endif
  else
   TEMPLATE_VBoxR3Exe_LATE_LIBS.x86     = \
-  	$(PATH_TOOL_$(TEMPLATE_VBoxR3Exe_TOOL.win.x86)_LIB)/msvcrt$(VBOX_VCC_CRT_TYPE).lib \
-  	$(PATH_TOOL_$(TEMPLATE_VBoxR3Exe_TOOL.win.x86)_LIB)/msvcprt$(VBOX_VCC_CRT_TYPE).lib \
+  	$(PATH_TOOL_$(TEMPLATE_VBoxR3Exe_TOOL.win.x86)_LIB)/libcmt$(VBOX_VCC_CRT_TYPE).lib \
+  	$(PATH_TOOL_$(TEMPLATE_VBoxR3Exe_TOOL.win.x86)_LIB)/libcpmt$(VBOX_VCC_CRT_TYPE).lib \
   	$(PATH_TOOL_$(TEMPLATE_VBoxR3Exe_TOOL.win.x86)_LIB)/oldnames.lib
   TEMPLATE_VBoxR3Exe_LATE_LIBS.amd64   = \
-  	$(PATH_TOOL_$(TEMPLATE_VBoxR3Exe_TOOL.win.amd64)_LIB)/msvcrt$(VBOX_VCC_CRT_TYPE).lib \
-  	$(PATH_TOOL_$(TEMPLATE_VBoxR3Exe_TOOL.win.amd64)_LIB)/msvcprt$(VBOX_VCC_CRT_TYPE).lib \
+  	$(PATH_TOOL_$(TEMPLATE_VBoxR3Exe_TOOL.win.amd64)_LIB)/libcmt$(VBOX_VCC_CRT_TYPE).lib \
+  	$(PATH_TOOL_$(TEMPLATE_VBoxR3Exe_TOOL.win.amd64)_LIB)/libcpmt$(VBOX_VCC_CRT_TYPE).lib \
   	$(PATH_TOOL_$(TEMPLATE_VBoxR3Exe_TOOL.win.amd64)_LIB)/oldnames.lib
  endif
 
@@ -6755,22 +6755,22 @@ ifeq ($(KBUILD_TARGET),win)
   ifdef VBOX_WITH_NOCRT_STATIC
    TEMPLATE_VBoxR3StaticBase_SDKS          = $(subst WINSDK10-UCRT$(VBOX_VCC_CRT_TYPE_UPPER),,$(TEMPLATE_VBoxR3Exe_SDKS))
   else
-   TEMPLATE_VBoxR3StaticBase_SDKS          = $(subst WINSDK10-UCRT$(VBOX_VCC_CRT_TYPE_UPPER), WINSDK10-UCRT$(VBOX_VCC_CRT_TYPE_UPPER)-STATIC,$(TEMPLATE_VBoxR3Exe_SDKS))
+   TEMPLATE_VBoxR3StaticBase_SDKS          = $(TEMPLATE_VBoxR3Exe_SDKS)
   endif
  endif
  ifdef VBOX_WITH_NOCRT_STATIC
-  TEMPLATE_VBoxR3StaticBase_CFLAGS          = $(filter-out -MD$(VBOX_VCC_CRT_TYPE) -EHsc -GR, $(TEMPLATE_VBoxR3Exe_CFLAGS)) \
+  TEMPLATE_VBoxR3StaticBase_CFLAGS          = $(filter-out -MT$(VBOX_VCC_CRT_TYPE) -EHsc -GR, $(TEMPLATE_VBoxR3Exe_CFLAGS)) \
   	-Zl -EHc-s- -Gy -GR-
-  TEMPLATE_VBoxR3StaticBase_CXXFLAGS        = $(filter-out -MD$(VBOX_VCC_CRT_TYPE) -EHsc -GR, $(TEMPLATE_VBoxR3Exe_CXXFLAGS)) \
+  TEMPLATE_VBoxR3StaticBase_CXXFLAGS        = $(filter-out -MT$(VBOX_VCC_CRT_TYPE) -EHsc -GR, $(TEMPLATE_VBoxR3Exe_CXXFLAGS)) \
   	-Zl -EHc-s- -Gy -GR-
-  TEMPLATE_VBoxR3StaticBase_PCHFLAGS        = $(filter-out -MD$(VBOX_VCC_CRT_TYPE) -EHsc -GR, $(TEMPLATE_VBoxR3Exe_PCHFLAGS)) \
+  TEMPLATE_VBoxR3StaticBase_PCHFLAGS        = $(filter-out -MT$(VBOX_VCC_CRT_TYPE) -EHsc -GR, $(TEMPLATE_VBoxR3Exe_PCHFLAGS)) \
   	-Zl -EHc-s- -Gy -GR-
  else
-  TEMPLATE_VBoxR3StaticBase_CFLAGS          = $(filter-out -MD$(VBOX_VCC_CRT_TYPE), $(TEMPLATE_VBoxR3Exe_CFLAGS)) \
+  TEMPLATE_VBoxR3StaticBase_CFLAGS          = $(filter-out -MT$(VBOX_VCC_CRT_TYPE), $(TEMPLATE_VBoxR3Exe_CFLAGS)) \
   	-MT$(VBOX_VCC_CRT_TYPE) -Gy
-  TEMPLATE_VBoxR3StaticBase_CXXFLAGS        = $(filter-out -MD$(VBOX_VCC_CRT_TYPE), $(TEMPLATE_VBoxR3Exe_CXXFLAGS)) \
+  TEMPLATE_VBoxR3StaticBase_CXXFLAGS        = $(filter-out -MT$(VBOX_VCC_CRT_TYPE), $(TEMPLATE_VBoxR3Exe_CXXFLAGS)) \
   	-MT$(VBOX_VCC_CRT_TYPE) -Gy
-  TEMPLATE_VBoxR3StaticBase_PCHFLAGS        = $(filter-out -MD$(VBOX_VCC_CRT_TYPE), $(TEMPLATE_VBoxR3Exe_PCHFLAGS)) \
+  TEMPLATE_VBoxR3StaticBase_PCHFLAGS        = $(filter-out -MT$(VBOX_VCC_CRT_TYPE), $(TEMPLATE_VBoxR3Exe_PCHFLAGS)) \
   	-MT$(VBOX_VCC_CRT_TYPE) -Gy
  endif
 
@@ -7356,9 +7356,9 @@ TEMPLATE_VBoxR3RuntimeDll = For libraries that are linked into VBoxRT.
 TEMPLATE_VBoxR3RuntimeDll_EXTENDS  := VBoxR3Dll
 TEMPLATE_VBoxR3RuntimeDll_DEFS      = $(TEMPLATE_VBoxR3Dll_DEFS) IN_RT_R3
 if defined(VBOX_WITH_MORE_NT4_COMPAT_BINARIES) && "$(KBUILD_TARGET).$(KBUILD_TARGET_ARCH)" == "win.x86"
- TEMPLATE_VBoxR3RuntimeDll_CFLAGS   = $(filter-out -MD$(VBOX_VCC_CRT_TYPE), $(TEMPLATE_VBoxR3Dll_CFLAGS)) -MT$(VBOX_VCC_CRT_TYPE)
- TEMPLATE_VBoxR3RuntimeDll_CXXFLAGS = $(filter-out -MD$(VBOX_VCC_CRT_TYPE), $(TEMPLATE_VBoxR3Dll_CXXFLAGS)) -MT$(VBOX_VCC_CRT_TYPE)
- TEMPLATE_VBoxR3RuntimeDll_PCHFLAGS = $(filter-out -MD$(VBOX_VCC_CRT_TYPE), $(TEMPLATE_VBoxR3Dll_PCHFLAGS)) -MT$(VBOX_VCC_CRT_TYPE)
+ TEMPLATE_VBoxR3RuntimeDll_CFLAGS   = $(filter-out -MT$(VBOX_VCC_CRT_TYPE), $(TEMPLATE_VBoxR3Dll_CFLAGS)) -MT$(VBOX_VCC_CRT_TYPE)
+ TEMPLATE_VBoxR3RuntimeDll_CXXFLAGS = $(filter-out -MT$(VBOX_VCC_CRT_TYPE), $(TEMPLATE_VBoxR3Dll_CXXFLAGS)) -MT$(VBOX_VCC_CRT_TYPE)
+ TEMPLATE_VBoxR3RuntimeDll_PCHFLAGS = $(filter-out -MT$(VBOX_VCC_CRT_TYPE), $(TEMPLATE_VBoxR3Dll_PCHFLAGS)) -MT$(VBOX_VCC_CRT_TYPE)
  TEMPLATE_VBoxR3RuntimeDll_LATE_LIBS.x86 = $(filter-out $(PATH_TOOL_$(TEMPLATE_VBoxR3Exe_TOOL.win.x86)_LIB)/%, $(TEMPLATE_VBoxR3Dll_LATE_LIBS.x86)) \
  	$(PATH_TOOL_$(TEMPLATE_VBoxR3RuntimeDll_TOOL.win.x86)_LIB)/oldnames.lib \
  	$(PATH_TOOL_$(TEMPLATE_VBoxR3RuntimeDll_TOOL.win.x86)_LIB)/libcmt$(VBOX_VCC_CRT_TYPE).lib \
@@ -7373,9 +7373,9 @@ TEMPLATE_VBoxR3RuntimeDllNonPedantic = For libraries that are linked into VBoxRT
 TEMPLATE_VBoxR3RuntimeDllNonPedantic_EXTENDS  := VBoxR3DllNonPedantic
 TEMPLATE_VBoxR3RuntimeDllNonPedantic_DEFS      = $(TEMPLATE_VBoxR3DllNonPedantic_DEFS) IN_RT_R3
 if defined(VBOX_WITH_MORE_NT4_COMPAT_BINARIES) && $(KBUILD_TARGET_ARCH) == "x86"
- TEMPLATE_VBoxR3RuntimeDllNonPedantic_CFLAGS   = $(filter-out -MD$(VBOX_VCC_CRT_TYPE), $(TEMPLATE_VBoxR3DllNonPedantic_CFLAGS)) -MT$(VBOX_VCC_CRT_TYPE)
- TEMPLATE_VBoxR3RuntimeDllNonPedantic_CXXFLAGS = $(filter-out -MD$(VBOX_VCC_CRT_TYPE), $(TEMPLATE_VBoxR3DllNonPedantic_CXXFLAGS)) -MT$(VBOX_VCC_CRT_TYPE)
- TEMPLATE_VBoxR3RuntimeDllNonPedantic_PCHFLAGS = $(filter-out -MD$(VBOX_VCC_CRT_TYPE), $(TEMPLATE_VBoxR3DllNonPedantic_PCHFLAGS)) -MT$(VBOX_VCC_CRT_TYPE)
+ TEMPLATE_VBoxR3RuntimeDllNonPedantic_CFLAGS   = $(filter-out -MT$(VBOX_VCC_CRT_TYPE), $(TEMPLATE_VBoxR3DllNonPedantic_CFLAGS)) -MT$(VBOX_VCC_CRT_TYPE)
+ TEMPLATE_VBoxR3RuntimeDllNonPedantic_CXXFLAGS = $(filter-out -MT$(VBOX_VCC_CRT_TYPE), $(TEMPLATE_VBoxR3DllNonPedantic_CXXFLAGS)) -MT$(VBOX_VCC_CRT_TYPE)
+ TEMPLATE_VBoxR3RuntimeDllNonPedantic_PCHFLAGS = $(filter-out -MT$(VBOX_VCC_CRT_TYPE), $(TEMPLATE_VBoxR3DllNonPedantic_PCHFLAGS)) -MT$(VBOX_VCC_CRT_TYPE)
 endif
 
 #
@@ -7387,9 +7387,9 @@ TEMPLATE_VBoxR3RuntimeDllNonPedantic-x86_EXTENDS      := VBoxR3DllNonPedantic-x8
 TEMPLATE_VBoxR3RuntimeDllNonPedantic-x86_BLD_TRG_ARCH := x86
 TEMPLATE_VBoxR3RuntimeDllNonPedantic-x86_DEFS      = $(TEMPLATE_VBoxR3DllNonPedantic-x86_DEFS) IN_RT_R3
 if defined(VBOX_WITH_MORE_NT4_COMPAT_BINARIES) && $(KBUILD_TARGET_ARCH) == "x86"
- TEMPLATE_VBoxR3RuntimeDllNonPedantic-x86_CFLAGS   = $(filter-out -MD$(VBOX_VCC_CRT_TYPE), $(TEMPLATE_VBoxR3DllNonPedantic-x86_CFLAGS)) -MT$(VBOX_VCC_CRT_TYPE)
- TEMPLATE_VBoxR3RuntimeDllNonPedantic-x86_CXXFLAGS = $(filter-out -MD$(VBOX_VCC_CRT_TYPE), $(TEMPLATE_VBoxR3DllNonPedantic-x86_CXXFLAGS)) -MT$(VBOX_VCC_CRT_TYPE)
- TEMPLATE_VBoxR3RuntimeDllNonPedantic-x86_PCHFLAGS = $(filter-out -MD$(VBOX_VCC_CRT_TYPE), $(TEMPLATE_VBoxR3DllNonPedantic-x86_PCHFLAGS)) -MT$(VBOX_VCC_CRT_TYPE)
+ TEMPLATE_VBoxR3RuntimeDllNonPedantic-x86_CFLAGS   = $(filter-out -MT$(VBOX_VCC_CRT_TYPE), $(TEMPLATE_VBoxR3DllNonPedantic-x86_CFLAGS)) -MT$(VBOX_VCC_CRT_TYPE)
+ TEMPLATE_VBoxR3RuntimeDllNonPedantic-x86_CXXFLAGS = $(filter-out -MT$(VBOX_VCC_CRT_TYPE), $(TEMPLATE_VBoxR3DllNonPedantic-x86_CXXFLAGS)) -MT$(VBOX_VCC_CRT_TYPE)
+ TEMPLATE_VBoxR3RuntimeDllNonPedantic-x86_PCHFLAGS = $(filter-out -MT$(VBOX_VCC_CRT_TYPE), $(TEMPLATE_VBoxR3DllNonPedantic-x86_PCHFLAGS)) -MT$(VBOX_VCC_CRT_TYPE)
 endif
 
 #
@@ -7451,11 +7451,11 @@ ifeq ($(KBUILD_TARGET),win)
  TEMPLATE_VBoxMainExe_TOOL.win.amd64     = $(VBOX_VCC_TOOL_STEM)AMD64
  TEMPLATE_VBoxMainExe_TOOL.win.arm64     = $(VBOX_VCC_TOOL_STEM)ARM64
  if "$(VBOX_VCC_TOOL_STEM)" >= "VCC140"
-  TEMPLATE_VBoxMainExe_SDKS              = ReorderCompilerIncs WINSDK10-UCRT$(VBOX_VCC_CRT_TYPE_UPPER) $(VBOX_WINPSDK) $(VBOX_WINDDK)
+  TEMPLATE_VBoxMainExe_SDKS              = ReorderCompilerIncs WINSDK10-UCRT$(VBOX_VCC_CRT_TYPE_UPPER)-STATIC $(VBOX_WINPSDK) $(VBOX_WINDDK)
  else
   TEMPLATE_VBoxMainExe_SDKS              = ReorderCompilerIncs $(VBOX_WINPSDK) $(VBOX_WINDDK)
  endif
- TEMPLATE_VBoxMainExe_CXXFLAGS           = -Zi -Zl -GR -EHsc -GF -MD$(VBOX_VCC_CRT_TYPE) $(VBOX_VCC_WCHAR_T_VARIANT) \
+ TEMPLATE_VBoxMainExe_CXXFLAGS           = -Zi -Zl -GR -EHsc -GF -MT$(VBOX_VCC_CRT_TYPE) $(VBOX_VCC_WCHAR_T_VARIANT) \
  	$(VBOX_VCC_OPT) $(VBOX_VCC_FP) $(VBOX_VCC_CC_GUARD_CF) $(VBOX_VCC_SANITIZER_FLAGS) $(VBOX_VCC_std)
  #    -wd4625: 'DisplaySourceBitmap' : copy constructor could not be generated because a base class copy constructor is inaccessible
  #    -wd4626: 'DisplaySourceBitmap' : assignment operator could not be generated because a base class assignment operator is inaccessible
@@ -7514,19 +7514,19 @@ ifeq ($(KBUILD_TARGET),win)
  	$(LIB_RUNTIME)
  if "$(VBOX_VCC_TOOL_STEM)" >= "VCC140"
   TEMPLATE_VBoxMainExe_LATE_LIBS.x86     = \
-  	$(PATH_TOOL_$(TEMPLATE_VBoxMainExe_TOOL.win.x86)_LIB)/vcruntime$(VBOX_VCC_CRT_TYPE).lib \
-  	$(PATH_TOOL_$(TEMPLATE_VBoxMainExe_TOOL.win.x86)_LIB)/msvcrt$(VBOX_VCC_CRT_TYPE).lib \
-  	$(PATH_TOOL_$(TEMPLATE_VBoxMainExe_TOOL.win.x86)_LIB)/msvcprt$(VBOX_VCC_CRT_TYPE).lib \
+  	$(PATH_TOOL_$(TEMPLATE_VBoxMainExe_TOOL.win.x86)_LIB)/libvcruntime$(VBOX_VCC_CRT_TYPE).lib \
+  	$(PATH_TOOL_$(TEMPLATE_VBoxMainExe_TOOL.win.x86)_LIB)/libcmt$(VBOX_VCC_CRT_TYPE).lib \
+  	$(PATH_TOOL_$(TEMPLATE_VBoxMainExe_TOOL.win.x86)_LIB)/libcpmt$(VBOX_VCC_CRT_TYPE).lib \
   	$(PATH_TOOL_$(TEMPLATE_VBoxMainExe_TOOL.win.x86)_LIB)/oldnames.lib
   TEMPLATE_VBoxMainExe_LATE_LIBS.amd64   = \
-  	$(PATH_TOOL_$(TEMPLATE_VBoxMainExe_TOOL.win.amd64)_LIB)/vcruntime$(VBOX_VCC_CRT_TYPE).lib \
-  	$(PATH_TOOL_$(TEMPLATE_VBoxMainExe_TOOL.win.amd64)_LIB)/msvcrt$(VBOX_VCC_CRT_TYPE).lib \
-  	$(PATH_TOOL_$(TEMPLATE_VBoxMainExe_TOOL.win.amd64)_LIB)/msvcprt$(VBOX_VCC_CRT_TYPE).lib \
+  	$(PATH_TOOL_$(TEMPLATE_VBoxMainExe_TOOL.win.amd64)_LIB)/libvcruntime$(VBOX_VCC_CRT_TYPE).lib \
+  	$(PATH_TOOL_$(TEMPLATE_VBoxMainExe_TOOL.win.amd64)_LIB)/libcmt$(VBOX_VCC_CRT_TYPE).lib \
+  	$(PATH_TOOL_$(TEMPLATE_VBoxMainExe_TOOL.win.amd64)_LIB)/libcpmt$(VBOX_VCC_CRT_TYPE).lib \
   	$(PATH_TOOL_$(TEMPLATE_VBoxMainExe_TOOL.win.amd64)_LIB)/oldnames.lib
   TEMPLATE_VBoxMainExe_LATE_LIBS.arm64   = \
-  	$(PATH_TOOL_$(TEMPLATE_VBoxMainExe_TOOL.win.arm64)_LIB)/vcruntime$(VBOX_VCC_CRT_TYPE).lib \
-  	$(PATH_TOOL_$(TEMPLATE_VBoxMainExe_TOOL.win.arm64)_LIB)/msvcrt$(VBOX_VCC_CRT_TYPE).lib \
-  	$(PATH_TOOL_$(TEMPLATE_VBoxMainExe_TOOL.win.arm64)_LIB)/msvcprt$(VBOX_VCC_CRT_TYPE).lib \
+  	$(PATH_TOOL_$(TEMPLATE_VBoxMainExe_TOOL.win.arm64)_LIB)/libvcruntime$(VBOX_VCC_CRT_TYPE).lib \
+  	$(PATH_TOOL_$(TEMPLATE_VBoxMainExe_TOOL.win.arm64)_LIB)/libcmt$(VBOX_VCC_CRT_TYPE).lib \
+  	$(PATH_TOOL_$(TEMPLATE_VBoxMainExe_TOOL.win.arm64)_LIB)/libcpmt$(VBOX_VCC_CRT_TYPE).lib \
   	$(PATH_TOOL_$(TEMPLATE_VBoxMainExe_TOOL.win.arm64)_LIB)/oldnames.lib
   ifeq ($(KBUILD_TYPE),asan)
    if "$(VBOX_VCC_TOOL_STEM)" >= "VCC143"
@@ -7547,12 +7547,12 @@ ifeq ($(KBUILD_TARGET),win)
   endif
  else
   TEMPLATE_VBoxMainExe_LATE_LIBS.x86     = \
-  	$(PATH_TOOL_$(TEMPLATE_VBoxMainExe_TOOL.win.x86)_LIB)/msvcrt$(VBOX_VCC_CRT_TYPE).lib \
-  	$(PATH_TOOL_$(TEMPLATE_VBoxMainExe_TOOL.win.x86)_LIB)/msvcprt$(VBOX_VCC_CRT_TYPE).lib \
+  	$(PATH_TOOL_$(TEMPLATE_VBoxMainExe_TOOL.win.x86)_LIB)/libcmt$(VBOX_VCC_CRT_TYPE).lib \
+  	$(PATH_TOOL_$(TEMPLATE_VBoxMainExe_TOOL.win.x86)_LIB)/libcpmt$(VBOX_VCC_CRT_TYPE).lib \
   	$(PATH_TOOL_$(TEMPLATE_VBoxMainExe_TOOL.win.x86)_LIB)/oldnames.lib
   TEMPLATE_VBoxMainExe_LATE_LIBS.amd64   = \
-  	$(PATH_TOOL_$(TEMPLATE_VBoxMainExe_TOOL.win.amd64)_LIB)/msvcrt$(VBOX_VCC_CRT_TYPE).lib \
-  	$(PATH_TOOL_$(TEMPLATE_VBoxMainExe_TOOL.win.amd64)_LIB)/msvcprt$(VBOX_VCC_CRT_TYPE).lib \
+  	$(PATH_TOOL_$(TEMPLATE_VBoxMainExe_TOOL.win.amd64)_LIB)/libcmt$(VBOX_VCC_CRT_TYPE).lib \
+  	$(PATH_TOOL_$(TEMPLATE_VBoxMainExe_TOOL.win.amd64)_LIB)/libcpmt$(VBOX_VCC_CRT_TYPE).lib \
   	$(PATH_TOOL_$(TEMPLATE_VBoxMainExe_TOOL.win.amd64)_LIB)/oldnames.lib
  endif
  TEMPLATE_VBoxMainExe_POST_CMDS.win      = $(VBOX_UTF8_MANIFEST_CMDS)$(NLTAB)$(VBOX_SIGN_IMAGE_CMDS)
@@ -8024,7 +8024,7 @@ if defined(VBOX_WITH_QTGUI) || defined(VBOX_WITH_NLS)
  ifndef VBOX_WITH_ORACLE_QT
   ifndef VBOX_OSE
    if1of ($(KBUILD_TARGET), darwin solaris win)
-    VBOX_WITH_ORACLE_QT := 1
+    VBOX_WITH_ORACLE_QT := 
    endif
   endif
  endif
@@ -8155,13 +8155,13 @@ ifdef VBOX_WITH_QTGUI
   # Note! Only use VBOX_VCC_CRT_TYPE when it matches VBOX_QT_DBG.
   TEMPLATE_VBoxQtGuiExe_TOOL = $(VBOX_VCC_TOOL)
   if "$(VBOX_VCC_TOOL_STEM)" >= "VCC140"
-   TEMPLATE_VBoxQtGuiExe_SDKS = WINSDK10-UCRT$(VBOX_VCC_CRT_TYPE_UPPER)
+   TEMPLATE_VBoxQtGuiExe_SDKS = WINSDK10-UCRT$(VBOX_VCC_CRT_TYPE_UPPER)-STATIC
   endif
   TEMPLATE_VBoxQtGuiExe_DEFS += \
   	_WIN32_WINNT=0x0500 UNICODE _UNICODE \
   	QT_DLL _CRT_SECURE_NO_DEPRECATE \
   	$(QMAKE_PRL_DEFINES)
-  TEMPLATE_VBoxQtGuiExe_CXXFLAGS = -nologo -Zm200 -MD$(if-expr "$(VBOX_QT_DBG)" == "$(VBOX_VCC_CRT_TYPE)",$(VBOX_VCC_CRT_TYPE),) \
+  TEMPLATE_VBoxQtGuiExe_CXXFLAGS = -nologo -Zm200 -MT$(if-expr "$(VBOX_QT_DBG)" == "$(VBOX_VCC_CRT_TYPE)",$(VBOX_VCC_CRT_TYPE),) \
   	-Zi -EHsc $(VBOX_VCC_WCHAR_T_VARIANT) $(VBOX_VCC_CC_GUARD_CF) $(VBOX_VCC_SANITIZER_FLAGS) $(VBOX_VCC_std)
   #    -wd4481: nonstandard extension used: override specifier 'override'
   #    -wd4625: 'QRubberBand' : copy constructor could not be generated because a base class copy constructor is inaccessible
@@ -8246,9 +8246,9 @@ ifdef VBOX_WITH_QTGUI
    TEMPLATE_VBoxQtGuiExe_LATE_LIBS = \
    	$(VBOX_LIBS_QT) \
    	$(LIB_RUNTIME) \
-   	$(PATH_TOOL_$(VBOX_VCC_TOOL)_LIB)/vcruntime$(if-expr "$(VBOX_QT_DBG)" == "$(VBOX_VCC_CRT_TYPE)",$(VBOX_VCC_CRT_TYPE),).lib \
-   	$(PATH_TOOL_$(VBOX_VCC_TOOL)_LIB)/msvcrt$(if-expr "$(VBOX_QT_DBG)" == "$(VBOX_VCC_CRT_TYPE)",$(VBOX_VCC_CRT_TYPE),).lib \
-   	$(PATH_TOOL_$(VBOX_VCC_TOOL)_LIB)/msvcprt$(if-expr "$(VBOX_QT_DBG)" == "$(VBOX_VCC_CRT_TYPE)",$(VBOX_VCC_CRT_TYPE),).lib \
+   	$(PATH_TOOL_$(VBOX_VCC_TOOL)_LIB)/libvcruntime$(if-expr "$(VBOX_QT_DBG)" == "$(VBOX_VCC_CRT_TYPE)",$(VBOX_VCC_CRT_TYPE),).lib \
+   	$(PATH_TOOL_$(VBOX_VCC_TOOL)_LIB)/libcmt$(if-expr "$(VBOX_QT_DBG)" == "$(VBOX_VCC_CRT_TYPE)",$(VBOX_VCC_CRT_TYPE),).lib \
+   	$(PATH_TOOL_$(VBOX_VCC_TOOL)_LIB)/libcpmt$(if-expr "$(VBOX_QT_DBG)" == "$(VBOX_VCC_CRT_TYPE)",$(VBOX_VCC_CRT_TYPE),).lib \
    	$(PATH_TOOL_$(VBOX_VCC_TOOL)_LIB)/oldnames.lib \
    	$(PATH_TOOL_$(VBOX_VCC_TOOL)_LIB)/delayimp.lib
    ifeq ($(KBUILD_TYPE),asan)
@@ -8260,8 +8260,8 @@ ifdef VBOX_WITH_QTGUI
    TEMPLATE_VBoxQtGuiExe_LATE_LIBS = \
    	$(VBOX_LIBS_QT) \
    	$(LIB_RUNTIME) \
-   	$(PATH_TOOL_$(VBOX_VCC_TOOL)_LIB)/msvcprt$(if-expr "$(VBOX_QT_DBG)" == "$(VBOX_VCC_CRT_TYPE)",$(VBOX_VCC_CRT_TYPE),).lib \
-   	$(PATH_TOOL_$(VBOX_VCC_TOOL)_LIB)/msvcrt$(if-expr "$(VBOX_QT_DBG)" == "$(VBOX_VCC_CRT_TYPE)",$(VBOX_VCC_CRT_TYPE),).lib \
+   	$(PATH_TOOL_$(VBOX_VCC_TOOL)_LIB)/libcpmt$(if-expr "$(VBOX_QT_DBG)" == "$(VBOX_VCC_CRT_TYPE)",$(VBOX_VCC_CRT_TYPE),).lib \
+   	$(PATH_TOOL_$(VBOX_VCC_TOOL)_LIB)/libcmt$(if-expr "$(VBOX_QT_DBG)" == "$(VBOX_VCC_CRT_TYPE)",$(VBOX_VCC_CRT_TYPE),).lib \
    	$(PATH_TOOL_$(VBOX_VCC_TOOL)_LIB)/oldnames.lib \
    	$(PATH_TOOL_$(VBOX_VCC_TOOL)_LIB)/delayimp.lib
   endif

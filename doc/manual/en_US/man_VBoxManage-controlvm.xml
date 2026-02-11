@@ -1828,27 +1828,27 @@
       </para>
       <itemizedlist>
         <listitem><para>
-            <literal>default</literal> &ndash; Default process
+            <literal>default</literal> &#8211; Default process
             priority determined by the OS.
           </para></listitem>
         <listitem><para>
-            <literal>flat</literal> &ndash; Uses a scheduling
+            <literal>flat</literal> &#8211; Uses a scheduling
             policy which puts the process at the default priority
             and with all threads at the same priority.
           </para></listitem>
         <listitem><para>
-            <literal>low</literal> &ndash; Uses a scheduling
+            <literal>low</literal> &#8211; Uses a scheduling
             policy which puts the process mostly below the default
             priority of the host OS.
           </para></listitem>
         <listitem><para>
-            <literal>normal</literal> &ndash; Uses a scheduling
+            <literal>normal</literal> &#8211; Uses a scheduling
             policy which shares the CPU resources fairly with
             other processes running with the default priority of
             the host OS.
           </para></listitem>
         <listitem><para>
-            <literal>high</literal> &ndash; Uses a scheduling
+            <literal>high</literal> &#8211; Uses a scheduling
             policy which puts the task above the default priority of
             the host OS. This policy might easily cause other tasks
             in the system to starve.

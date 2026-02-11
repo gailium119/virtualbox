@@ -2256,10 +2256,13 @@ class ToolCheck(CheckBase):
                 "14.0x": ( "VCC140", "Visual Studio 2015"),
                 "14.1x": ( "VCC141", "Visual Studio 2017"),
                 "14.2x": ( "VCC142", "Visual Studio 2019"),
-                "14.3x": ( "VCC143", "Visual Studio 2022")
+                "14.3x": ( "VCC143", "Visual Studio 2022"),
+                "14.4x": ( "VCC143", "Visual Studio 2022")
             };
 
-            sVCPPVer    = '.'.join(sVCPPVer.split('.')[:2]); # Strip build #.
+            sVCPPVer    = asVCPPVer[0].split("\\")
+            sVCPPVer.reverse()
+            sVCPPVer = sVCPPVer[0]
             sVCPPArchBinPath = None;
 
             asMatches = [];
@@ -3287,7 +3290,7 @@ g_aoLibs = [
                  sCode = '#include <pulse/version.h>\nint main() { printf("%s", pa_get_library_version()); return 0; }\n'),
     LibraryCheck("libslirp", [ "slirp/libslirp.h", "slirp/libslirp-version.h" ], [ "libslirp" ], aeTargets = [ BuildTarget.ANY ], fUseInTree = True,
                  sCode = '#include <slirp/libslirp.h>\n#include <slirp/libslirp-version.h>\nint main() { printf("%d.%d.%d", SLIRP_MAJOR_VERSION, SLIRP_MINOR_VERSION, SLIRP_MICRO_VERSION); return 0; }\n'),
-    LibraryCheck("libssh", [ "libssh/libssh.h" ], [ "libssh" ], aeTargets = [ BuildTarget.DARWIN, BuildTarget.LINUX, BuildTarget.WINDOWS ], fUseInTree = True,
+    LibraryCheck("libssh", [ "libssh/libssh.h" ], [ "libssh" ], aeTargets = [ BuildTarget.DARWIN, BuildTarget.LINUX, BuildTarget.WINDOWS ],
                  sCode = '#include <libssh/libssh.h>\n#include <libssh/libssh_version.h>\nint main() { printf("%d.%d.%d", LIBSSH_VERSION_MAJOR, LIBSSH_VERSION_MINOR, LIBSSH_VERSION_MICRO); return 0; }\n'),
     LibraryCheck("libtpms", [ "libtpms/tpm_library.h" ], [ "libtpms" ], aeTargets = [ BuildTarget.ANY ], fUseInTree = True,
                  sCode = '#include <libtpms/tpm_library.h>\nint main() { printf("%d.%d.%d", TPM_LIBRARY_VER_MAJOR, TPM_LIBRARY_VER_MINOR, TPM_LIBRARY_VER_MICRO); return 0; }\n'),

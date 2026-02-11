@@ -471,7 +471,7 @@ VBoxDrvStartIO(PVOID HwDeviceExtension, PVIDEO_REQUEST_PACKET RequestPacket)
 
             if (*pChildIndex>0 && *pChildIndex<=(ULONG)VBoxCommonFromDeviceExt(pExt)->cDisplays)
             {
-                *pChildState = VIDEO_CHILD_ACTIVE;
+                *pChildState = 0x00000001;
                 pStatus->Information = sizeof(ULONG);
                 bResult = TRUE;
             }
