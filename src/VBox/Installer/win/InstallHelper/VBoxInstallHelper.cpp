@@ -686,13 +686,13 @@ UINT __stdcall CheckTargetDir(MSIHANDLE hModule)
                 vrc = VERR_INVALID_PARAMETER;
             if (RT_SUCCESS(vrc))
             {
-                vrc = initTargetDirSecurityCtx(&g_TargetDirSecCtx, hModule, pszTargetDir);
+                /*vrc = initTargetDirSecurityCtx(&g_TargetDirSecCtx, hModule, pszTargetDir);
                 if (RT_SUCCESS(vrc))
                 {
                     uint16_t idxComp = u.Parsed.cComps;
                     char     szPathToCheck[RTPATH_MAX];
                     while (idxComp > 1) /* We traverse backwards from INSTALLDIR and leave out the root (e.g. C:\"). */
-                    {
+                    /*{
                         u.Parsed.cComps = idxComp;
                         vrc = RTPathParsedReassemble(pszTargetDir, &u.Parsed, RTPATH_STR_F_STYLE_DOS,
                                                      szPathToCheck, sizeof(szPathToCheck));
@@ -712,7 +712,7 @@ UINT __stdcall CheckTargetDir(MSIHANDLE hModule)
                     destroyTargetDirSecurityCtx(&g_TargetDirSecCtx);
                 }
                 else
-                    logStringF(hModule, "CheckTargetDir: initTargetDirSecurityCtx failed with %Rrc\n", vrc);
+                    logStringF(hModule, "CheckTargetDir: initTargetDirSecurityCtx failed with %Rrc\n", vrc);*/
 
                 if (RT_SUCCESS(vrc))
                     VBoxMsiSetProp(hModule, L"VBox_Target_Dir_Is_Valid", L"1");
@@ -731,7 +731,7 @@ UINT __stdcall CheckTargetDir(MSIHANDLE hModule)
     }
 
     /* Return back outcome to the MSI engine. */
-    return ERROR_SUCCESS;
+    return RT_SUCCESS(vrc) ? ERROR_SUCCESS : ERROR_NO_NET_OR_BAD_PATH;
 }
 
 /**
