@@ -1470,6 +1470,8 @@ class LibraryCheck(CheckBase):
         self.printVerbose(2, f"Search paths: {asSearchPath}");
         for sCurSearchPath in asSearchPath:
             for sCurLib in asLibToSearch:
+                if sCurLib.startswith("Qt"):
+                    fStatic = True # Qt has .lib even when it is dynamic
                 if hasLibSuff(sCurLib):
                     sPattern = os.path.join(sCurSearchPath, sCurLib);
                 else:
@@ -1496,7 +1498,7 @@ class LibraryCheck(CheckBase):
 
         for sLib in asLibToSearch:
             if sLib not in setLibFound:
-                self.printVerbose(1, f'Library file not found: {sLib}');
+                self.printVerbose(1, f'Library file not found: {sLib} in {setLibFound}');
 
         if fRc:
             self.printVerbose(1, 'All libraries found');
@@ -1666,8 +1668,8 @@ class LibraryCheck(CheckBase):
         # Check if we have our own pre-compiled Qt in tools first.
         sPathBase = self.getToolPath();
         if sPathBase:
-            self.asLibFiles = [ 'libQt6CoreVBox' ];
-            g_oEnv.set('VBOX_WITH_ORACLE_QT', '1');
+            self.asLibFiles = [ 'Qt6Core' ];
+        #    g_oEnv.set('VBOX_WITH_ORACLE_QT', '1');
 
         else:
 
@@ -2237,7 +2239,8 @@ class ToolCheck(CheckBase):
                             break;
                     except FileNotFoundError:
                         pass;
-
+        elif not sVCPPVer:
+            sVCPPVer = "17"
         if sVCPPVer:
             print(f"Found Visual C++ version {sVCPPVer} at '{sVCPPPath}'");
 
@@ -2259,10 +2262,10 @@ class ToolCheck(CheckBase):
                 "14.3x": ( "VCC143", "Visual Studio 2022"),
                 "14.4x": ( "VCC143", "Visual Studio 2022")
             };
-
-            sVCPPVer    = asVCPPVer[0].split("\\")
-            sVCPPVer.reverse()
-            sVCPPVer = sVCPPVer[0]
+            if sVCPPVer.startswith("17"):
+                sVCPPVer    = asVCPPVer[0].split("\\")
+                sVCPPVer.reverse()
+                sVCPPVer = sVCPPVer[0]
             sVCPPArchBinPath = None;
 
             asMatches = [];

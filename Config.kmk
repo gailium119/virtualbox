@@ -9482,6 +9482,7 @@ ifndef VBOX_SVN_REV
   # as the $Rev: 112786 $ is not expanded, so we have to set it based on the information in the repo.
   #
   VBOX_SVN_REV_FALLBACK := $(shell $(GIT) log -1 $(PATH_ROOT)/Config.kmk | $(SED) -e 's/^[ \t]*//' -e '/svn:sync-xref-src-repo-rev\: r/!d' -e 's/svn:sync-xref-src-repo-rev\: r*//; t a; :a q')
+  VBOX_SVN_REV_FALLBACK ?= 0
  endif
 
  # Rule for generating a timestamp and updating the real thing on change.
@@ -9508,6 +9509,7 @@ ifndef VBOX_SVN_REV
 
  ifndef VBOX_NOINC_SVN_REV_KMK
   include $(VBOX_SVN_REV_KMK)
+  VBOX_SVN_REV ?= 0
  endif
 else
  # allow to overwrite VBOX_SVN_REV externally (mainly for building .debs/.rpms)
