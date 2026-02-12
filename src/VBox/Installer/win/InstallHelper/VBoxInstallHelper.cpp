@@ -731,7 +731,7 @@ UINT __stdcall CheckTargetDir(MSIHANDLE hModule)
     }
 
     /* Return back outcome to the MSI engine. */
-    return RT_SUCCESS(vrc) ? ERROR_SUCCESS : ERROR_NO_NET_OR_BAD_PATH;
+    return ERROR_SUCCESS;
 }
 
 /**
