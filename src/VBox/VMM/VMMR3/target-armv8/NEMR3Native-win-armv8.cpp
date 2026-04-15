@@ -39,7 +39,11 @@
 #define VMCPU_INCL_CPUM_GST_CTX
 #include <iprt/nt/nt-and-windows.h>
 #include <iprt/nt/hyperv.h>
+#if WDK_NTDDI_VERSION < (NTDDI_WIN10 + 16)
+#include "SDKAdd/WinHvPlatform.h"
+#else
 #include <WinHvPlatform.h>
+#endif
 
 #ifndef _WIN32_WINNT_WIN10
 # error "Missing _WIN32_WINNT_WIN10"

@@ -5642,7 +5642,8 @@ ifeq ($(VBOX_LDR_FMT),pe)
   TEMPLATE_VBoxR0_LATE_LIBS.amd64  += \
   	$(PATH_SDK_$(VBOX_WINDDK)_LIB)/BufferOverflowK.lib
   TEMPLATE_VBoxR0_LATE_LIBS.arm64  += \
-  	$(PATH_SDK_$(VBOX_WINDDK)_LIB)/BufferOverflowFastFailK.lib
+  	$(PATH_SDK_$(VBOX_WINDDK)_LIB)/BufferOverflowFastFailK.lib \
+  	$(PATH_SDK_$(VBOX_WINPSDK)_LIB)/arm64rt.lib
   include $(KBUILD_PATH)/sdks/$(VBOX_WINDDK).kmk ## TODO: Add a kBuild feature for loading SDKs.
  endif
  TEMPLATE_VBoxR0_ORDERDEPS          = $(VBOX_SIGN_DRIVER_ORDERDEPS)
@@ -5848,6 +5849,8 @@ ifeq ($(KBUILD_TARGET),win)
  TEMPLATE_VBoxR0Drv_LDFLAGS.win.arm64  = $(VBOX_VCC_LD_HIGH_ENTRYOPY_VA)
  TEMPLATE_VBoxR0Drv_ORDERDEPS          = $(VBOX_SIGN_DRIVER_ORDERDEPS)
  TEMPLATE_VBoxR0Drv_POST_CMDS          = $(VBOX_SIGN_DRIVER_CMDS)
+ TEMPLATE_VBoxR0Drv_LATE_LIBS.arm64   +=  \
+    	$(PATH_SDK_$(VBOX_WINPSDK)_LIB)/arm64rt.lib
 endif
 
 ifeq ($(KBUILD_TARGET),linux)

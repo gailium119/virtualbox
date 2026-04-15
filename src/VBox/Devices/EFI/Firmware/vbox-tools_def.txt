@@ -194,13 +194,13 @@ DEFINE DTC_BIN                 = ENV(DTC_PREFIX)dtc
 *_VS2017_IA32_ASM_PATH     = DEF(VS2017_BIN_IA32)\ml.exe
 
       *_VS2017_IA32_MAKE_FLAGS  = /nologo
-  DEBUG_VS2017_IA32_CC_FLAGS    = /nologo /arch:IA32 /c /WX /GS- /W4 /Gs32768 /D UNICODE /O1b2 /GL /FIAutoGen.h /EHs-c- /GR- /GF /Gy /Z7 /Gw /MP
-RELEASE_VS2017_IA32_CC_FLAGS    = /nologo /arch:IA32 /c /WX /GS- /W4 /Gs32768 /D UNICODE /O1b2 /GL /FIAutoGen.h /EHs-c- /GR- /GF /Gw /MP
-NOOPT_VS2017_IA32_CC_FLAGS      = /nologo /arch:IA32 /c /WX /GS- /W4 /Gs32768 /D UNICODE /FIAutoGen.h /EHs-c- /GR- /GF /Gy /Z7 /Od /MP
+  DEBUG_VS2017_IA32_CC_FLAGS    = /nologo /arch:IA32 /c /GS- /W4 /Gs32768 /D UNICODE /O1b2 /GL /FIAutoGen.h /EHs-c- /GR- /GF /Gy /Z7 /Gw /MP
+RELEASE_VS2017_IA32_CC_FLAGS    = /nologo /arch:IA32 /c /GS- /W4 /Gs32768 /D UNICODE /O1b2 /GL /FIAutoGen.h /EHs-c- /GR- /GF /Gw /MP
+NOOPT_VS2017_IA32_CC_FLAGS      = /nologo /arch:IA32 /c /GS- /W4 /Gs32768 /D UNICODE /FIAutoGen.h /EHs-c- /GR- /GF /Gy /Z7 /Od /MP
 
-  DEBUG_VS2017_IA32_ASM_FLAGS   = /nologo /c /WX /W3 /Cx /coff /Zd /Zi
-RELEASE_VS2017_IA32_ASM_FLAGS   = /nologo /c /WX /W3 /Cx /coff /Zd
-NOOPT_VS2017_IA32_ASM_FLAGS     = /nologo /c /WX /W3 /Cx /coff /Zd /Zi
+  DEBUG_VS2017_IA32_ASM_FLAGS   = /nologo /c /W3 /Cx /coff /Zd /Zi
+RELEASE_VS2017_IA32_ASM_FLAGS   = /nologo /c /W3 /Cx /coff /Zd
+NOOPT_VS2017_IA32_ASM_FLAGS     = /nologo /c /W3 /Cx /coff /Zd /Zi
 
   DEBUG_VS2017_IA32_NASM_FLAGS  = -Ox -f win32 -g
 RELEASE_VS2017_IA32_NASM_FLAGS  = -Ox -f win32
@@ -224,13 +224,13 @@ NOOPT_VS2017_IA32_DLINK_FLAGS   = /NOLOGO /NODEFAULTLIB /IGNORE:4001 /OPT:REF /O
 *_VS2017_X64_DLINK_PATH    = DEF(VS2017_BIN_X64)\link.exe
 *_VS2017_X64_ASLDLINK_PATH = DEF(VS2017_BIN_X64)\link.exe
 
-  DEBUG_VS2017_X64_CC_FLAGS     = /nologo /c /WX /GS- /W4 /Gs32768 /D UNICODE /O1b2s /GL /Gy /FIAutoGen.h /EHs-c- /GR- /GF /Z7 /Gw /MP
-RELEASE_VS2017_X64_CC_FLAGS     = /nologo /c /WX /GS- /W4 /Gs32768 /D UNICODE /O1b2s /GL /Gy /FIAutoGen.h /EHs-c- /GR- /GF /Gw /MP
-NOOPT_VS2017_X64_CC_FLAGS       = /nologo /c /WX /GS- /W4 /Gs32768 /D UNICODE /Gy /FIAutoGen.h /EHs-c- /GR- /GF /Z7 /Od /MP
+  DEBUG_VS2017_X64_CC_FLAGS     = /nologo /c /GS- /W4 /Gs32768 /D UNICODE /O1b2s /GL /Gy /FIAutoGen.h /EHs-c- /GR- /GF /Z7 /Gw /MP
+RELEASE_VS2017_X64_CC_FLAGS     = /nologo /c /GS- /W4 /Gs32768 /D UNICODE /O1b2s /GL /Gy /FIAutoGen.h /EHs-c- /GR- /GF /Gw /MP
+NOOPT_VS2017_X64_CC_FLAGS       = /nologo /c /GS- /W4 /Gs32768 /D UNICODE /Gy /FIAutoGen.h /EHs-c- /GR- /GF /Z7 /Od /MP
 
-  DEBUG_VS2017_X64_ASM_FLAGS    = /nologo /c /WX /W3 /Cx /Zd /Zi
-RELEASE_VS2017_X64_ASM_FLAGS    = /nologo /c /WX /W3 /Cx /Zd
-NOOPT_VS2017_X64_ASM_FLAGS      = /nologo /c /WX /W3 /Cx /Zd /Zi
+  DEBUG_VS2017_X64_ASM_FLAGS    = /nologo /c /W3 /Cx /Zd /Zi
+RELEASE_VS2017_X64_ASM_FLAGS    = /nologo /c /W3 /Cx /Zd
+NOOPT_VS2017_X64_ASM_FLAGS      = /nologo /c /W3 /Cx /Zd /Zi
 
   DEBUG_VS2017_X64_NASM_FLAGS   = -Ox -f win64 -g
 RELEASE_VS2017_X64_NASM_FLAGS   = -Ox -f win64
@@ -255,9 +255,9 @@ NOOPT_VS2017_X64_DLINK_FLAGS    = /NOLOGO /NODEFAULTLIB /IGNORE:4001 /IGNORE:428
 *_VS2017_ARM_ASLDLINK_PATH        = DEF(VS2017_BIN_ARM)\link.exe
 
       *_VS2017_ARM_MAKE_FLAGS     = /nologo
-  DEBUG_VS2017_ARM_CC_FLAGS       = /nologo /c /WX /GS- /W4 /Gs32768 /D UNICODE /O1b2 /GL /FIAutoGen.h /EHs-c- /GR- /GF /Gy /Zi /Gm /Gw /Oi-
-RELEASE_VS2017_ARM_CC_FLAGS       = /nologo /c /WX /GS- /W4 /Gs32768 /D UNICODE /O1b2 /GL /FIAutoGen.h /EHs-c- /GR- /GF /Gw /Oi-
-NOOPT_VS2017_ARM_CC_FLAGS         = /nologo /c /WX /GS- /W4 /Gs32768 /D UNICODE /FIAutoGen.h /EHs-c- /GR- /GF /Gy /Zi /Gm /Od /Oi-
+  DEBUG_VS2017_ARM_CC_FLAGS       = /nologo /c /GS- /W4 /Gs32768 /D UNICODE /O1b2 /GL /FIAutoGen.h /EHs-c- /GR- /GF /Gy /Zi /Gm /Gw /Oi-
+RELEASE_VS2017_ARM_CC_FLAGS       = /nologo /c /GS- /W4 /Gs32768 /D UNICODE /O1b2 /GL /FIAutoGen.h /EHs-c- /GR- /GF /Gw /Oi-
+NOOPT_VS2017_ARM_CC_FLAGS         = /nologo /c /GS- /W4 /Gs32768 /D UNICODE /FIAutoGen.h /EHs-c- /GR- /GF /Gy /Zi /Gm /Od /Oi-
 
   DEBUG_VS2017_ARM_ASM_FLAGS      = /nologo /g
 RELEASE_VS2017_ARM_ASM_FLAGS      = /nologo
@@ -282,9 +282,9 @@ NOOPT_VS2017_ARM_DLINK_FLAGS      = /NOLOGO /NODEFAULTLIB /IGNORE:4001 /OPT:REF 
 *_VS2017_AARCH64_ASLDLINK_PATH     = DEF(VS2017_BIN_AARCH64)\link.exe
 
       *_VS2017_AARCH64_MAKE_FLAGS  = /nologo
-  DEBUG_VS2017_AARCH64_CC_FLAGS    = /nologo /c /WX /GS- /W4 /Gs32768 /D UNICODE /O1b2 /GL /FIAutoGen.h /EHs-c- /GR- /GF /Gy /Zi /Gm /Gw /Oi-
-RELEASE_VS2017_AARCH64_CC_FLAGS    = /nologo /c /WX /GS- /W4 /Gs32768 /D UNICODE /O1b2 /GL /FIAutoGen.h /EHs-c- /GR- /GF /Gw /Oi-
-NOOPT_VS2017_AARCH64_CC_FLAGS      = /nologo /c /WX /GS- /W4 /Gs32768 /D UNICODE /FIAutoGen.h /EHs-c- /GR- /GF /Gy /Zi /Gm /Od /Oi-
+  DEBUG_VS2017_AARCH64_CC_FLAGS    = /nologo /c /GS- /W4 /Gs32768 /D UNICODE /O1b2 /GL /FIAutoGen.h /EHs-c- /GR- /GF /Gy /Zi /Gm /Gw /Oi-
+RELEASE_VS2017_AARCH64_CC_FLAGS    = /nologo /c /GS- /W4 /Gs32768 /D UNICODE /O1b2 /GL /FIAutoGen.h /EHs-c- /GR- /GF /Gw /Oi-
+NOOPT_VS2017_AARCH64_CC_FLAGS      = /nologo /c /GS- /W4 /Gs32768 /D UNICODE /FIAutoGen.h /EHs-c- /GR- /GF /Gy /Zi /Gm /Od /Oi-
 
   DEBUG_VS2017_AARCH64_ASM_FLAGS   = /nologo /g
 RELEASE_VS2017_AARCH64_ASM_FLAGS   = /nologo
@@ -307,7 +307,7 @@ NOOPT_VS2017_AARCH64_DLINK_FLAGS   = /NOLOGO /NODEFAULTLIB /IGNORE:4001 /OPT:REF
 
 *_VS2017_EBC_MAKE_FLAGS          = /nologo
 *_VS2017_EBC_PP_FLAGS            = /nologo /E /TC /FIAutoGen.h
-*_VS2017_EBC_CC_FLAGS            = /nologo /c /WX /W3 /FIAutoGen.h /D$(MODULE_ENTRY_POINT)=$(ARCH_ENTRY_POINT)
+*_VS2017_EBC_CC_FLAGS            = /nologo /c /W3 /FIAutoGen.h /D$(MODULE_ENTRY_POINT)=$(ARCH_ENTRY_POINT)
 *_VS2017_EBC_VFRPP_FLAGS         = /nologo /E /TC /DVFRCOMPILE /FI$(MODULE_NAME)StrDefs.h
 *_VS2017_EBC_SLINK_FLAGS         = /lib /NOLOGO /MACHINE:EBC
 *_VS2017_EBC_DLINK_FLAGS         = "C:\Program Files (x86)\Intel\EBC\Lib\EbcLib.lib" /NOLOGO /NODEFAULTLIB /MACHINE:EBC /OPT:REF /ENTRY:$(IMAGE_ENTRY_POINT) /SUBSYSTEM:EFI_BOOT_SERVICE_DRIVER /MAP /ALIGN:32 /DRIVER
@@ -357,13 +357,13 @@ NOOPT_VS2017_AARCH64_DLINK_FLAGS   = /NOLOGO /NODEFAULTLIB /IGNORE:4001 /OPT:REF
 *_VS2019_IA32_PP_PATH      = DEF(VS2019_BIN_IA32)\cl.exe
 *_VS2019_IA32_ASM_PATH     = DEF(VS2019_BIN_IA32)\ml.exe
 
-  DEBUG_VS2019_IA32_CC_FLAGS    = /nologo /arch:IA32 /c /WX /GS- /W4 /Gs32768 /D UNICODE /O1b2 /GL /FIAutoGen.h /EHs-c- /GR- /GF /Gy /Z7 /Gw /MP
-RELEASE_VS2019_IA32_CC_FLAGS    = /nologo /arch:IA32 /c /WX /GS- /W4 /Gs32768 /D UNICODE /O1b2 /GL /FIAutoGen.h /EHs-c- /GR- /GF /Gw /MP
-NOOPT_VS2019_IA32_CC_FLAGS      = /nologo /arch:IA32 /c /WX /GS- /W4 /Gs32768 /D UNICODE /FIAutoGen.h /EHs-c- /GR- /GF /Gy /Z7 /Od /MP
+  DEBUG_VS2019_IA32_CC_FLAGS    = /nologo /arch:IA32 /c /GS- /W4 /Gs32768 /D UNICODE /O1b2 /GL /FIAutoGen.h /EHs-c- /GR- /GF /Gy /Z7 /Gw /MP
+RELEASE_VS2019_IA32_CC_FLAGS    = /nologo /arch:IA32 /c /GS- /W4 /Gs32768 /D UNICODE /O1b2 /GL /FIAutoGen.h /EHs-c- /GR- /GF /Gw /MP
+NOOPT_VS2019_IA32_CC_FLAGS      = /nologo /arch:IA32 /c /GS- /W4 /Gs32768 /D UNICODE /FIAutoGen.h /EHs-c- /GR- /GF /Gy /Z7 /Od /MP
 
-  DEBUG_VS2019_IA32_ASM_FLAGS   = /nologo /c /WX /W3 /Cx /coff /Zd /Zi
-RELEASE_VS2019_IA32_ASM_FLAGS   = /nologo /c /WX /W3 /Cx /coff /Zd /Zi
-NOOPT_VS2019_IA32_ASM_FLAGS     = /nologo /c /WX /W3 /Cx /coff /Zd /Zi
+  DEBUG_VS2019_IA32_ASM_FLAGS   = /nologo /c /W3 /Cx /coff /Zd /Zi
+RELEASE_VS2019_IA32_ASM_FLAGS   = /nologo /c /W3 /Cx /coff /Zd /Zi
+NOOPT_VS2019_IA32_ASM_FLAGS     = /nologo /c /W3 /Cx /coff /Zd /Zi
 
 # 2024-11-16 bird: Added our include directory for CryptoPkg\Library\IntrinsicLib\Ia32\ftol2-vcc.nasm using iprt/asmdefs.mac.
   DEBUG_VS2019_IA32_NASM_FLAGS  = -Ox -f win32 -g -I@VBOX_PATH_ROOT@/include
@@ -388,13 +388,13 @@ NOOPT_VS2019_IA32_DLINK_FLAGS   = /NOLOGO /NODEFAULTLIB /IGNORE:4001 /OPT:REF /O
 *_VS2019_X64_DLINK_PATH    = DEF(VS2019_BIN_X64)\link.exe
 *_VS2019_X64_ASLDLINK_PATH = DEF(VS2019_BIN_X64)\link.exe
 
-  DEBUG_VS2019_X64_CC_FLAGS     = /nologo /c /WX /GS- /W4 /Gs32768 /D UNICODE /O1b2s /GL /Gy /FIAutoGen.h /EHs-c- /GR- /GF /Z7 /Gw /MP /volatileMetadata-
-RELEASE_VS2019_X64_CC_FLAGS     = /nologo /c /WX /GS- /W4 /Gs32768 /D UNICODE /O1b2s /GL /Gy /FIAutoGen.h /EHs-c- /GR- /GF /Gw /MP /volatileMetadata-
-NOOPT_VS2019_X64_CC_FLAGS       = /nologo /c /WX /GS- /W4 /Gs32768 /D UNICODE /Gy /FIAutoGen.h /EHs-c- /GR- /GF /Z7 /Od /MP /volatileMetadata-
+  DEBUG_VS2019_X64_CC_FLAGS     = /nologo /c /GS- /W4 /Gs32768 /D UNICODE /O1b2s /GL /Gy /FIAutoGen.h /EHs-c- /GR- /GF /Z7 /Gw /MP /volatileMetadata-
+RELEASE_VS2019_X64_CC_FLAGS     = /nologo /c /GS- /W4 /Gs32768 /D UNICODE /O1b2s /GL /Gy /FIAutoGen.h /EHs-c- /GR- /GF /Gw /MP /volatileMetadata-
+NOOPT_VS2019_X64_CC_FLAGS       = /nologo /c /GS- /W4 /Gs32768 /D UNICODE /Gy /FIAutoGen.h /EHs-c- /GR- /GF /Z7 /Od /MP /volatileMetadata-
 
-  DEBUG_VS2019_X64_ASM_FLAGS    = /nologo /c /WX /W3 /Cx /Zd /Zi
-RELEASE_VS2019_X64_ASM_FLAGS    = /nologo /c /WX /W3 /Cx /Zd /Zi
-NOOPT_VS2019_X64_ASM_FLAGS      = /nologo /c /WX /W3 /Cx /Zd /Zi
+  DEBUG_VS2019_X64_ASM_FLAGS    = /nologo /c /W3 /Cx /Zd /Zi
+RELEASE_VS2019_X64_ASM_FLAGS    = /nologo /c /W3 /Cx /Zd /Zi
+NOOPT_VS2019_X64_ASM_FLAGS      = /nologo /c /W3 /Cx /Zd /Zi
 
 # 2024-11-16 bird: Added our include directory.
   DEBUG_VS2019_X64_NASM_FLAGS   = -Ox -f win64 -g -I@VBOX_PATH_ROOT@/include
@@ -419,9 +419,9 @@ NOOPT_VS2019_X64_DLINK_FLAGS    = /NOLOGO /NODEFAULTLIB /IGNORE:4001 /IGNORE:428
 *_VS2019_ARM_ASLPP_PATH           = DEF(VS2019_BIN_ARM)\cl.exe
 *_VS2019_ARM_ASLDLINK_PATH        = DEF(VS2019_BIN_ARM)\link.exe
 
-  DEBUG_VS2019_ARM_CC_FLAGS       = /nologo /c /WX /GS- /W4 /Gs32768 /D UNICODE /O1b2 /GL /FIAutoGen.h /EHs-c- /GR- /GF /Gy /Zi /Gw /Oi- /MP
-RELEASE_VS2019_ARM_CC_FLAGS       = /nologo /c /WX /GS- /W4 /Gs32768 /D UNICODE /O1b2 /GL /FIAutoGen.h /EHs-c- /GR- /GF /Gw /Oi- /MP
-NOOPT_VS2019_ARM_CC_FLAGS         = /nologo /c /WX /GS- /W4 /Gs32768 /D UNICODE /FIAutoGen.h /EHs-c- /GR- /GF /Gy /Zi /Od /Oi- /MP
+  DEBUG_VS2019_ARM_CC_FLAGS       = /nologo /c /GS- /W4 /Gs32768 /D UNICODE /O1b2 /GL /FIAutoGen.h /EHs-c- /GR- /GF /Gy /Zi /Gw /Oi- /MP
+RELEASE_VS2019_ARM_CC_FLAGS       = /nologo /c /GS- /W4 /Gs32768 /D UNICODE /O1b2 /GL /FIAutoGen.h /EHs-c- /GR- /GF /Gw /Oi- /MP
+NOOPT_VS2019_ARM_CC_FLAGS         = /nologo /c /GS- /W4 /Gs32768 /D UNICODE /FIAutoGen.h /EHs-c- /GR- /GF /Gy /Zi /Od /Oi- /MP
 
   DEBUG_VS2019_ARM_ASM_FLAGS      = /nologo /g
 RELEASE_VS2019_ARM_ASM_FLAGS      = /nologo
@@ -445,9 +445,9 @@ NOOPT_VS2019_ARM_DLINK_FLAGS      = /NOLOGO /NODEFAULTLIB /IGNORE:4001 /OPT:REF 
 *_VS2019_AARCH64_ASLPP_PATH        = DEF(VS2019_BIN_AARCH64)\cl.exe
 *_VS2019_AARCH64_ASLDLINK_PATH     = DEF(VS2019_BIN_AARCH64)\link.exe
 
-  DEBUG_VS2019_AARCH64_CC_FLAGS    = /nologo /c /WX /GS- /W4 /Gs32768 /D UNICODE /O1b2 /GL /FIAutoGen.h /EHs-c- /GR- /GF /Gy /Zi /Gw /Oi- /MP
-RELEASE_VS2019_AARCH64_CC_FLAGS    = /nologo /c /WX /GS- /W4 /Gs32768 /D UNICODE /O1b2 /GL /FIAutoGen.h /EHs-c- /GR- /GF /Gw /Oi- /MP
-NOOPT_VS2019_AARCH64_CC_FLAGS      = /nologo /c /WX /GS- /W4 /Gs32768 /D UNICODE /FIAutoGen.h /EHs-c- /GR- /GF /Gy /Zi /Od /Oi- /MP
+  DEBUG_VS2019_AARCH64_CC_FLAGS    = /nologo /c /GS- /W4 /Gs32768 /D UNICODE /O1b2 /GL /FIAutoGen.h /EHs-c- /GR- /GF /Gy /Zi /Gw /Oi- /MP
+RELEASE_VS2019_AARCH64_CC_FLAGS    = /nologo /c /GS- /W4 /Gs32768 /D UNICODE /O1b2 /GL /FIAutoGen.h /EHs-c- /GR- /GF /Gw /Oi- /MP
+NOOPT_VS2019_AARCH64_CC_FLAGS      = /nologo /c /GS- /W4 /Gs32768 /D UNICODE /FIAutoGen.h /EHs-c- /GR- /GF /Gy /Zi /Od /Oi- /MP
 
   DEBUG_VS2019_AARCH64_ASM_FLAGS   = /nologo /g
 RELEASE_VS2019_AARCH64_ASM_FLAGS   = /nologo

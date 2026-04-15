@@ -11,3 +11,6 @@
 /tbox_patches
 /tinderclient.log
 .vscode
+.vs
+/win.arm64
+/win.x64
