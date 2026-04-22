@@ -66,6 +66,7 @@
 [Sources.Ia32]
   Ia32/WriteTr.nasm
   Ia32/Lfence.nasm
+  Ia32/lshrdi3.c
 
   Ia32/Wbinvd.c | MSFT
   Ia32/WriteMm7.c | MSFT

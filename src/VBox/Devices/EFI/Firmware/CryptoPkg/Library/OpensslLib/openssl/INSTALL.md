@@ -51,7 +51,7 @@ To install OpenSSL, you will need:
  * A "make" implementation
  * Perl 5 with core modules (please read [NOTES-PERL.md](NOTES-PERL.md))
  * The Perl module `Text::Template` (please read [NOTES-PERL.md](NOTES-PERL.md))
- * an ANSI C compiler
+ * a C-99 compiler
  * POSIX C library (at least POSIX.1-2008), or compatible types and
    functionality.
  * a development environment in the form of development libraries and C
@@ -335,6 +335,14 @@ Build OpenSSL with debugging symbols and zero optimization level.
 
 Build OpenSSL without debugging symbols.  This is the default.
 
+    --coverage
+
+Build OpenSSL with gcov profiling information included
+
+    --pgo
+
+Build OpenSSL optimized using gcov data obtained from --coverage build
+
 Directories
 -----------
 
@@ -536,7 +544,7 @@ shown below:
     [random]
     seed=JITTER
 
-It uses a statically linked [jitterentropy-library](https://github.com/smuellerDD/jitterentropy-library) as the seed source.
+It uses a statically linked [jitterentropy-library] as the seed source.
 
 Additional configuration flags available:
 
@@ -737,6 +745,11 @@ This now only enables the `failed-malloc` feature.
 
 This is a no-op; the project uses the compiler's address/leak sanitizer instead.
 
+### enable-allocfail-tests
+
+This option enables testing that leverages the use of the crypto-mdebug feature
+to test error paths resulting from failed memory allocations.
+
 ### no-ct
 
 Don't build support for Certificate Transparency (CT).
@@ -780,6 +793,12 @@ Don't build support for Elliptic Curves.
 ### no-ec2m
 
 Don't build support for binary Elliptic Curves
+
+### no-tls-deprecated-ec
+
+Disable legacy TLS EC groups that were deprecated in RFC8422.  These are the
+Koblitz curves, B<secp160r1>, B<secp160r2>, B<secp192r1>, B<secp224r1>, and the
+binary Elliptic curves that would also be disabled by C<no-ec2m>.
 
 ### enable-ec_nistp_64_gcc_128
 
@@ -841,6 +860,19 @@ Don't perform FIPS module Power On Self Tests.
 This option MUST be used for debugging only as it makes the FIPS provider
 non-compliant. It is useful when setting breakpoints in FIPS algorithms.
 
+### enable-fips-jitter
+
+Use the CPU Jitter library as a FIPS validated entropy source.
+
+This option will only produce a compliant FIPS provider if you have:
+
+1. independently performed the required [SP 800-90B] entropy assessments;
+2. meet the minimum required entropy as specified by [jitterentropy-library];
+3. obtain an [ESV] certificate for the [jitterentropy-library] and
+4. have had the resulting FIPS provider certified by the [CMVP].
+
+Failure to do all of these will produce a non-compliant FIPS provider.
+
 ### enable-fuzz-libfuzzer, enable-fuzz-afl
 
 Build with support for fuzzing using either libfuzzer or AFL.
@@ -868,9 +900,25 @@ Don't build the legacy provider.
 
 Disabling this also disables the legacy algorithms: MD2 (already disabled by default).
 
+### enable-lms
+
+Enable Leighton-Micali Signatures (LMS) support.
+Support is currently limited to verification only as per
+[SP 800-208](https://csrc.nist.gov/pubs/sp/800/208/final).
+
 ### no-makedepend
 
 Don't generate dependencies.
+
+### no-ml-dsa
+
+Disable Module-Lattice-Based Digital Signature Standard (ML-DSA) support.
+ML-DSA is based on CRYSTALS-DILITHIUM. See [FIPS 204].
+
+### no-ml-kem
+
+Disable Module-Lattice-Based Key-Encapsulation Mechanism Standard (ML-KEM)
+support.  ML-KEM is based on CRYSTALS-KYBER. See [FIPS 203].
 
 ### no-module
 
@@ -960,6 +1008,11 @@ Build support for Stream Control Transmission Protocol (SCTP).
 Do not create shared libraries, only static ones.
 
 See [Notes on shared libraries](#notes-on-shared-libraries) below.
+
+### no-slh-dsa
+
+Disable Stateless Hash Based Digital Signature Standard support.
+(SLH-DSA is based on SPHINCS+. See [FIPS 205])
 
 ### no-sm2-precomp
 
@@ -1064,6 +1117,17 @@ application. Supported on POSIX compliant platforms and Windows.
 Build with support for the integrated tracing api.
 
 See manual pages OSSL_trace_set_channel(3) and OSSL_trace_enabled(3) for details.
+
+### enable-sslkeylog
+
+Build with support for the SSLKEYLOGFILE environment variable
+
+When enabled, setting SSLKEYLOGFILE to a file path records the keys exchanged
+during a TLS handshake for use in analysis tools like wireshark.  Note that the
+use of this mechanism allows for decryption of application payloads found in
+captured packets using keys from the key log file and therefore has significant
+security consequences.  See Section 3 of
+[the draft standard for SSLKEYLOGFILE](https://datatracker.ietf.org/doc/draft-ietf-tls-keylogfile/)
 
 ### no-ts
 
@@ -1176,9 +1240,9 @@ Build with support for the specified algorithm.
 ### no-{algorithm}
 
     no-{aria|bf|blake2|camellia|cast|chacha|cmac|
-        des|dh|dsa|ecdh|ecdsa|idea|md4|mdc2|ocb|
-        poly1305|rc2|rc4|rmd160|scrypt|seed|
-        siphash|siv|sm2|sm3|sm4|whirlpool}
+        des|dh|dsa|ecdh|ecdsa|idea|md4|mdc2|ml-dsa|
+        ml-kem|ocb|poly1305|rc2|rc4|rmd160|scrypt|
+        seed|siphash|siv|sm2|sm3|sm4|whirlpool}
 
 Build without support for the specified algorithm.
 
@@ -1988,6 +2052,24 @@ around the problem by forcing the build procedure to use the following script:
 instead of the real clang. In which case it doesn't matter what clang version
 is used, as it is the version of the GNU assembler that will be checked.
 
+Notes on profile guided optimization
+------------------------------------
+
+Some compilers support the concept of profile guided optimization.  This feature
+allows a user to build openssl and use profiling data gathered while running an
+application such that it can then be rebuilt in a way that is optimized specifically
+for that application, increasing performance.  Currently this feature is built into
+the openssl build system for x86_64 only.
+
+1) Configure openssl with the --coverage option.  This will configure the compiler to
+   record profiling data for the libcrypto and libssl libraries
+2) Run the application(s) which you wish to optimize for, ensuring that they use
+   the libraries compiled in step (1) (note this may entail the use of LD_LIBRARY_PATH)
+3) Clean the openssl build with make clean.  Note that the profile data (the .gcda and .gcno
+   files are retained through the clean operation). This is intentional.
+4) Configure openssl again, but this time select the --pgo build type.  This will use the
+   profiled data to optimize code layout for the application in question.
+
 ---
 
 <!-- Links  -->
@@ -2006,3 +2088,24 @@ is used, as it is the version of the GNU assembler that will be checked.
 
 [10-main.conf]:
     Configurations/10-main.conf
+
+[CMVP]:
+    <https://csrc.nist.gov/projects/cryptographic-module-validation-program>
+
+[ESV]:
+    <https://csrc.nist.gov/Projects/cryptographic-module-validation-program/entropy-validations>
+
+[FIPS 203]:
+    <https://csrc.nist.gov/pubs/fips/203/final>
+
+[FIPS 204]:
+    <https://csrc.nist.gov/pubs/fips/204/final>
+
+[SP 800-90B]:
+    <https://csrc.nist.gov/pubs/sp/800/90/b/final>
+
+[jitterentropy-library]:
+    <https://github.com/smuellerDD/jitterentropy-library>
+
+[FIPS 205]:
+    <https://csrc.nist.gov/pubs/fips/205/final>

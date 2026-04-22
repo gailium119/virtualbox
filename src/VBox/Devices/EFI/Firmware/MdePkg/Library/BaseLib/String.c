@@ -972,6 +972,72 @@ AsciiStrStr (
 }
 
 /**
+  Returns the first occurrence of any character from a set of ASCII characters
+  in a Null-terminated ASCII string.
+
+  This function scans the contents of the ASCII string specified by String
+  and returns the first occurrence of any character that is present in
+  SearchString. If no character from SearchString is found in String, then
+  NULL is returned. If SearchString is empty (contains only the Null-terminator),
+  then NULL is returned.
+
+  If String is NULL, then ASSERT().
+  If SearchString is NULL, then ASSERT().
+
+  If PcdMaximumAsciiStringLength is not zero, and SearchString or
+  String contains more than PcdMaximumAsciiStringLength characters
+  not including the Null-terminator, then ASSERT().
+
+  @param  String          A pointer to a Null-terminated ASCII string.
+  @param  SearchString    A pointer to a Null-terminated ASCII string
+                          containing the set of characters to search for.
+
+  @retval NULL            If no character from SearchString appears in String,
+                          or if SearchString is empty.
+  @retval others          Pointer to the first occurrence in String of any
+                          character from SearchString.
+**/
+CHAR8 *
+EFIAPI
+AsciiStrPBrk (
+  IN CONST CHAR8 *String,
+  IN CONST CHAR8 *SearchString
+  )
+{
+  CONST CHAR8 *Ptr;
+  CONST CHAR8 *SearchPtr;
+
+  //
+  // ASSERT both strings are valid and their lengths are within limits
+  //
+  ASSERT (AsciiStrSize (String) != 0);
+  ASSERT (AsciiStrSize (SearchString) != 0);
+
+  //
+  // An empty search set yields no match
+  //
+  if (*SearchString == '\0') {
+    return NULL;
+  }
+
+  //
+  // Scan the entire string
+  //
+  for (Ptr = String; *Ptr != '\0'; Ptr++) {
+    //
+    // Check if current character appears in SearchString
+    //
+    for (SearchPtr = SearchString; *SearchPtr != '\0'; SearchPtr++) {
+      if (*Ptr == *SearchPtr) {
+        return (CHAR8 *)Ptr;
+      }
+    }
+  }
+
+  return NULL;
+}
+
+/**
   Convert a Null-terminated ASCII decimal string to a value of type
   UINTN.
 

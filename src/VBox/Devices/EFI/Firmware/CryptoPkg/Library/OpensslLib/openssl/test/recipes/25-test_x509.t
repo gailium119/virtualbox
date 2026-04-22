@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2024 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -12,11 +12,12 @@ use warnings;
 
 use File::Spec;
 use OpenSSL::Test::Utils;
-use OpenSSL::Test qw/:DEFAULT srctop_file/;
+use OpenSSL::Test qw/:DEFAULT srctop_file result_file/;
+use File::Compare qw/compare_text/;
 
 setup("test_x509");
 
-plan tests => 97;
+plan tests => 151;
 
 # Prevent MSys2 filename munging for arguments that look like file paths but
 # aren't
@@ -41,6 +42,18 @@ ok(run(app(["openssl", "x509", "-text", "-in", $pem, "-out", $out_utf8,
             "-nameopt", "utf8"])));
 is(cmp_text($out_utf8, $utf),
    0, 'Comparing utf8 output with cyrillic.utf8');
+
+SKIP: {
+    skip "EdDSA disabled", 2 if disabled("ecx");
+
+    $pem = srctop_file(@certs, "tab-in-dn.pem");
+    my $out_text = "out-tab-in-dn.text";
+    my $text = srctop_file(@certs, "tab-in-dn.text");
+    ok(run(app(["openssl", "x509", "-text", "-noout",
+            "-in", $pem, "-out", $out_text])));
+    is(cmp_text($out_text, $text),
+       0, 'Comparing default output with tab-in-dn.text');
+}
 
 SKIP: {
     skip "DES disabled", 1 if disabled("des");
@@ -97,6 +110,16 @@ ok(run(app(["openssl", "x509", "-new", "-force_pubkey", $key, "-subj", "/CN=EE",
             "-extfile", $extfile, "-CA", $ca, "-CAkey", $pkey, "-out", $caout]))
 && run(app(["openssl", "verify", "-no_check_time",
             "-trusted", $ca, "-partial_chain", $caout])));
+
+# test trust decoration
+ok(run(app(["openssl", "x509", "-in", $ca, "-addtrust", "emailProtection",
+            "-out", "ca-trusted.pem"])));
+cert_contains("ca-trusted.pem", "Trusted Uses: E-mail Protection",
+              1, 'trusted use - E-mail Protection');
+ok(run(app(["openssl", "x509", "-in", $ca, "-addreject", "emailProtection",
+            "-out", "ca-rejected.pem"])));
+cert_contains("ca-rejected.pem", "Rejected Uses: E-mail Protection",
+              1, 'rejected use - E-mail Protection');
 
 subtest 'x509 -- x.509 v1 certificate' => sub {
     tconversion( -type => 'x509', -prefix => 'x509v1',
@@ -304,6 +327,137 @@ cert_contains($iobo_cert,
               "DirName:CN = Wildboar",
               1, 'X.509 Issued On Behalf Of');
 
+my $auth_att_id_cert = srctop_file(@certs, "ext-authorityAttributeIdentifier.pem");
+cert_contains($auth_att_id_cert,
+              "DirName:CN = Wildboar",
+              1, 'X.509 Authority Attribute Identifier');
+cert_contains($auth_att_id_cert,
+              "Issuer Serial: 01030507",
+              1, 'X.509 Authority Attribute Identifier');
+cert_contains($auth_att_id_cert,
+              "Issuer UID: B2",
+              1, 'X.509 Authority Attribute Identifier');
+
+my $role_spec_cert = srctop_file(@certs, "ext-roleSpecCertIdentifier.pem");
+cert_contains($role_spec_cert,
+              "Role Name: DirName:CN = Wildboar",
+              1, 'X.509 Role Spec Certificate Identifier');
+cert_contains($role_spec_cert,
+              "Role Certificate Issuer: DirName:CN",
+              1, 'X.509 Role Spec Certificate Identifier');
+cert_contains($role_spec_cert,
+              "Role Certificate Serial Number: 33818120 \\(0x2040608\\)",
+              1, 'X.509 Role Spec Certificate Identifier');
+cert_contains($role_spec_cert,
+              "DNS:wildboarsoftware.com",
+              1, 'X.509 Role Spec Certificate Identifier');
+cert_contains($role_spec_cert,
+              "Registered ID:description",
+              1, 'X.509 Role Spec Certificate Identifier');
+
+my $attr_desc_cert = srctop_file(@certs, "ext-attributeDescriptor.pem");
+cert_contains($attr_desc_cert,
+              "Identifier: 2.5.4.3",
+              1, 'X.509 Attribute Descriptor');
+# This comes from the syntax field, which starts on the next line.
+cert_contains($attr_desc_cert,
+              "UnboundedDirectoryString",
+              1, 'X.509 Attribute Descriptor');
+cert_contains($attr_desc_cert,
+              "Name: commonName",
+              1, 'X.509 Attribute Descriptor');
+# These comes from the dominationRule field.
+cert_contains($attr_desc_cert,
+              "Privilege Policy Identifier: 2.5.4.10",
+              1, 'X.509 Attribute Descriptor');
+cert_contains($attr_desc_cert,
+              "DirName:CN = Wildboar",
+              1, 'X.509 Attribute Descriptor');
+cert_contains($attr_desc_cert,
+              "Algorithm: sha256",
+              1, 'X.509 Attribute Descriptor');
+
+my $time_spec_abs_cert = srctop_file(@certs, "ext-timeSpecification-absolute.pem");
+cert_contains($time_spec_abs_cert,
+              "Timezone: UTC-05:00",
+              1, 'X.509 Time Specification (Absolute)');
+cert_contains($time_spec_abs_cert,
+              "Absolute: Any time between Dec 20 13:07:21 2022 GMT and Dec 20 13:07:21 2022 GMT",
+              1, 'X.509 Time Specification (Absolute)');
+
+my $time_spec_per_cert = srctop_file(@certs, "ext-timeSpecification-periodic.pem");
+cert_contains($time_spec_per_cert,
+              "Timezone: UTC-05:00",
+              1, 'X.509 Time Specification (Periodic)');
+cert_contains($time_spec_per_cert,
+              "NOT this time:",
+              1, 'X.509 Time Specification (Periodic)');
+cert_contains($time_spec_per_cert,
+              "05:43:21 - 12:34:56",
+              1, 'X.509 Time Specification (Periodic)');
+cert_contains($time_spec_per_cert,
+              "Days of the week: SUN, MON",
+              1, 'X.509 Time Specification (Periodic)');
+cert_contains($time_spec_per_cert,
+              "Weeks of the month: 3, 4",
+              1, 'X.509 Time Specification (Periodic)');
+cert_contains($time_spec_per_cert,
+              "Months: MAY, JUN",
+              1, 'X.509 Time Specification (Periodic)');
+cert_contains($time_spec_per_cert,
+              "Years: 2022, 2023",
+              1, 'X.509 Time Specification (Periodic)');
+cert_contains($time_spec_per_cert,
+              "Months: JUL, AUG",
+              1, 'X.509 Time Specification (Periodic)');
+cert_contains($time_spec_per_cert,
+              "Years: 2023, 2024",
+              1, 'X.509 Time Specification (Periodic)');
+
+my $time_spec_per_no_second_cert =
+    srctop_file(@certs, "ext-timeSpecification-periodic-no-second.pem");
+cert_contains($time_spec_per_no_second_cert,
+              "05:43:00 - 12:34:56",
+              1, 'X.509 Time Specification (Periodic, no second)');
+
+my $attr_map_cert = srctop_file(@certs, "ext-attributeMappings.pem");
+cert_contains($attr_map_cert,
+              "commonName == localityName",
+              1, 'X.509 Attribute Mappings');
+# localityName has an INTEGER value here, which was intentional to test the
+# display of non-string values.
+cert_contains($attr_map_cert,
+              "commonName:asdf == localityName:03:3E",
+              1, 'X.509 Attribute Mappings');
+
+my $aaa_cert = srctop_file(@certs, "ext-allowedAttributeAssignments.pem");
+cert_contains($aaa_cert,
+              "Attribute Type: commonName",
+              1, 'X.509 Allowed Attribute Assignments');
+cert_contains($aaa_cert,
+              "Holder Domain: email:jonathan.wilbur",
+              1, 'X.509 Allowed Attribute Assignments');
+
+my $aa_idp_cert = srctop_file(@certs, "ext-aAissuingDistributionPoint.pem");
+cert_contains($aa_idp_cert,
+              "DirName:CN = Wildboar",
+              1, 'X.509 Attribute Authority Issuing Distribution Point');
+cert_contains($aa_idp_cert,
+              "CA Compromise",
+              1, 'X.509 Attribute Authority Issuing Distribution Point');
+cert_contains($aa_idp_cert,
+              "Indirect CRL: TRUE",
+              1, 'X.509 Attribute Authority Issuing Distribution Point');
+cert_contains($aa_idp_cert,
+              "Contains User Attribute Certificates: TRUE",
+              1, 'X.509 Attribute Authority Issuing Distribution Point');
+cert_contains($aa_idp_cert,
+              "Contains Attribute Authority \\(AA\\) Certificates: TRUE",
+              1, 'X.509 Attribute Authority Issuing Distribution Point');
+cert_contains($aa_idp_cert,
+              "Contains Source Of Authority \\(SOA\\) Public Key Certificates: TRUE",
+              1, 'X.509 Attribute Authority Issuing Distribution Point');
+
 sub test_errors { # actually tests diagnostics of OSSL_STORE
     my ($expected, $cert, @opts) = @_;
     my $infile = srctop_file(@certs, $cert);
@@ -347,6 +501,19 @@ ok(run(app(["openssl", "x509", "-noout", "-dates", "-dateopt", "iso_8601",
 ok(!run(app(["openssl", "x509", "-noout", "-dates", "-dateopt", "invalid_format",
 	     "-in", srctop_file("test/certs", "ca-cert.pem")])),
    "Run with invalid -dateopt format");
+
+my $ca_cert = srctop_file(@certs, "ca-cert.pem");
+my $goodcn2_chain = srctop_file(@certs, "goodcn2-chain.pem");
+
+# -multi test with single cert
+ok(run(app(["openssl", "x509", "-multi", "-in", $ca_cert])),
+   "Run with -multi (single cert)");
+
+# -multi test with multiple certs
+my $outfile = result_file("multi.out");
+ok(run(app(["openssl", "x509", "-multi", "-in", $goodcn2_chain, "-out", $outfile]))
+   && compare_text($outfile, $goodcn2_chain) == 0,
+   "Run with -multi (multiple certs)");
 
 # Tests for signing certs (broken in 1.1.1o)
 my $a_key = "a-key.pem";
@@ -469,3 +636,75 @@ SKIP: {
 
     ok(run(test(["x509_test", $psscert])), "running x509_test");
 }
+
+# Tests for -checkend including -multi
+# Discussed in https://github.com/openssl/openssl/pull/29155
+
+my $c_early = "c-early.pem";
+my $c_late = "c-late.pem";
+my $c_chain = "c-chain.pem";
+my $c_key = srctop_file(@certs, 'ca-key.pem');
+ok(run(app(["openssl", "x509", "-new", "-key", $c_key, "-subj", "/CN=EARLY",
+            "-extfile", $extfile, "-days", "100", "-text", "-out", $c_early]))
+&& run(app(["openssl", "x509", "-new", "-key", $c_key, "-subj", "/CN=LATE",
+            "-extfile", $extfile, "-days", "200", "-text", "-out", $c_late])));
+my $c_time = Time::Piece->gmtime->epoch;
+my $delta_early = Time::Piece->strptime(
+                    get_field($c_early, "Not After "),
+                       "%b %d %T %Y %Z")->epoch - $c_time;
+my $delta_late = Time::Piece->strptime(
+                    get_field($c_late, "Not After "),
+                        "%b %d %T %Y %Z")->epoch - $c_time;
+sub mkchain {
+    open(my $out, ">:raw", $c_chain) or die;
+    foreach my $fn (@_) {
+        open(my $in, "<:raw", $fn) or die;
+        print {$out} <$in>;
+        close($in);
+    }
+    close($out);
+    return 0;
+}
+# Single + not expiring
+ok(run(app(["openssl", "x509", "-checkend", $delta_early - 3600,
+            "-in", $c_early])),
+    "Single cert + not expiring in -checkend window");
+# Single + expiring
+ok(!run(app(["openssl", "x509", "-checkend", $delta_early + 3600,
+            "-in", $c_early])),
+    "Single cert + expiring in -checkend window");
+# Single + expiring at boundary
+# Test may fail erroneously due to sequential now() calls
+# See https://github.com/openssl/openssl/pull/29155
+my $delta_exact = Time::Piece->strptime( get_field($c_early, "Not After "),
+                    "%b %d %T %Y %Z")->epoch - Time::Piece->gmtime->epoch;
+ok(!run(app(["openssl", "x509", "-checkend", $delta_exact, "-in", $c_early])),
+    "Single cert + expiring at -checkend boundary");
+# Multi + none expiring
+mkchain($c_early, $c_late, $c_late);
+ok(run(app(["openssl", "x509", "-multi", "-checkend",
+            $delta_early - 3600, "-in", $c_chain])),
+    "Multi cert + none expiring in -checkend window");
+# Multi + 1st expiring
+mkchain($c_early, $c_late, $c_late);
+ok(!run(app(["openssl", "x509", "-multi", "-checkend",
+             $delta_early + 3600, "-in", $c_chain])),
+    "Multi cert + 1st expiring in -checkend window");
+# Multi + 2nd expiring
+mkchain($c_late, $c_early, $c_late);
+ok(!run(app(["openssl", "x509", "-multi", "-checkend",
+             $delta_early + 3600, "-in", $c_chain])),
+    "Multi cert + 2nd expiring in -checkend window");
+# Multi + 3rd expiring
+mkchain($c_late, $c_late, $c_early);
+ok(!run(app(["openssl", "x509", "-multi", "-checkend",
+             $delta_late - 3600, "-in", $c_chain])),
+    "Multi cert + 3rd expiring in -checkend window");
+# Multi + all expiring
+mkchain($c_early, $c_late, $c_early);
+ok(!run(app(["openssl", "x509", "-multi", "-checkend",
+             $delta_late + 3600, "-in", $c_chain])),
+    "Multi cert + all expiring in -checkend window");
+# Bad parse still returns non-zero
+ok(!run(app(["openssl", "x509", "-checkend", "60", "-in", $c_key])),
+    "Bad parse with -checkend returns non-zero");
