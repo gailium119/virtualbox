@@ -802,6 +802,7 @@
 #
 ################################################################################
 [Components]
+  HelloWorldPkg/HelloWorld.inf
   OvmfPkg/ResetVector/ResetVector.inf
 
   #

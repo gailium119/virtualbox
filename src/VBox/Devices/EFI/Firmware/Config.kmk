@@ -77,7 +77,7 @@ endif
 #
 ifeq ($(KBUILD_HOST),win)
  # The VS2019 template is the same as the VS2022 in upstream, so we stick with this till we upgrade.
- VBOX_EFI_TOOL_CHAIN.x86   := VS2019
+ VBOX_EFI_TOOL_CHAIN.x86   := CLANGDWARF
  VBOX_EFI_TOOL_CHAIN.amd64 := CLANGDWARF
 else
  VBOX_EFI_TOOL_CHAIN.x86   := GCC48

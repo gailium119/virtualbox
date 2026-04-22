@@ -85,6 +85,7 @@
 
   gEfiCertTypeRsa2048Sha256Guid  ## SOMETIMES_CONSUMES   ## GUID  # Unique ID for the type of the certificate.
   gEfiCertPkcs7Guid              ## SOMETIMES_CONSUMES   ## GUID  # Unique ID for the type of the certificate.
+  gEfiCertMlDsaGuid              ## SOMETIMES_CONSUMES   ## GUID  # Unique ID for the type of the certificate.
   gEfiCertX509Guid               ## SOMETIMES_CONSUMES   ## GUID  # Unique ID for the type of the signature.
 
 [FeaturePcd]

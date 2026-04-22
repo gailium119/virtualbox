@@ -108,6 +108,7 @@
   ## CONSUMES                ## HII
   gSecureBootConfigFormSetGuid
   gEfiCertPkcs7Guid                             ## SOMETIMES_PRODUCES  ## GUID  # Unique ID for the type of the certificate.
+  gEfiCertMlDsaGuid                             ## SOMETIMES_PRODUCES  ## GUID  # Unique ID for the type of the certificate.
   gEfiCertTypeRsa2048Sha256Guid                 ## SOMETIMES_CONSUMES  ## GUID  # Unique ID for the type of the certificate.
   gEfiFileSystemVolumeLabelInfoIdGuid           ## SOMETIMES_CONSUMES  ## GUID  # Indicate the information type
 

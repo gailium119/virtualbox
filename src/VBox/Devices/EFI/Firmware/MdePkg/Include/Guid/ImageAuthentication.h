@@ -303,6 +303,12 @@ typedef struct {
     0x4aafd29d, 0x68df, 0x49ee, {0x8a, 0xa9, 0x34, 0x7d, 0x37, 0x56, 0x65, 0xa7} \
   }
 
+#define EFI_CERT_ML_DSA_GUID \
+  { 0x9e4d7c8a, 0x2f5b, 0x4a3c, { 0x8b, 0x1e, 0x5a, 0x6f, 0x7c, 0x8d, 0x9a, 0x2b } }
+
+#define EFI_CERT_ML_DSA_65_PUBKEY_HASH_GUID \
+  { 0x8a2e3c5d, 0x1f4b, 0x4a6c, { 0x9e, 0x7d, 0x2c, 0x8f, 0x5a, 0x6b, 0x3c, 0x1e } }
+
 // ***********************************************************************
 // Image Execution Information Table Definition
 // ***********************************************************************
@@ -379,6 +385,7 @@ extern EFI_GUID  gEfiCertX509Sha256Guid;
 extern EFI_GUID  gEfiCertX509Sha384Guid;
 extern EFI_GUID  gEfiCertX509Sha512Guid;
 extern EFI_GUID  gEfiCertPkcs7Guid;
+extern EFI_GUID  gEfiCertMlDsaGuid;
 extern EFI_GUID  gEfiCertSm3Guid;
 extern EFI_GUID  gEfiCertX509Sm3Guid;
 

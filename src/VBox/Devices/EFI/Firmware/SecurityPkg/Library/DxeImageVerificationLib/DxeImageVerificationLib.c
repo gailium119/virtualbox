@@ -71,6 +71,10 @@ HASH_TABLE  mHash[] = {
 
 EFI_STRING  mHashTypeStr;
 
+// Key and signature sizes (example values, adjust as needed)
+#define ML_DSA_65_PUBLIC_KEY_SIZE   1952
+#define ML_DSA_65_SIGNATURE_SIZE    3309
+
 /**
   SecureBoot Hook for processing image verification.
 
@@ -1007,6 +1011,7 @@ IsSignatureFoundInDatabase (
       //
       // No database, no need to search.
       //
+      DEBUG((DEBUG_ERROR, "Variable %s not found\n", VariableName));
       Status = EFI_SUCCESS;
     }
 
@@ -1020,6 +1025,7 @@ IsSignatureFoundInDatabase (
 
   Status = gRT->GetVariable (VariableName, &gEfiImageSecurityDatabaseGuid, NULL, &DataSize, Data);
   if (EFI_ERROR (Status)) {
+    DEBUG((DEBUG_ERROR, "Variable %s not found\n", VariableName));
     goto Done;
   }
 
@@ -1033,6 +1039,7 @@ IsSignatureFoundInDatabase (
     if ((CertList->SignatureSize == sizeof (EFI_SIGNATURE_DATA) - 1 + SignatureSize) && (CompareGuid (&CertList->SignatureType, CertType))) {
       for (Index = 0; Index < CertCount; Index++) {
         if (CompareMem (Cert->SignatureData, Signature, SignatureSize) == 0) {
+          DEBUG((DEBUG_INFO, "Signature found in %s\n", VariableName));
           //
           // Find the signature in database.
           //
@@ -1915,6 +1922,7 @@ DxeImageVerificationHandler (
         (SecDataDirLeft - WinCertificate->dwLength <
          ALIGN_SIZE (WinCertificate->dwLength)))
     {
+      DEBUG ((DEBUG_INFO, "DxeImageVerificationLib: Not enough size for WinCertificate at offset 0x%x.\n", OffSet));
       break;
     }
 
@@ -1937,20 +1945,117 @@ DxeImageVerificationHandler (
       //
       // The certificate is formatted as WIN_CERTIFICATE_UEFI_GUID which is described in UEFI Spec.
       //
+      DEBUG ((DEBUG_INFO, "DxeImageVerificationLib: WIN_CERT_TYPE_EFI_GUID\n"));
       WinCertUefiGuid = (WIN_CERTIFICATE_UEFI_GUID *)WinCertificate;
       if (WinCertUefiGuid->Hdr.dwLength <= OFFSET_OF (WIN_CERTIFICATE_UEFI_GUID, CertData)) {
         break;
       }
 
-      if (!CompareGuid (&WinCertUefiGuid->CertType, &gEfiCertPkcs7Guid)) {
+    if (!CompareGuid (&WinCertUefiGuid->CertType, &gEfiCertPkcs7Guid) &&
+        !CompareGuid (&WinCertUefiGuid->CertType, &gEfiCertMlDsaGuid)) {
         continue;
-      }
+    }
 
       AuthData     = WinCertUefiGuid->CertData;
       AuthDataSize = WinCertUefiGuid->Hdr.dwLength - OFFSET_OF (WIN_CERTIFICATE_UEFI_GUID, CertData);
+      // ========== 新增：ML-DSA 处理分支 ==========
+      if (CompareGuid (&WinCertUefiGuid->CertType, &gEfiCertMlDsaGuid)) {
+        DEBUG ((DEBUG_INFO, "Mldsa sig found \n"));
+        UINT8   PubKey[ML_DSA_65_PUBLIC_KEY_SIZE];
+        UINT8   PubKeyHash[SHA256_DIGEST_SIZE];
+        UINT8   *Signature;
+        UINTN   SigSize;
+        BOOLEAN IsFoundInDb, IsFoundInDbx;
+        VOID    *MlCtx;
+
+        // 假定数据格式: [DER-encoded key] + [raw signature]
+        if (AuthDataSize < ML_DSA_65_SIGNATURE_SIZE + 10) {
+          continue;
+        }
+        SigSize = ML_DSA_65_SIGNATURE_SIZE;
+        Signature = AuthData + (AuthDataSize - SigSize) - 5;
+        AuthDataSize -= SigSize;  // 剩下的是证书数据
+
+        // 从 DER 数据中提取原始公钥
+        if (!ExtractMlDsaPublicKeyFromDer (AuthData, AuthDataSize, PubKey)) {
+          DEBUG ((DEBUG_INFO, "DxeImageVerificationLib: Failed to extract ML-DSA public key.\n"));
+          continue;
+        }
+
+        // 计算公钥哈希
+        if (!Sha256HashAll (PubKey, sizeof(PubKey), PubKeyHash)) {
+          DEBUG ((DEBUG_INFO, "DxeImageVerificationLib: Failed to hash ML-DSA public key.\n"));
+          continue;
+        }
+
+        // 检查黑名单 dbx
+        DbStatus = IsSignatureFoundInDatabase (
+                     EFI_IMAGE_SECURITY_DATABASE1,
+                     PubKeyHash,
+                     &gEfiCertX509Guid,
+                     SHA256_DIGEST_SIZE,
+                     &IsFoundInDbx
+                   );
+        if (!EFI_ERROR (DbStatus) && IsFoundInDbx) {
+          Action = EFI_IMAGE_EXECUTION_AUTH_SIG_FOUND;
+          DEBUG ((DEBUG_INFO, "DxeImageVerificationLib: ML-DSA public key hash found in DBX.\n"));
+          IsVerified = FALSE;
+          continue;
+        }
+
+        // 检查白名单 db
+        DbStatus = IsSignatureFoundInDatabase (
+                     EFI_IMAGE_SECURITY_DATABASE,
+                     PubKeyHash,
+                     &gEfiCertX509Guid,
+                     SHA256_DIGEST_SIZE,
+                     &IsFoundInDb
+                   );
+        if (EFI_ERROR (DbStatus) || !IsFoundInDb) {
+          DEBUG ((DEBUG_INFO, "DxeImageVerificationLib: ML-DSA public key hash not found in DB.\n"));
+          DEBUG ((DEBUG_INFO, "DxeImageVerificationLib: ML-DSA public key hash = %d bytes\n", SHA256_DIGEST_SIZE));
+          for (UINTN i = 0; i < SHA256_DIGEST_SIZE; i++) {
+            if (i % 16 == 0) {
+              DEBUG ((DEBUG_INFO, "\n  %04x: ", i));
+            }
+            DEBUG ((DEBUG_INFO, "%02x ", PubKeyHash[i]));
+          }
+          DEBUG ((DEBUG_INFO, "\n"));
+          //Action = EFI_IMAGE_EXECUTION_AUTH_SIG_NOT_FOUND;
+          //continue;
+        }
+
+        // 计算镜像哈希 (ML-DSA-65 使用 SHA-256)
+        if (!HashPeImage (HASHALG_SHA256)) {
+          DEBUG ((DEBUG_INFO, "DxeImageVerificationLib: ML-DSA hash computation failed.\n"));
+          continue;
+        }
+
+        // 验证签名
+        MlCtx = MlDsaNew (CRYPTO_NID_ML_DSA_65);
+        if (MlCtx == NULL) {
+          DEBUG ((DEBUG_INFO, "MlDsaNew failed\n"));
+          continue;
+        }
+        if (!MlDsaSetPublicKey (MlCtx, PubKey, sizeof(PubKey))) {
+          DEBUG ((DEBUG_INFO, "MlDsaSetPublicKey failed\n"));
+          MlDsaFree (MlCtx);
+          continue;
+        }
+        if (MlDsaVerify (MlCtx, mImageDigest, mImageDigestSize, Signature, SigSize)) {
+          IsVerified = TRUE;
+          DEBUG ((DEBUG_INFO, "DxeImageVerificationLib: ML-DSA signature verified.\n"));
+          MlDsaFree (MlCtx);
+          continue;
+        }
+        MlDsaFree (MlCtx);
+        DEBUG ((DEBUG_INFO, "DxeImageVerificationLib: ML-DSA signature verification failed.\n"));
+        Action = EFI_IMAGE_EXECUTION_AUTH_SIG_FAILED;
+        continue;
+      }
     } else {
       if (WinCertificate->dwLength < sizeof (WIN_CERTIFICATE)) {
-        break;
+        continue;
       }
 
       continue;
@@ -2017,6 +2122,7 @@ DxeImageVerificationHandler (
     //
     // The Size in Certificate Table or the attribute certificate table is corrupted.
     //
+    DEBUG ((DEBUG_INFO, "The Size in Certificate Table or the attribute certificate table is corrupted, expected 0x%x, actual 0x%x.\n", SecDataDirEnd, OffSet));
     IsVerified = FALSE;
   }
 
@@ -2032,6 +2138,7 @@ DxeImageVerificationHandler (
     SignatureList     = (EFI_SIGNATURE_LIST *)AllocateZeroPool (SignatureListSize);
     if (SignatureList == NULL) {
       SignatureListSize = 0;
+      DEBUG ((DEBUG_INFO, "SignatureList is NULL \n"));
       goto Failed;
     }
 

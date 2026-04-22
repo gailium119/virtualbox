@@ -133,4 +133,7 @@ extern CONST UINTN  mSizeOfMicrosoftUefiCa;
 extern CONST UINT8  mSha256OfDevNull[];
 extern CONST UINTN  mSizeOfSha256OfDevNull;
 
+extern CONST UINT8  mMlDsaPubKeyHash[];
+extern CONST UINTN  mSizeOfMlDsaPubKeyHash;
+
 #endif /* ENROLL_DEFAULT_KEYS_H_ */

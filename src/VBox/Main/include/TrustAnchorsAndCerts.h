@@ -56,6 +56,9 @@ extern const unsigned g_cbUefiMicrosoftWinCa2023;
 extern const unsigned char g_abUefiOracleDefPk[];
 extern const unsigned g_cbUefiOracleDefPk;
 
+extern const unsigned char g_abUefiMlDsaPubkeyHash[];
+extern const unsigned g_cbUefiMlDsaPubkeyHash;
+
 RT_C_DECLS_END
 
 #endif /* !MAIN_INCLUDED_TrustAnchorsAndCerts_h */

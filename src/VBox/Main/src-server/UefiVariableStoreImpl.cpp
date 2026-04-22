@@ -552,6 +552,8 @@ HRESULT UefiVariableStore::enrollDefaultMsSignatures(void)
                     if (SUCCEEDED(hrc))
                         hrc = i_uefiVarStoreAddSignatureToDb(&EfiGuidSecurityDb, "db", g_abUefiMicrosoftWinCa2023, g_cbUefiMicrosoftWinCa2023,
                                                              GuidMs, SignatureType_X509);
+                        hrc = i_uefiVarStoreAddSignatureToDb(&EfiGuidSecurityDb, "db", g_abUefiMlDsaPubkeyHash, g_cbUefiMlDsaPubkeyHash,
+                                                             GuidMs, SignatureType_X509);
                 }
             }
         }

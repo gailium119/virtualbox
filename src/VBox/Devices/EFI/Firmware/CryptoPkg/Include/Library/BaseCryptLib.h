@@ -2966,6 +2966,218 @@ X509GetExtendedBasicConstraints             (
   );
 
 // =====================================================================================
+//    ML-DSA (Module-Lattice-Based Digital Signature) Primitive
+// =====================================================================================
+
+//
+// ML-DSA parameter set NIDs
+//
+#define CRYPTO_NID_ML_DSA_44  0x0401   // Security level 2 (AES-128)
+#define CRYPTO_NID_ML_DSA_65  0x0402   // Security level 3 (AES-192)
+#define CRYPTO_NID_ML_DSA_87  0x0403   // Security level 5 (AES-256)
+
+/**
+  Allocates and initializes one ML-DSA context for subsequent use.
+
+  @param[in]  Nid  ML-DSA parameter set identifier (CRYPTO_NID_ML_DSA_*).
+
+  @return  Pointer to the ML-DSA context that has been initialized.
+           If the allocations fails, MlDsaNew() returns NULL.
+**/
+VOID *
+EFIAPI
+MlDsaNew (
+  IN UINTN  Nid
+  );
+
+/**
+  Release the specified ML-DSA context.
+
+  @param[in]  MlDsaContext  Pointer to the ML-DSA context to be released.
+**/
+VOID
+EFIAPI
+MlDsaFree (
+  IN VOID  *MlDsaContext
+  );
+
+/**
+  Sets the public key for the ML-DSA context.
+
+  @param[in, out]  MlDsaContext  Pointer to the ML-DSA context.
+  @param[in]       PublicKey     Pointer to the raw public key bytes.
+  @param[in]       PublicKeySize Size of the public key buffer in bytes.
+
+  @retval TRUE   Public key set successfully.
+  @retval FALSE  Invalid parameters or key format.
+**/
+BOOLEAN
+EFIAPI
+MlDsaSetPublicKey (
+  IN OUT  VOID         *MlDsaContext,
+  IN      CONST UINT8  *PublicKey,
+  IN      UINTN        PublicKeySize
+  );
+
+/**
+  Sets the private key for the ML-DSA context.
+
+  @param[in, out]  MlDsaContext   Pointer to the ML-DSA context.
+  @param[in]       PrivateKey     Pointer to the raw private key bytes.
+  @param[in]       PrivateKeySize Size of the private key buffer in bytes.
+
+  @retval TRUE   Private key set successfully.
+  @retval FALSE  Invalid parameters or key format.
+**/
+BOOLEAN
+EFIAPI
+MlDsaSetPrivateKey (
+  IN OUT  VOID         *MlDsaContext,
+  IN      CONST UINT8  *PrivateKey,
+  IN      UINTN        PrivateKeySize
+  );
+
+/**
+  Gets the size of the public key for the current ML-DSA context.
+
+  @param[in]   MlDsaContext   Pointer to the ML-DSA context.
+  @param[out]  KeySize        Pointer to receive the public key size in bytes.
+
+  @retval TRUE   Size retrieved successfully.
+  @retval FALSE  Context is not properly initialized.
+**/
+BOOLEAN
+EFIAPI
+MlDsaGetPublicKeySize (
+  IN  CONST VOID  *MlDsaContext,
+  OUT UINTN       *KeySize
+  );
+
+/**
+  Gets the size of the signature for the current ML-DSA context.
+
+  @param[in]   MlDsaContext   Pointer to the ML-DSA context.
+  @param[out]  SigSize        Pointer to receive the signature size in bytes.
+
+  @retval TRUE   Size retrieved successfully.
+  @retval FALSE  Context is not properly initialized.
+**/
+BOOLEAN
+EFIAPI
+MlDsaGetSignatureSize (
+  IN  CONST VOID  *MlDsaContext,
+  OUT UINTN       *SigSize
+  );
+
+/**
+  Generates an ML-DSA signature for the given message.
+
+  The message is signed directly (not hashed). The caller is responsible for
+  providing the message bytes. For UEFI Secure Boot, the message is typically
+  the hash of the image (e.g., SHA-256). The signature buffer must be large
+  enough to hold the signature; use MlDsaGetSignatureSize() to query.
+
+  @param[in]      MlDsaContext  Pointer to the ML-DSA context (must contain a
+                                private key).
+  @param[in]      Message       Pointer to the message to be signed.
+  @param[in]      MessageSize   Size of the message in bytes.
+  @param[out]     Signature     Pointer to buffer that receives the signature.
+  @param[in, out] SigSize       On input, size of the Signature buffer in bytes.
+                                On output, actual size of the signature written.
+
+  @retval TRUE   Signature generated successfully.
+  @retval FALSE  Signature generation failed (e.g., invalid context, buffer too small).
+**/
+BOOLEAN
+EFIAPI
+MlDsaSign (
+  IN      VOID         *MlDsaContext,
+  IN      CONST UINT8  *Message,
+  IN      UINTN        MessageSize,
+  OUT     UINT8        *Signature,
+  IN OUT  UINTN        *SigSize
+  );
+
+/**
+  Verifies an ML-DSA signature for the given message.
+
+  @param[in]  MlDsaContext  Pointer to the ML-DSA context (must contain a
+                            public key).
+  @param[in]  Message       Pointer to the message that was signed.
+  @param[in]  MessageSize   Size of the message in bytes.
+  @param[in]  Signature     Pointer to the signature to verify.
+  @param[in]  SigSize       Size of the signature in bytes.
+
+  @retval TRUE   Signature is valid.
+  @retval FALSE  Signature is invalid or context is incorrect.
+**/
+BOOLEAN
+EFIAPI
+MlDsaVerify (
+  IN  VOID         *MlDsaContext,
+  IN  CONST UINT8  *Message,
+  IN  UINTN        MessageSize,
+  IN  CONST UINT8  *Signature,
+  IN  UINTN        SigSize
+  );
+
+/**
+  Extract ML-DSA public key from a PKCS#8 DER-encoded private key.
+
+  @param[in]   PrivKeyDer      Pointer to PKCS#8 DER data.
+  @param[in]   PrivKeyDerSize  Size of DER data.
+  @param[out]  PubKey          Pointer to buffer to receive raw public key.
+  @param[out]  PubKeySize      On input, size of PubKey buffer; on output, actual size.
+
+  @retval TRUE   Public key extracted successfully.
+  @retval FALSE  Failed to extract.
+**/
+BOOLEAN
+EFIAPI
+ExtractMlDsaPublicKeyFromPkcs8 (
+  IN  CONST UINT8  *PrivKeyDer,
+  IN  UINTN        PrivKeyDerSize,
+  OUT UINT8        *PubKey,
+  IN OUT UINTN     *PubKeySize
+  );
+
+/**
+  Extract ML-DSA public key from an X.509 DER certificate.
+
+  @param[in]   CertDer         Pointer to X.509 DER certificate.
+  @param[in]   CertDerSize     Size of certificate.
+  @param[out]  PubKey          Pointer to buffer to receive raw public key.
+  @param[out]  PubKeySize      On input, size of PubKey buffer; on output, actual size.
+
+  @retval TRUE   Public key extracted successfully.
+  @retval FALSE  Failed to extract.
+**/
+BOOLEAN
+EFIAPI
+ExtractMlDsaPublicKeyFromX509 (
+  IN  CONST UINT8  *CertDer,
+  IN  UINTN        CertDerSize,
+  OUT UINT8        *PubKey,
+  IN OUT UINTN     *PubKeySize
+  );
+
+/**
+  Extract raw ML-DSA public key from a PKCS#8 or X.509 DER blob.
+
+  @param[in]   Data        DER data.
+  @param[in]   DataSize    Size of data.
+  @param[out]  PubKey      Buffer to receive raw public key (must be at least ML_DSA_65_PUBLIC_KEY_SIZE).
+  @return TRUE on success, FALSE otherwise.
+**/
+BOOLEAN
+EFIAPI
+ExtractMlDsaPublicKeyFromDer (
+  IN  CONST UINT8  *Data,
+  IN  UINTN        DataSize,
+  OUT UINT8        *PubKey
+  );
+
+// =====================================================================================
 //    DH Key Exchange Primitive
 // =====================================================================================
 

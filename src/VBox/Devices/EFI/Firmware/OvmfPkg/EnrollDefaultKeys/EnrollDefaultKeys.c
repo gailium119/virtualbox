@@ -689,6 +689,9 @@ ShellAppMain (
                PkKek1,
                SizeOfPkKek1,
                &gEfiCallerIdGuid,
+               mMlDsaPubKeyHash,
+               mSizeOfMlDsaPubKeyHash,
+               &gEfiCallerIdGuid,
                NULL
                );
   } else {
@@ -702,6 +705,9 @@ ShellAppMain (
                mMicrosoftUefiCa,
                mSizeOfMicrosoftUefiCa,
                &gMicrosoftVendorGuid,
+               mMlDsaPubKeyHash,
+               mSizeOfMlDsaPubKeyHash,
+               &gEfiCallerIdGuid,
                NULL
                );
   }
